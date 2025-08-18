@@ -5,4 +5,4 @@ def mp3_to_wav(src, dst):
     sound = AudioSegment.from_mp3(src)
     sound.export(dst, format="wav")
 
-mp3_to_wav("media/mp3/PinkPanther_Piano_Only.mp3", "media/wav/test.wav")
+mp3_to_wav("src/media/mp3/PinkPanther_Piano_Only.mp3", "src/media/wav/test.wav")
