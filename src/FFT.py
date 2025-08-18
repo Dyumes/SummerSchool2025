@@ -1,4 +1,4 @@
-from scipy.fft import fft
+from scipy.fft import rfft
 from scipy.io import wavfile
 import os
 import numpy as np
@@ -35,17 +35,24 @@ def extract_sample(audio, tick):
 
 
 def freq_to_number(freq): return (69 + 12*np.log2(freq/440.0))%12
+def round_note_num(num): return int(round(num,0))%12
 
+# Hanning window function
+window = 0.5 * (1 - np.cos(np.linspace(0, 2*np.pi, FFT_WINDOW_SIZE, False)))
 
 print(len(audio))
 for tick in range(int(len(audio)/FFT_WINDOW_SIZE)):
     sample = extract_sample(audio, tick)
-    fft = np.fft.rfft(sample)
+    fft = rfft(sample * window)
     for freq in fft:
-        if freq.real > 0:
+        if 1000 >= freq.real >= 10:
             note_num = freq_to_number(freq.real)
-            if (note_num % 1) < 0.001 or (note_num % 1) > 0.999:
-                note_num = int(note_num)
-                print(NOTE_NAMES[note_num],freq.imag)
+            if (note_num % 1) < 0.005 or (note_num % 1) > 0.995:
+                if abs(freq.imag) > 5000:
+                    note_num = round_note_num(note_num)
+                    print("tick:",(tick*FFT_WINDOW_SIZE) ,"second:",round((tick*FFT_WINDOW_SIZE/fs),4) ,NOTE_NAMES[note_num],"frequency:",freq.real,"intensity:", round(freq.imag,0))
 
+#print(round_note_num(freq_to_number(440)))
+#print(round_note_num(freq_to_number(16.35)))
 
+#print(NOTE_NAMES[round_note_num(freq_to_number(16.35))])
