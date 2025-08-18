@@ -9,15 +9,15 @@ AUDIO_FILE = os.path.join("media","wav","test.wav")
 fs, data = wavfile.read(AUDIO_FILE)  #Return the sample rate (in samples/sec) and data from an LPCM WAV file
 audio = data.T[0]       # 1st channel of wav
 
-#fourrier = fft(audio)
-#print(fourrier)
 
-FPS = 30
+
 FFT_WINDOW_SECONDS = 0.046 # how many seconds of audio make up an FFT window
 
-#FRAME_STEP = (fs / FPS) # audio samples per video frame
+
 FFT_WINDOW_SIZE = int(fs * FFT_WINDOW_SECONDS)
 AUDIO_LENGTH = len(audio)/fs
+
+NOTE_NAMES = ["do", "do#", "ré", "ré#", "mi", "fa", "fa#", "sol", "sol#", "la", "la#", "si"]
 
 def extract_sample(audio, tick):
     end = tick*FFT_WINDOW_SIZE
@@ -34,13 +34,18 @@ def extract_sample(audio, tick):
         return audio[begin:end]
 
 
+def freq_to_number(freq): return (69 + 12*np.log2(freq/440.0))%12
+
+
 print(len(audio))
 for tick in range(int(len(audio)/FFT_WINDOW_SIZE)):
     sample = extract_sample(audio, tick)
     fft = np.fft.rfft(sample)
     for freq in fft:
-        if 439 < freq.real < 441:
-            if freq.imag > 0:
-                print("la",freq.imag)
-    #print(fft)
-    #print("a")
+        if freq.real > 0:
+            note_num = freq_to_number(freq.real)
+            if (note_num % 1) < 0.001 or (note_num % 1) > 0.999:
+                note_num = int(note_num)
+                print(NOTE_NAMES[note_num],freq.imag)
+
+
