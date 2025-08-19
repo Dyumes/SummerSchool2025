@@ -10,7 +10,7 @@ fs, data = wavfile.read(AUDIO_FILE)  #Return the sample rate (in samples/sec) an
 audio = data.T[0]       # 1st channel of wav
 
 
-FFT_WINDOW_SIZE = 4096 * 2
+FFT_WINDOW_SIZE = 4096
 FFT_WINDOW_SECONDS = FFT_WINDOW_SIZE/fs # how many seconds of audio make up an FFT window
 
 
@@ -81,15 +81,20 @@ for tick in range(int(len(audio)/FFT_WINDOW_SIZE)):
 
 for timeNote in values:
     i = 0
+    print("____________________________________")
+    print("SECONDS: ",timeNote.tick/fs*FFT_WINDOW_SIZE)
+    print("tick:", timeNote.tick*FFT_WINDOW_SIZE)
     while i < len(timeNote.frequencies):
-        if timeNote.frequencies[i].amplitude > 1000000:
+        if timeNote.frequencies[i].amplitude > 2000000:
             while timeNote.frequencies[i].amplitude < timeNote.frequencies[i+1].amplitude:
                 i += 1
             if timeNote.frequencies[i].amplitude > timeNote.frequencies[i-1].amplitude:
                 print(f"local maximum: {timeNote.frequencies[i]} between {timeNote.frequencies[i-1]} and {timeNote.frequencies[i+1]}")
 
                 p = (timeNote.frequencies[i+1].amplitude - timeNote.frequencies[i-1].amplitude) /2 /(2*timeNote.frequencies[i].amplitude - timeNote.frequencies[i-1].amplitude - timeNote.frequencies[i+1].amplitude)
-                print("interpolated maximum:",timeNote.frequencies[i].frequency + p*(timeNote.frequencies[i].frequency - timeNote.frequencies[i-1].frequency ))
+                inter_max = timeNote.frequencies[i].frequency + p*(timeNote.frequencies[i].frequency - timeNote.frequencies[i-1].frequency)
+                print("interpolated maximum:", inter_max)
+                print("estimated note:", NOTE_NAMES[round_note_num(freq_to_number(inter_max))])
 
         i += 1
 
