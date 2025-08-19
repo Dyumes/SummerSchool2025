@@ -86,16 +86,10 @@ for timeNote in values:
             while timeNote.frequencies[i].amplitude < timeNote.frequencies[i+1].amplitude:
                 i += 1
             if timeNote.frequencies[i].amplitude > timeNote.frequencies[i-1].amplitude:
-                print(f"local maxima: {timeNote.frequencies[i]} between {timeNote.frequencies[i-1]} and {timeNote.frequencies[i+1]}")
+                print(f"local maximum: {timeNote.frequencies[i]} between {timeNote.frequencies[i-1]} and {timeNote.frequencies[i+1]}")
 
-                x = [timeNote.frequencies[i-2].frequency, timeNote.frequencies[i-1].frequency, timeNote.frequencies[i].frequency, timeNote.frequencies[i+1].frequency,timeNote.frequencies[i+2].frequency]
-                y = [timeNote.frequencies[i-2].amplitude, timeNote.frequencies[i-1].amplitude,timeNote.frequencies[i].amplitude,timeNote.frequencies[i+1].amplitude, timeNote.frequencies[i+2].amplitude,]
-                f = interpolate.interp1d(x,y,"quadratic")
-                inter_max = np.max(f.y)
-
-                for j in range(len(f.y)):
-                    if f.y[j] == inter_max:
-                        print(f"interpolated maxima: frequency: {f.x[j]}, amplitude: {f.y[j]}")
+                p = (timeNote.frequencies[i+1].amplitude - timeNote.frequencies[i-1].amplitude) /2 /(2*timeNote.frequencies[i].amplitude - timeNote.frequencies[i-1].amplitude - timeNote.frequencies[i+1].amplitude)
+                print("interpolated maximum:",timeNote.frequencies[i].frequency + p*(timeNote.frequencies[i].frequency - timeNote.frequencies[i-1].frequency ))
 
         i += 1
 
