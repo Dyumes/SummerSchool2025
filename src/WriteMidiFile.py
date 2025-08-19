@@ -1,11 +1,5 @@
 import pretty_midi
 
-midi = pretty_midi.PrettyMIDI()
-notes = []
-
-piano = pretty_midi.Instrument(program=0)
-trumpet = pretty_midi.Instrument(program=56)
-
 def note_name_to_pitch(note_name, octave=4):
     note_names = ["do", "do#", "ré", "ré#", "mi", "fa", "fa#", "sol", "sol#", "la", "la#", "si"]
     base_pitch = note_names.index(note_name)
@@ -20,10 +14,20 @@ def add_note(instrument, note_name, start_tick, duration, octave=4):
     end_time = ticks_to_seconds(start_tick+duration, 0.1)
     instrument.notes.append(pretty_midi.Note(100, pitch, start_time, end_time))
 
-add_note(piano, "do", 0, 5, 4)
-add_note(piano, "mi", 5, 5, 4)
-add_note(piano, "sol", 10, 5, 4)
+def create_piano():
+    return pretty_midi.Instrument(program=0)
 
-midi.instruments.append(piano)
+def create_trumpet():
+    return pretty_midi.Instrument(program=56)
 
-midi.write('output.mid')
+def add_piano(file):
+    file.instruments.append(create_piano())
+
+def add_trumpet(file):
+    file.instruments.append(create_trumpet())
+
+def create_midi_file():
+    return pretty_midi.PrettyMIDI()
+
+def write_midi_file(midi, filename):
+    midi.write(filename)
