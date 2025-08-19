@@ -10,7 +10,7 @@ fs, data = wavfile.read(AUDIO_FILE)  #Return the sample rate (in samples/sec) an
 audio = data.T[0]       # 1st channel of wav
 
 
-FFT_WINDOW_SIZE = 4096
+FFT_WINDOW_SIZE = 4096          # 2048 -> 50ms, 21 Hrz //4096 -> 100ms, 10Hz
 FFT_WINDOW_SECONDS = FFT_WINDOW_SIZE/fs # how many seconds of audio make up an FFT window
 
 
@@ -78,25 +78,108 @@ for tick in range(int(len(audio)/FFT_WINDOW_SIZE)):
 
     values.append(timeNotes(tick,frequencies))
 
+def humanreadvalues():
+    for timeNote in values:
+        i = 0
+        print("____________________________________")
+        print("SECONDS: ",timeNote.tick/fs*FFT_WINDOW_SIZE)
+        print("tick:", timeNote.tick*FFT_WINDOW_SIZE)
+        while i < len(timeNote.frequencies):
+            if timeNote.frequencies[i].amplitude > 1500000:
+                while timeNote.frequencies[i].amplitude < timeNote.frequencies[i+1].amplitude:
+                    i += 1
+                if timeNote.frequencies[i].amplitude > timeNote.frequencies[i-1].amplitude:
+                    print(f"local maximum: {timeNote.frequencies[i]} between {timeNote.frequencies[i-1]} and {timeNote.frequencies[i+1]}")
 
-for timeNote in values:
-    i = 0
-    print("____________________________________")
-    print("SECONDS: ",timeNote.tick/fs*FFT_WINDOW_SIZE)
-    print("tick:", timeNote.tick*FFT_WINDOW_SIZE)
-    while i < len(timeNote.frequencies):
-        if timeNote.frequencies[i].amplitude > 2000000:
-            while timeNote.frequencies[i].amplitude < timeNote.frequencies[i+1].amplitude:
-                i += 1
-            if timeNote.frequencies[i].amplitude > timeNote.frequencies[i-1].amplitude:
-                print(f"local maximum: {timeNote.frequencies[i]} between {timeNote.frequencies[i-1]} and {timeNote.frequencies[i+1]}")
+                    p = (timeNote.frequencies[i+1].amplitude - timeNote.frequencies[i-1].amplitude) /2 /(2*timeNote.frequencies[i].amplitude - timeNote.frequencies[i-1].amplitude - timeNote.frequencies[i+1].amplitude)
+                    inter_max = timeNote.frequencies[i].frequency + p*(timeNote.frequencies[i].frequency - timeNote.frequencies[i-1].frequency)
+                    print("interpolated maximum:", inter_max)
+                    print("estimated note:", NOTE_NAMES[round_note_num(freq_to_number(inter_max))])
 
-                p = (timeNote.frequencies[i+1].amplitude - timeNote.frequencies[i-1].amplitude) /2 /(2*timeNote.frequencies[i].amplitude - timeNote.frequencies[i-1].amplitude - timeNote.frequencies[i+1].amplitude)
-                inter_max = timeNote.frequencies[i].frequency + p*(timeNote.frequencies[i].frequency - timeNote.frequencies[i-1].frequency)
-                print("interpolated maximum:", inter_max)
-                print("estimated note:", NOTE_NAMES[round_note_num(freq_to_number(inter_max))])
+            i += 1
 
-        i += 1
+#humanreadvalues()
+
+def filter(values):
+    newvalues = []
+    for timeNote in values:
+        frequencies = []
+
+        i = 0
+        while i < len(timeNote.frequencies):
+            if timeNote.frequencies[i].amplitude > 500000:
+                while timeNote.frequencies[i].amplitude < timeNote.frequencies[i+1].amplitude:
+                    i += 1
+                if timeNote.frequencies[i].amplitude > timeNote.frequencies[i-1].amplitude:
+
+                    p = (timeNote.frequencies[i+1].amplitude - timeNote.frequencies[i-1].amplitude) /2 /(2*timeNote.frequencies[i].amplitude - timeNote.frequencies[i-1].amplitude - timeNote.frequencies[i+1].amplitude)
+                    inter_max = timeNote.frequencies[i].frequency + p*(timeNote.frequencies[i].frequency - timeNote.frequencies[i-1].frequency)
+                    inter_max_magnitude = timeNote.frequencies[i].amplitude- (timeNote.frequencies[i-1].amplitude - timeNote.frequencies[i].amplitude)*p/4
+
+                    newNote = Note(inter_max,inter_max_magnitude)
+                    frequencies.append(newNote)
+
+
+            i += 1
+
+        newvalues.append(timeNotes(timeNote.tick,frequencies))
+
+    return newvalues
+
+values = filter(values)
+
+def printvalues(values):
+    for timeNote in values:
+        print("_______________")
+        print("tick: ",timeNote.tick*FFT_WINDOW_SIZE, "seconds: ",timeNote.tick/fs*FFT_WINDOW_SIZE)
+        for note in timeNote.frequencies:
+            print("FREQ: ",note.frequency ,"AMP: " ,note.amplitude,"NOTE: ",NOTE_NAMES[round_note_num(freq_to_number(note.frequency))] )
+
+#printvalues(values)
+
+
+def pianovtrumpet(values):
+    trumpetvalues = []
+    pianovalues = []
+
+    for timeNote in values:
+        frequencies = timeNote.frequencies
+        trumpetfrequencises = []
+        pianofrequencies = []
+        notes = []
+        for note in frequencies:
+            if note.frequency <= 1000 and note.amplitude > 1500000:
+                notes.append([note.frequency, note.amplitude, NOTE_NAMES[round_note_num(freq_to_number(note.frequency))]])
+            if note.frequency > 1000:
+                searchednote = NOTE_NAMES[round_note_num(freq_to_number(note.frequency))]
+                for i in range(len(notes)):
+                    if searchednote == notes[i][2]:
+                        if notes[i][1] < note.amplitude:
+                            pianofrequencies.append(searchednote)
+                        else:
+                            trumpetfrequencises.append(searchednote)
+
+        trumpetvalues.append([timeNote.tick,trumpetfrequencises])
+        pianovalues.append([timeNote.tick,pianofrequencies])
+
+
+    return trumpetvalues, pianovalues
+
+trumpetnotes,pianonotes = pianovtrumpet(values)
+
+for timeNote in trumpetnotes:
+    print("_______________")
+    print("tick: ",timeNote[0]*FFT_WINDOW_SIZE, "seconds: ",timeNote[0]/fs*FFT_WINDOW_SIZE)
+    for note in timeNote[1]:
+        print(note)
+
+
+for timeNote in pianonotes:
+    print("_______________")
+    print("tick: ",timeNote[0]*FFT_WINDOW_SIZE, "seconds: ",timeNote[0]/fs*FFT_WINDOW_SIZE)
+    for note in timeNote[1]:
+        print(note)
+
 
 
 
