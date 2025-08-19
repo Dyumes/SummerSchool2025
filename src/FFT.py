@@ -1,8 +1,8 @@
 from scipy.fft import rfft, rfftfreq
 from scipy.io import wavfile
+from scipy import interpolate
 import os
 import numpy as np
-
 
 AUDIO_FILE = os.path.join("media","wav","PinkPanther_Piano_Only.wav")
 
@@ -10,7 +10,7 @@ fs, data = wavfile.read(AUDIO_FILE)  #Return the sample rate (in samples/sec) an
 audio = data.T[0]       # 1st channel of wav
 
 
-FFT_WINDOW_SIZE = 4096
+FFT_WINDOW_SIZE = 4096 * 2
 FFT_WINDOW_SECONDS = FFT_WINDOW_SIZE/fs # how many seconds of audio make up an FFT window
 
 
@@ -45,6 +45,21 @@ print(FFT_WINDOW_SECONDS)
 
 values = []
 
+class Note :
+    def __init__(self,freq,ampl):
+        self.frequency = freq
+        self.amplitude = ampl
+    def __str__(self):
+        return f"|feq: {self.frequency}, amp: {self.amplitude}|"
+
+class timeNotes :
+    def __init__(self,tick,freqs):
+        self.frequencies = freqs
+        self.tick = tick
+    def __str__(self):
+        return f"[tick: {self.tick}]"
+
+
 for tick in range(int(len(audio)/FFT_WINDOW_SIZE)):
     sample = extract_sample(audio, tick)
     fft = rfft(sample * window)
@@ -53,20 +68,44 @@ for tick in range(int(len(audio)/FFT_WINDOW_SIZE)):
 
     idx = 1
     frequencies = []
+
     while idx<len(freqs):
 
-        note = [freqs[idx],np.abs(fft[idx])]
-        frequencies.append(note)
+        noteA = Note(freqs[idx],np.abs(fft[idx]))
+        frequencies.append(noteA)
 
-    values.append([tick,frequencies])
+        idx += 1
 
-for frequencies in values[1]:
+    values.append(timeNotes(tick,frequencies))
+
+
+for timeNote in values:
+    i = 0
+    while i < len(timeNote.frequencies):
+        if timeNote.frequencies[i].amplitude > 1000000:
+            while timeNote.frequencies[i].amplitude < timeNote.frequencies[i+1].amplitude:
+                i += 1
+            if timeNote.frequencies[i].amplitude > timeNote.frequencies[i-1].amplitude:
+                print(f"local maxima: {timeNote.frequencies[i]} between {timeNote.frequencies[i-1]} and {timeNote.frequencies[i+1]}")
+
+                x = [timeNote.frequencies[i-2].frequency, timeNote.frequencies[i-1].frequency, timeNote.frequencies[i].frequency, timeNote.frequencies[i+1].frequency,timeNote.frequencies[i+2].frequency]
+                y = [timeNote.frequencies[i-2].amplitude, timeNote.frequencies[i-1].amplitude,timeNote.frequencies[i].amplitude,timeNote.frequencies[i+1].amplitude, timeNote.frequencies[i+2].amplitude,]
+                f = interpolate.interp1d(x,y,"quadratic")
+                inter_max = np.max(f.y)
+
+                for j in range(len(f.y)):
+                    if f.y[j] == inter_max:
+                        print(f"interpolated maxima: frequency: {f.x[j]}, amplitude: {f.y[j]}")
+
+        i += 1
 
 
 
-                    #print("tick:",(tick*FFT_WINDOW_SIZE) ,"second:",round((tick*FFT_WINDOW_SIZE/fs),4) ,NOTE_NAMES[note_num],"frequency:",freq.real,"intensity:", round(freq.imag,0))
 
-#print(round_note_num(freq_to_number(440)))
-#print(round_note_num(freq_to_number(16.35)))
-
-#print(NOTE_NAMES[round_note_num(freq_to_number(16.35))])
+"""
+for value in values:
+    print (value.tick/fs*FFT_WINDOW_SIZE)
+    for j in value.frequencies:
+        if j.amplitude > 1000000:
+            print(j)
+"""
