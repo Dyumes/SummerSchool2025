@@ -43,6 +43,8 @@ window = 0.5 * (1 - np.cos(np.linspace(0, 2*np.pi, FFT_WINDOW_SIZE, False)))
 print(len(audio))
 print(FFT_WINDOW_SECONDS)
 
+values = []
+
 for tick in range(int(len(audio)/FFT_WINDOW_SIZE)):
     sample = extract_sample(audio, tick)
     fft = rfft(sample * window)
@@ -50,27 +52,15 @@ for tick in range(int(len(audio)/FFT_WINDOW_SIZE)):
     freqs = rfftfreq(FFT_WINDOW_SIZE,1/fs)
 
     idx = 1
-    string =""
-    string += f"   second: {round((tick*FFT_WINDOW_SIZE/fs),4)}"
-    something = 0
-
+    frequencies = []
     while idx<len(freqs):
-        #print(freqs[idx],np.abs(fft[idx]))
-        if(np.abs(fft[idx]) > 700000) and ((freq_to_number(freqs[idx]) % 1) < 0.2 or (freq_to_number(freqs[idx]) % 1) > 0.8):
-            something = 1
-           # string += "  Note:"
-            string += "  "
-            string += NOTE_NAMES[round_note_num(freq_to_number(freqs[idx]))]
-            string += "  Velocity:"
-            string += str(round(np.abs(fft[idx]),0))
-            string += "  frequency:"
-            string += str(freqs[idx])
 
-        idx += 1
-    if something:
-        print(string)
+        note = [freqs[idx],np.abs(fft[idx])]
+        frequencies.append(note)
 
+    values.append([tick,frequencies])
 
+for frequencies in values[1]:
 
 
 
