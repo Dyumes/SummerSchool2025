@@ -43,7 +43,7 @@ window = 0.5 * (1 - np.cos(np.linspace(0, 2*np.pi, FFT_WINDOW_SIZE, False)))
 print(len(audio))
 print(FFT_WINDOW_SECONDS)
 
-values = []
+#values = []
 
 class Note :
     def __init__(self,freq,ampl):
@@ -52,7 +52,7 @@ class Note :
     def __str__(self):
         return f"|feq: {self.frequency}, amp: {self.amplitude}|"
 
-class timeNotes :
+class TimeNotes :
     def __init__(self,tick,freqs):
         self.frequencies = freqs
         self.tick = tick
@@ -60,45 +60,44 @@ class timeNotes :
         return f"[tick: {self.tick}]"
 
 
-for tick in range(int(len(audio)/FFT_WINDOW_SIZE)):
-    sample = extract_sample(audio, tick)
-    fft = rfft(sample * window)
-
-    freqs = rfftfreq(FFT_WINDOW_SIZE,1/fs)
-
-    idx = 1
-    frequencies = []
-
-    while idx<len(freqs):
-
-        noteA = Note(freqs[idx],np.abs(fft[idx]))
-        frequencies.append(noteA)
-
-        idx += 1
-
-    values.append(timeNotes(tick,frequencies))
+def compute_time_notes(audio, window, FFT_WINDOW_SIZE, fs):
+    values = []
+    for tick in range(int(len(audio)/FFT_WINDOW_SIZE)):
+        sample = extract_sample(audio, tick)
+        fft = rfft(sample * window)
+        freqs = rfftfreq(FFT_WINDOW_SIZE, 1/fs)
+        idx = 1
+        frequencies = []
+        while idx < len(freqs):
+            noteA = Note(freqs[idx], np.abs(fft[idx]))
+            frequencies.append(noteA)
+            idx += 1
+        values.append(TimeNotes(tick, frequencies))
+    return values
 
 
-for timeNote in values:
-    i = 0
-    print("____________________________________")
-    print("SECONDS: ",timeNote.tick/fs*FFT_WINDOW_SIZE)
-    print("tick:", timeNote.tick*FFT_WINDOW_SIZE)
-    while i < len(timeNote.frequencies):
-        if timeNote.frequencies[i].amplitude > 2000000:
-            while timeNote.frequencies[i].amplitude < timeNote.frequencies[i+1].amplitude:
-                i += 1
-            if timeNote.frequencies[i].amplitude > timeNote.frequencies[i-1].amplitude:
-                print(f"local maximum: {timeNote.frequencies[i]} between {timeNote.frequencies[i-1]} and {timeNote.frequencies[i+1]}")
+def find_estimated_note(values, fs, FFT_WINDOW_SIZE, NOTE_NAMES):
+    for timeNote in values:
+        i = 0
+        print("____________________________________")
+        print("SECONDS: ", timeNote.tick / fs * FFT_WINDOW_SIZE)
+        print("tick:", timeNote.tick * FFT_WINDOW_SIZE)
+        while i < len(timeNote.frequencies):
+            if timeNote.frequencies[i].amplitude > 2000000:
+                while i + 1 < len(timeNote.frequencies) and timeNote.frequencies[i].amplitude < timeNote.frequencies[i + 1].amplitude:
+                    i += 1
+                if i > 0 and i + 1 < len(timeNote.frequencies) and timeNote.frequencies[i].amplitude > timeNote.frequencies[i - 1].amplitude:
+                    print(f"local maximum: {timeNote.frequencies[i]} between {timeNote.frequencies[i-1]} and {timeNote.frequencies[i+1]}")
+                    p = (timeNote.frequencies[i + 1].amplitude - timeNote.frequencies[i - 1].amplitude) / 2 / (
+                        2 * timeNote.frequencies[i].amplitude - timeNote.frequencies[i - 1].amplitude - timeNote.frequencies[i + 1].amplitude)
+                    inter_max = timeNote.frequencies[i].frequency + p * (
+                        timeNote.frequencies[i].frequency - timeNote.frequencies[i - 1].frequency)
+                    print("interpolated maximum:", inter_max)
+                    print("estimated note:", NOTE_NAMES[round_note_num(freq_to_number(inter_max))])
+            i += 1
 
-                p = (timeNote.frequencies[i+1].amplitude - timeNote.frequencies[i-1].amplitude) /2 /(2*timeNote.frequencies[i].amplitude - timeNote.frequencies[i-1].amplitude - timeNote.frequencies[i+1].amplitude)
-                inter_max = timeNote.frequencies[i].frequency + p*(timeNote.frequencies[i].frequency - timeNote.frequencies[i-1].frequency)
-                print("interpolated maximum:", inter_max)
-                print("estimated note:", NOTE_NAMES[round_note_num(freq_to_number(inter_max))])
-
-        i += 1
-
-
+values = compute_time_notes(audio, window, FFT_WINDOW_SIZE, fs)
+find_estimated_note(values, fs, FFT_WINDOW_SIZE, NOTE_NAMES)
 
 
 """
