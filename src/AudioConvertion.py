@@ -14,4 +14,4 @@ def mp3_to_wav(src, dst):
         print("An error occurred during the conversion process.")
         print("Please ensure that you have ffmpeg installed and the path is correctly set.")
 
-mp3_to_wav("src/media/mp3/PinkPanther_Piano_Only.mp3", "src/media/wav/test.wav")
+mp3_to_wav("media/mp3/PinkPanther_Piano_Only.mp3", "media/wav/test.wav")
