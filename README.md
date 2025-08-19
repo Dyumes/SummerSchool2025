@@ -18,5 +18,16 @@ Assurez-vous que FFmpeg est installé sur votre système et que son exécutable 
 Pour vérifier l’installation, lancez la commande suivante dans un terminal :
 
 ```bash
-ffmpeg -version
+   ffmpeg -version
 ``` 
+### Installation sous MacOS
+1. Ouvrez le terminal.
+2. Installez Homebrew si ce n’est pas déjà fait en suivant les instructions sur [https://brew.sh/](https://brew.sh/).
+3. Installez FFmpeg en exécutant la commande suivante :
+```bash
+   brew install ffmpeg
+```
+4. Pour vérifier l’installation, lancez la commande suivante dans le terminal :
+```bash
+   ffmpeg -version
+```
