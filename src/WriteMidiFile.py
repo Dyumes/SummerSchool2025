@@ -8,10 +8,10 @@ def note_name_to_pitch(note_name, octave=4):
 def ticks_to_seconds(ticks, fft_window_seconds):
     return ticks * fft_window_seconds
 
-def add_note(instrument, note_name, start_tick, duration, octave=4):
+def add_note(instrument, note_name, start_tick, duration, fft_window_seconds, octave=4):
     pitch = note_name_to_pitch(note_name, octave)
-    start_time = ticks_to_seconds(start_tick, 0.1)  # Assuming 0.1 seconds per tick
-    end_time = ticks_to_seconds(start_tick+duration, 0.1)
+    start_time = ticks_to_seconds(start_tick, fft_window_seconds)  # Assuming 0.1 seconds per tick
+    end_time = ticks_to_seconds(start_tick+duration, fft_window_seconds)
     instrument.notes.append(pretty_midi.Note(100, pitch, start_time, end_time))
 
 def create_piano():
