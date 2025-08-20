@@ -1,5 +1,7 @@
 import pygame
+from pygame import gfxdraw
 import math
+import numpy as np
 import array as ar
 from random import randrange
 import pygame_widgets
@@ -8,6 +10,7 @@ from pygame_widgets.textbox import TextBox
 from matplotlib.widgets import Slider
 from sympy.core.random import random
 from win32api import GetSystemMetrics
+
 
 pygame.init()
 
@@ -190,6 +193,76 @@ class Mountain:
             #pygame.draw.circle(window, (0, 255, 255), (tri.p3[0], tri.p3[1] - self.height), 5)
 
 
+def get_transformation(src, dst):
+    A = []
+    for (x,y), (X,Y) in zip(src, dst):
+        A.append([x, y, 1, 0, 0, 0, -X*x, -X*y, -X])
+        A.append([0, 0, 0, x, y, 1, -Y*x, -Y*y, -Y])
+    A = np.array(A, dtype=float)
+
+    U,S,Vt = np.linalg.svd(A)
+    H = Vt[-1].reshape((3,3))
+    return H / H[2,2]  #normalization
+
+def apply_transformation(pt, H):
+    x,y = pt
+    vec = np.array([x,y,1.0])
+    res = H.dot(vec)
+    return (res[0]/res[2], res[1]/res[2])
+
+class Ground():
+    def __init__(self):
+        self.cols = 12*6
+        self.rows = 9*3
+        self.triangles = []
+
+    def groundGeneration(self):
+        cell_width = 50
+        cell_height = cell_width
+
+        W = self.cols*cell_width
+        H = self.rows*cell_height
+
+        src = [(0, 0), (W, 0), (W, H), (0,H)]
+
+        base_y = GetSystemMetrics(1)
+        dest = [
+            (GetSystemMetrics(0)/2-(GetSystemMetrics(0)*4)-50, base_y),
+            (GetSystemMetrics(0)/2+(GetSystemMetrics(0)*4)-50, base_y),
+            (GetSystemMetrics(0) -50 -GetSystemMetrics(0)/5, (GetSystemMetrics(1) - 100) *7/16 ),
+            (-50 +GetSystemMetrics(0)/5, (GetSystemMetrics(1) - 100) *7/16)
+        ]
+
+        transfo = get_transformation(src, dest)
+
+        for i in range(self.rows):
+            for j in range(self.cols):
+                p1 = (j*cell_width, i*cell_height)
+                p2 = ((j + 1) * cell_width, i * cell_height)
+                p3 = ((j + 1) * cell_width, (i + 1) * cell_height)
+                p4 = ((j * cell_width), (i + 1)* cell_height)
+
+                P1 = apply_transformation(p1, transfo)
+                P2 = apply_transformation(p2, transfo)
+                P3 = apply_transformation(p3, transfo)
+                P4 = apply_transformation(p4, transfo)
+
+                color = (127,0,255)
+                t1 = Triangle(color, (int(P1[0]),int(P1[1])), (int(P2[0]),int(P2[1])), (int(P3[0]),int(P3[1])) )
+                t2 = Triangle(color, (int(P1[0]),int(P1[1])), (int(P3[0]),int(P3[1])), (int(P4[0]),int(P4[1])) )
+
+                self.triangles.append(t1)
+                self.triangles.append(t2)
+
+    def draw(self):
+        for tri in reversed(self.triangles):
+            color = tri.get_color()
+            pygame.gfxdraw.trigon(window, tri.p1[0], tri.p1[1],tri.p2[0], tri.p2[1], tri.p3[0], tri.p3[1],color)
+
+    def clear(self):
+        self.triangles = []
+
+
 def spawnMountain():
     positionX = 0
     positionY = (GetSystemMetrics(1) - 100) / 2
@@ -203,11 +276,15 @@ def spawnMountain():
 
 firstLaunch = True
 s1 = Sun((GetSystemMetrics(0) - 100) / 2, (GetSystemMetrics(1) - 100)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
+g = Ground()
 def globalGeneration(time):
+
     if firstLaunch:
         spawnMountain()
+        g.groundGeneration()
         #playTrumpet(1)
     elif firstLaunch != True:
+        g.draw()
         s1.draw()
         s1.update()
         for mountain in mountains:
@@ -219,6 +296,7 @@ def globalGeneration(time):
 def clearAll():
     global mountains
     mountains.clear()
+    g.clear()
 
 
 font = pygame.font.SysFont("Arial", 30)
