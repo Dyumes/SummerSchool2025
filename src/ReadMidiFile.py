@@ -4,10 +4,10 @@ import pygame
 
 #INIT variables
 midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
-print(midi_data.estimate_tempo()) #Print estimate bpm (For the sun)
+# print(midi_data.estimate_tempo()) #Print estimate bpm (For the sun)
 
 tempo = 60 / midi_data.estimate_tempo()
-print(tempo)
+# print(tempo)
 
 piano_notes = []
 flute_notes = []
@@ -32,19 +32,7 @@ def getNotes(pianoArr, fluteArr):
             elif instrument.name == "Flute":
                 fluteArr.append(note)
 
-# INIT
-getNotes(piano_notes, flute_notes)
-pygame.display.flip()
-start_ticks = pygame.time.get_ticks()
 
-pygame.mixer.init()
-pygame.mixer.music.load(os.path.join("media","mp3","Ecossaise_Both.mp3"))
-pygame.mixer.music.play()
-
-
-# Reorder Note by the starting time
-piano_notes = sorted(piano_notes, key=lambda note: note.start)
-flute_notes = sorted(flute_notes, key=lambda note: note.start)
 
 # TEST
 
@@ -56,8 +44,22 @@ def drawNotes(notes, color, pos_y):
 #     print(e)
 
 if __name__ == "__main__":
+    # INIT
+    getNotes(piano_notes, flute_notes)
+    pygame.display.flip()
+    start_ticks = pygame.time.get_ticks()
+
+    pygame.mixer.init()
+    pygame.mixer.music.load(os.path.join("media", "mp3", "Ecossaise_Both.mp3"))
+    pygame.mixer.music.play()
+
+    # Reorder Note by the starting time
+    piano_notes = sorted(piano_notes, key=lambda note: note.start)
+    flute_notes = sorted(flute_notes, key=lambda note: note.start)
+
     running = True
     while running:
+
         # Close the Windows if the button close is pressed
         for event in pygame.event.get():
           if event.type == pygame.QUIT:

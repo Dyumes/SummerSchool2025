@@ -15,6 +15,8 @@ active_flute_notes = []
 current_piano_index = 0
 current_flute_index = 0
 
+startSong = False
+
 fps = 60
 
 # SETTINGS
@@ -29,8 +31,7 @@ pygame.display.flip()
 start_ticks = pygame.time.get_ticks()
 
 pygame.mixer.init()
-pygame.mixer.music.load(os.path.join("media","mp3","Ecossaise_Trumpet.mp3"))
-pygame.mixer.music.play()
+pygame.mixer.music.load(os.path.join("media", "mp3", "Ecossaise_Trumpet.mp3"))
 
 # Reorder Note by the starting time
 piano_notes = sorted(piano_notes, key=lambda note: note.start)
@@ -39,6 +40,12 @@ flute_notes = sorted(flute_notes, key=lambda note: note.start)
 def detectTrumpetNotes(notes):
     for n in notes:
         print(n.pitch)
+        print(n.duration)
+        print(n.velocity * 2)
+        gn.changeMountainAnimiationTime(n.duration,n.pitch)
+        gn.changeMountainStartTime(current_time, n.pitch)
+        # gn.changeMountainGrowthSpeed(200/n.duration, n.pitch)
+        gn.changeMountainMaxHeight(n.velocity * 2,n.pitch)
         gn.playTrumpet(n.pitch)
 
 if __name__ == "__main__":
@@ -46,37 +53,47 @@ if __name__ == "__main__":
     while running:
         # Close the Windows if the button close is pressed
         for event in pygame.event.get():
-          if event.type == pygame.QUIT:
-            running = False
+            if event.type == pygame.QUIT:
+                running = False
+
+            if event.type == pygame.KEYDOWN:
+                match event.key:
+                    case pygame.K_SPACE:
+                        if not startSong:
+                            startSong = True
+                            pygame.mixer.music.play()
+                            start_ticks = pygame.time.get_ticks()
 
         # Programme
         current_time = (pygame.time.get_ticks() - start_ticks) / 1000.0
 
-        # detect if a piano notes should play
-        while current_piano_index < len(piano_notes) and piano_notes[current_piano_index].start <= current_time:
-            active_piano_notes.append(piano_notes[current_piano_index])
-            current_piano_index += 1
+        if startSong:
 
-        for n in active_piano_notes:
-            if n.end <= current_time:
-                active_piano_notes.remove(n)
-        # detect if a flute notes should play
-        while current_flute_index < len(flute_notes) and flute_notes[current_flute_index].start <= current_time:
-            active_flute_notes.append(flute_notes[current_flute_index])
-            current_flute_index += 1
+            # detect if a piano notes should play
+            while current_piano_index < len(piano_notes) and piano_notes[current_piano_index].start <= current_time:
+                active_piano_notes.append(piano_notes[current_piano_index])
+                current_piano_index += 1
 
-        for n in active_flute_notes:
-            if n.end <= current_time:
-                active_flute_notes.remove(n)
+            # detect if a flute notes should play
+            while current_flute_index < len(flute_notes) and flute_notes[current_flute_index].start <= current_time:
+                active_flute_notes.append(flute_notes[current_flute_index])
+                current_flute_index += 1
 
         # Drawing things
 
         screen.fill(background_colour)
-        gn.globalGeneration()
+        gn.globalGeneration(current_time)
         gn.firstLaunch = False
-        gn.fps_counter()
+        gn.fps_counter(screen, clock)
         detectTrumpetNotes(active_flute_notes)
-        rmf.drawNotes(active_flute_notes, (0,255,255),700)
+
+        for n in active_flute_notes:
+            # if n.end <= current_time:
+            active_flute_notes.remove(n)
+
+        for n in active_piano_notes:
+            # if n.end <= current_time:
+            active_piano_notes.remove(n)
 
         # UPDATE the WINDOWS
         pygame.display.flip()

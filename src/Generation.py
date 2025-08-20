@@ -93,23 +93,34 @@ class Mountain:
         self.position = position
         self.growthSpeed = 500
         self.height = 0
+        self.maxHeight = 200
+        self.animationTime = 1
         self.maxReached = False
         self.triangles = []
         self.canMove = False
+        self.startTime = 0
 
-    def update(self):
-        if self.canMove == True:
-            if not self.maxReached:
-                self.height += self.growthSpeed * dt
-                if self.height >= 200:
-                    self.height = 200
-                    self.maxReached = True
+
+    def update(self, time):
+        animationCurrentTime = time - self.startTime
+        if self.canMove:
+            if  animationCurrentTime < 0.2 * self.animationTime:
+                self.height = (0.2 * self.animationTime) / self.maxHeight * animationCurrentTime
+            elif animationCurrentTime > 0.8 * self.animationTime:
+                self.height = -1 * (0.2 * self.animationTime) / self.maxHeight * animationCurrentTime
             else:
-                self.height -= self.growthSpeed * dt
-                if self.height <= 0:
-                    self.height = 0
-                    self.canMove = False
-                    self.maxReached = False
+                self.height = self.maxHeight
+            # if not self.maxReached:
+            #     self.height += self.growthSpeed * dt
+            #     if self.height >= self.maxHeight:
+            #         self.height = self.maxHeight
+            #         self.maxReached = True
+            # else:
+            #     self.height -= self.growthSpeed * dt
+            #     if self.height <= 0:
+            #         self.height = 0
+            #         self.canMove = False
+            #         self.maxReached = False
 
 
     def createMountain(self):
@@ -192,7 +203,7 @@ def spawnMountain():
 
 firstLaunch = True
 s1 = Sun((GetSystemMetrics(0) - 100) / 2, (GetSystemMetrics(1) - 100)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
-def globalGeneration():
+def globalGeneration(time):
     if firstLaunch:
         spawnMountain()
         #playTrumpet(1)
@@ -202,7 +213,7 @@ def globalGeneration():
         for mountain in mountains:
             mountain.draw()
             if mountain.canMove:
-                mountain.update()
+                mountain.update(time)
 
 
 def clearAll():
@@ -211,10 +222,10 @@ def clearAll():
 
 
 font = pygame.font.SysFont("Arial", 30)
-def fps_counter():
-    fps = str(int(clock.get_fps()))
+def fps_counter(win, clk):
+    fps = str(int(clk.get_fps()))
     fps_t = font.render(fps , 1, pygame.Color("RED"))
-    window.blit(fps_t,(0,0))
+    win.blit(fps_t,(0,0))
 
 def playTrumpet(nbr): #TODO : SEE IF WE RECEIVE THE NOTE NAME OR THE PLACE
     mountains[nbr].canMove = True
@@ -223,6 +234,17 @@ def playTrumpet(nbr): #TODO : SEE IF WE RECEIVE THE NOTE NAME OR THE PLACE
     # else:
     #     mountains[nbr].canMove = True
 
+def changeMountainGrowthSpeed(newSpeed, nbr):
+    mountains[nbr].growthSpeed = newSpeed
+
+def changeMountainMaxHeight(newHeight, nbr):
+    mountains[nbr].maxHeight = newHeight
+
+def changeMountainAnimiationTime(newAnimiationTime, nbr):
+    mountains[nbr].animationTime = newAnimiationTime
+
+def changeMountainStartTime(newStartTime, nbr):
+    mountains[nbr].startTime = newStartTime
 
 if __name__ == "__main__":
 
@@ -233,7 +255,7 @@ if __name__ == "__main__":
 
         window.fill((0, 0, 0))
 
-        globalGeneration()
+        globalGeneration(clock.tick())
         firstLaunch = False
         fps_counter()
 
