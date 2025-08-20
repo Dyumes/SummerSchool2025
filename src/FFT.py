@@ -47,16 +47,19 @@ class Note :
         self.name = NOTE_NAMES[self.number]
 
     def __str__(self):
-        return f"|feq: {self.frequency}, amp: {self.amplitude}|"
+        return f"|FEQ: {self.frequency} AMP: {self.amplitude} NOTE: {self.name}|"
 
 class timeNotes :
     def __init__(self,step,notes):
         self.notes = notes
         self.step = step
         self.tick = self.step*FFT_WINDOW_SIZE
-        self.second = self.step/fs
+        self.second = self.tick/fs
     def __str__(self):
-        return f"[tick: {self.tick}]"
+        string =f"[step: {self.step}  second = {self.second}]"
+        for note in self.notes:
+            string += str(note)
+        return string
 
 def dofft():
     values = []
@@ -107,19 +110,17 @@ def filter(values):
                     notes.append(newNote)
             i += 1
 
-        newvalues.append(timeNotes(timeNote.tick,notes))
+        newvalues.append(timeNotes(timeNote.step,notes))
     return newvalues
 
 values = filter(values)
 
 def printvalues(values):
     for timeNote in values:
-        print("_______________")
-        print("step: ",timeNote.step, "seconds: ",timeNote.second)
-        for note in timeNote.notes:
-            print("FREQ: ",note.frequency ,"AMP: " ,note.amplitude,"NOTE: ",note.name )
+        print(timeNote)
 
 printvalues(values)
+
 
 """"
 def pianovtrumpet(values):
