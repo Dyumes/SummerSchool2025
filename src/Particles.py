@@ -69,12 +69,25 @@ class Particle:
             forces = []
         self.form = form
         self.forces = forces
+        self.is_bouncing = False
+
+    def __del__(self):
+        print("Particle deleted at:", self.form.center.x, self.form.center.y)
+        del self
 
     def draw(self):
         self.form.draw()
 
-    def update(self):
+    def update(self, env):
         self.form.update(self.forces)
+        if not self.is_inside_env(env):
+            env.remove_particle(self)
+            print("Particle is outside the environment, removing it.")
+            self.__del__()
+
+        if self.touch_env_border(env):
+            print("Particle touched the environment border at:", self.form.center.x, self.form.center.y)
+            self.bouncing()
 
     def add_force(self, force):
         if self.forces is None:
@@ -83,6 +96,20 @@ class Particle:
 
     def is_inside_env(self, env):
         return env.is_inside(self.form.center)
+
+    def touch_env_border(self, env):
+        if self.form.center.x - self.form.radius < 0 or \
+           self.form.center.x + self.form.radius > env.width or \
+           self.form.center.y - self.form.radius < 0 or \
+           self.form.center.y + self.form.radius > env.height:
+            return True
+        return False
+
+    def bouncing(self):
+        if not self.is_bouncing:
+            self.is_bouncing = True
+            print("Particle is bouncing at:", self.form.center.x, self.form.center.y)
+            #TODO
 
 class Environment:
     def __init__(self, size):
@@ -96,7 +123,7 @@ class Environment:
 
     def update(self):
         for particle in self.particles:
-            particle.update()
+            particle.update(self)
 
     def is_inside(self, point):
         return 0 <= point.x <= self.width and 0 <= point.y <= self.height
@@ -107,6 +134,13 @@ class Environment:
         radius = 20
         self.particles.append(Particle(Circle(Point(x, y), radius, NBR_TRIANGLE_IN_CIRCLE)))
         print("Particle created at:", x, y)
+
+    def remove_particle(self, particle):
+        if particle in self.particles:
+            self.particles.remove(particle)
+            print("Particle removed at:", particle.form.center.x, particle.form.center.y)
+        else:
+            print("Particle not found in environment.")
 
 
 
