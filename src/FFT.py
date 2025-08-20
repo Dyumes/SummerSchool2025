@@ -1,6 +1,5 @@
 from scipy.fft import rfft, rfftfreq
 from scipy.io import wavfile
-from scipy import interpolate
 import os
 import numpy as np
 
@@ -9,18 +8,18 @@ AUDIO_FILE = os.path.join("media","wav","PinkPanther_Piano_Only.wav")
 fs, data = wavfile.read(AUDIO_FILE)  #Return the sample rate (in samples/sec) and data from an LPCM WAV file
 audio = data.T[0]       # 1st channel of wav
 
-
 FFT_WINDOW_SIZE = 4096          # 2048 -> 50ms, 21 Hrz //4096 -> 100ms, 10Hz
 FFT_WINDOW_SECONDS = FFT_WINDOW_SIZE/fs # how many seconds of audio make up an FFT window
-
-
 #FFT_WINDOW_SIZE = int(fs * FFT_WINDOW_SECONDS)
-AUDIO_LENGTH = len(audio)/fs
+AUDIO_LENGTH_TICKS = len(audio)
+AUDIO_LENGTH_SECONDS = len(audio)/fs    #audio length in seconds
 
 NOTE_NAMES = ["do", "do#", "ré", "ré#", "mi", "fa", "fa#", "sol", "sol#", "la", "la#", "si"]
 
-def extract_sample(audio, tick):
-    end = tick*FFT_WINDOW_SIZE
+STEP_NUMBER = int(len(audio)/FFT_WINDOW_SIZE)
+
+def extract_sample(audio, step):    #exctrats window size sample from audio with zero-padding
+    end = step*FFT_WINDOW_SIZE
     begin = int(end - FFT_WINDOW_SIZE)
 
     if end == 0:
@@ -38,92 +37,77 @@ def freq_to_number(freq): return (69 + 12*np.log2(freq/440.0))%12
 def round_note_num(num): return int(round(num,0))%12
 
 # Hanning window function
-window = 0.5 * (1 - np.cos(np.linspace(0, 2*np.pi, FFT_WINDOW_SIZE, False)))
-
-print(len(audio))
-print(FFT_WINDOW_SECONDS)
-
-values = []
+hanningWindow = 0.5 * (1 - np.cos(np.linspace(0, 2*np.pi, FFT_WINDOW_SIZE, False)))
 
 class Note :
     def __init__(self,freq,ampl):
         self.frequency = freq
         self.amplitude = ampl
+        self.number = round_note_num(freq_to_number(self.frequency))        #number corresponding to note name
+        self.name = NOTE_NAMES[self.number]
+
     def __str__(self):
         return f"|feq: {self.frequency}, amp: {self.amplitude}|"
 
 class timeNotes :
-    def __init__(self,tick,freqs):
-        self.frequencies = freqs
-        self.tick = tick
+    def __init__(self,step,notes):
+        self.notes = notes
+        self.step = step
+        self.tick = self.step*FFT_WINDOW_SIZE
+        self.second = self.step/fs
     def __str__(self):
         return f"[tick: {self.tick}]"
 
+def dofft():
+    values = []
+    for step in range(STEP_NUMBER):
+        sample = extract_sample(audio, step)
+        fft = rfft(sample * hanningWindow)
 
-for tick in range(int(len(audio)/FFT_WINDOW_SIZE)):
-    sample = extract_sample(audio, tick)
-    fft = rfft(sample * window)
+        freqs = rfftfreq(FFT_WINDOW_SIZE,1/fs)
 
-    freqs = rfftfreq(FFT_WINDOW_SIZE,1/fs)
+        idx = 1
+        notes = []
 
-    idx = 1
-    frequencies = []
+        while idx<len(freqs):
 
-    while idx<len(freqs):
+            noteA = Note(freqs[idx],np.abs(fft[idx]))       #frequence and amplitude put into note
+            notes.append(noteA)
 
-        noteA = Note(freqs[idx],np.abs(fft[idx]))
-        frequencies.append(noteA)
+            idx += 1
 
-        idx += 1
+        values.append(timeNotes(step,notes))
+    return values
 
-    values.append(timeNotes(tick,frequencies))
+print(AUDIO_LENGTH_TICKS)
+print(FFT_WINDOW_SECONDS)
+values = dofft()
 
-def humanreadvalues():
-    for timeNote in values:
-        i = 0
-        print("____________________________________")
-        print("SECONDS: ",timeNote.tick/fs*FFT_WINDOW_SIZE)
-        print("tick:", timeNote.tick*FFT_WINDOW_SIZE)
-        while i < len(timeNote.frequencies):
-            if timeNote.frequencies[i].amplitude > 1500000:
-                while timeNote.frequencies[i].amplitude < timeNote.frequencies[i+1].amplitude:
-                    i += 1
-                if timeNote.frequencies[i].amplitude > timeNote.frequencies[i-1].amplitude:
-                    print(f"local maximum: {timeNote.frequencies[i]} between {timeNote.frequencies[i-1]} and {timeNote.frequencies[i+1]}")
+def interp_quadratic(x_1, x, x1):
+    p = (x_1.amplitude - x1.amplitude) /2 /(2*x.amplitude - x_1.amplitude - x1.amplitude)
+    max = x.frequency +p*(x.frequency - x_1.frequency)
+    max_magnitude = x.amplitude- (x_1.amplitude - x1.amplitude)*p/4
 
-                    p = (timeNote.frequencies[i+1].amplitude - timeNote.frequencies[i-1].amplitude) /2 /(2*timeNote.frequencies[i].amplitude - timeNote.frequencies[i-1].amplitude - timeNote.frequencies[i+1].amplitude)
-                    inter_max = timeNote.frequencies[i].frequency + p*(timeNote.frequencies[i].frequency - timeNote.frequencies[i-1].frequency)
-                    print("interpolated maximum:", inter_max)
-                    print("estimated note:", NOTE_NAMES[round_note_num(freq_to_number(inter_max))])
-
-            i += 1
-
-#humanreadvalues()
+    return max, max_magnitude
 
 def filter(values):
     newvalues = []
     for timeNote in values:
-        frequencies = []
+        notes = []
 
         i = 0
-        while i < len(timeNote.frequencies):
-            if timeNote.frequencies[i].amplitude > 500000:
-                while timeNote.frequencies[i].amplitude < timeNote.frequencies[i+1].amplitude:
+        while i < len(timeNote.notes):
+            if timeNote.notes[i].amplitude > 500000:
+                while timeNote.notes[i].amplitude < timeNote.notes[i+1].amplitude:
                     i += 1
-                if timeNote.frequencies[i].amplitude > timeNote.frequencies[i-1].amplitude:
+                if timeNote.notes[i].amplitude > timeNote.notes[i-1].amplitude:
 
-                    p = (timeNote.frequencies[i+1].amplitude - timeNote.frequencies[i-1].amplitude) /2 /(2*timeNote.frequencies[i].amplitude - timeNote.frequencies[i-1].amplitude - timeNote.frequencies[i+1].amplitude)
-                    inter_max = timeNote.frequencies[i].frequency + p*(timeNote.frequencies[i].frequency - timeNote.frequencies[i-1].frequency)
-                    inter_max_magnitude = timeNote.frequencies[i].amplitude- (timeNote.frequencies[i-1].amplitude - timeNote.frequencies[i].amplitude)*p/4
-
+                    inter_max, inter_max_magnitude = interp_quadratic(timeNote.notes[i-1],timeNote.notes[i],timeNote.notes[i+1])
                     newNote = Note(inter_max,inter_max_magnitude)
-                    frequencies.append(newNote)
-
-
+                    notes.append(newNote)
             i += 1
 
-        newvalues.append(timeNotes(timeNote.tick,frequencies))
-
+        newvalues.append(timeNotes(timeNote.tick,notes))
     return newvalues
 
 values = filter(values)
@@ -131,19 +115,19 @@ values = filter(values)
 def printvalues(values):
     for timeNote in values:
         print("_______________")
-        print("tick: ",timeNote.tick*FFT_WINDOW_SIZE, "seconds: ",timeNote.tick/fs*FFT_WINDOW_SIZE)
-        for note in timeNote.frequencies:
-            print("FREQ: ",note.frequency ,"AMP: " ,note.amplitude,"NOTE: ",NOTE_NAMES[round_note_num(freq_to_number(note.frequency))] )
+        print("step: ",timeNote.step, "seconds: ",timeNote.second)
+        for note in timeNote.notes:
+            print("FREQ: ",note.frequency ,"AMP: " ,note.amplitude,"NOTE: ",note.name )
 
-#printvalues(values)
+printvalues(values)
 
-
+""""
 def pianovtrumpet(values):
     trumpetvalues = []
     pianovalues = []
 
     for timeNote in values:
-        frequencies = timeNote.frequencies
+        frequencies = timeNote.notes
         trumpetfrequencises = []
         pianofrequencies = []
         notes = []
@@ -179,7 +163,7 @@ for timeNote in pianonotes:
     print("tick: ",timeNote[0]*FFT_WINDOW_SIZE, "seconds: ",timeNote[0]/fs*FFT_WINDOW_SIZE)
     for note in timeNote[1]:
         print(note)
-
+"""
 
 
 
