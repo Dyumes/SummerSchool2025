@@ -100,7 +100,7 @@ def filter(values):
 
         i = 0
         while i < len(timeNote.notes):
-            if timeNote.notes[i].amplitude > 500000:
+            if timeNote.notes[i].amplitude > 80000:
                 while timeNote.notes[i].amplitude < timeNote.notes[i+1].amplitude:
                     i += 1
                 if timeNote.notes[i].amplitude > timeNote.notes[i-1].amplitude:
@@ -119,8 +119,43 @@ def printvalues(values):
     for timeNote in values:
         print(timeNote)
 
-printvalues(values)
+#printvalues(values)
 
+
+def getharmonics(notelist,name):
+    harmonicslist = []
+    for note in notelist:
+        if note.name == name:
+            harmonicslist.append(note)
+    return harmonicslist
+
+def pianovtrumpet(values):
+    trumpetvalues = []
+    pianovalues = []
+
+    for timeNote in values:
+        trumpetnotes = []
+        pianonotes = []
+
+        for name in NOTE_NAMES:
+            harmonicslist = getharmonics(timeNote.notes,name)
+            if len(harmonicslist)>1:
+                if harmonicslist[0].frequency < 1000 and harmonicslist[0].amplitude > 800000:
+
+                    if harmonicslist[0].amplitude *1.7 < harmonicslist[1].amplitude:
+                        trumpetnotes.append(harmonicslist[0])
+                    else:
+                        pianonotes.append(harmonicslist[0])
+
+        trumpetvalues.append(timeNotes(timeNote.step,trumpetnotes))
+        pianovalues.append(timeNotes(timeNote.step,pianonotes))
+
+    return trumpetvalues,pianovalues
+
+
+trumpetvalues, pianovalues = pianovtrumpet(values)
+printvalues(trumpetvalues)
+printvalues(pianovalues)
 
 """"
 def pianovtrumpet(values):
