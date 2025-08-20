@@ -57,8 +57,9 @@ class Vector:
         return Vector(math.sqrt(x**2 + y**2), math.atan2(y, x))
 
 class Force:
-    def __init__(self, vector):
+    def __init__(self, vector, name=None):
         self.vector = vector
+        self.name = name
 
     def apply(self, point):
         return Point(
@@ -131,6 +132,26 @@ class Particle:
             self.is_bouncing = True
             print("Particle is bouncing at:", self.form.center.x, self.form.center.y)
             #TODO
+            rebounce_force = Force(Vector(20, -math.pi / 2))
+            self.add_force(rebounce_force)
+        if self.is_bouncing:
+            if self.find_force("GroundRebounce") is not None:
+                self.change_force("GroundRebounce", change_magnitude=-0.5, change_direction=0)
+                if self.find_force("GroundRebounce").vector.magnitude <= 0:
+                    self.is_bouncing = False
+                    print("Particle stopped bouncing at:", self.form.center.x, self.form.center.y)
+
+    def find_force(self, name):
+        for force in self.forces:
+            if force.name == name:
+                return force
+        return None
+
+    def change_force(self, name, change_magnitude, change_direction):
+        force = self.find_force(name)
+        if force is not None:
+            force.vector.magnitude += change_magnitude
+            force.vector.direction += change_direction
 
 class Environment:
     def __init__(self, size):
