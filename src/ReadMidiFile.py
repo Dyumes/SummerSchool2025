@@ -2,28 +2,9 @@ import pretty_midi
 import os
 import pygame
 
-#INIT variables
-midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
-# print(midi_data.estimate_tempo()) #Print estimate bpm (For the sun)
 
-tempo = 60 / midi_data.estimate_tempo()
-# print(tempo)
-
-piano_notes = []
-flute_notes = []
-active_piano_notes = []
-active_flute_notes = []
-current_piano_index = 0
-current_flute_index = 0
-
-# SETTINGS
-(width, height) = (1920, 1080)
-background_colour = (255,255,255)
-screen = pygame.display.set_mode((width, height))
-clock = pygame.time.Clock()
-
-def getNotes(pianoArr, fluteArr):
-    for instrument in midi_data.instruments:
+def getNotes(pianoArr, fluteArr, data):
+    for instrument in data.instruments:
         print(instrument)
         for note in instrument.notes:
             note.pitch %= 12
@@ -31,8 +12,6 @@ def getNotes(pianoArr, fluteArr):
                 pianoArr.append(note)
             elif instrument.name == "Flute":
                 fluteArr.append(note)
-
-
 
 # TEST
 
@@ -44,8 +23,29 @@ def drawNotes(notes, color, pos_y):
 #     print(e)
 
 if __name__ == "__main__":
+    # INIT variables
+    midi_data = pretty_midi.PrettyMIDI(os.path.join("media", "midi", "Ecossaise_Beethoven.midi"))
+    # print(midi_data.estimate_tempo()) #Print estimate bpm (For the sun)
+
+    tempo = 60 / midi_data.estimate_tempo()
+    # print(tempo)
+
+    piano_notes = []
+    flute_notes = []
+    active_piano_notes = []
+    active_flute_notes = []
+    current_piano_index = 0
+    current_flute_index = 0
+
+    # SETTINGS
+    (width, height) = (1920, 1080)
+    background_colour = (255, 255, 255)
+    screen = pygame.display.set_mode((width, height))
+    clock = pygame.time.Clock()
+
+
     # INIT
-    getNotes(piano_notes, flute_notes)
+    getNotes(piano_notes, flute_notes, midi_data)
     pygame.display.flip()
     start_ticks = pygame.time.get_ticks()
 
