@@ -109,7 +109,7 @@ class Mountain:
             elif animationCurrentTime > 0.8 * self.animationTime:
                 self.height = -1 * (0.2 * self.animationTime) / self.maxHeight * animationCurrentTime
             else:
-                self.height = self.maxHeight
+                self.height = self.maxHeight * 0.1 * math.sin(animationCurrentTime * 20) + self.maxHeight
             # if not self.maxReached:
             #     self.height += self.growthSpeed * dt
             #     if self.height >= self.maxHeight:
@@ -257,7 +257,7 @@ if __name__ == "__main__":
 
         globalGeneration(clock.tick())
         firstLaunch = False
-        fps_counter()
+        fps_counter(window, clock)
 
         for event in pygame.event.get():
 
