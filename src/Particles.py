@@ -41,17 +41,20 @@ class Circle:
                                                         [self.center.x + (self.radius * math.cos(angle2)),
                                                          self.center.y + (self.radius * math.sin(angle2))]])
 
-    def update(self, forces):
-        if forces is not None:
-            print("Updating circle at:", self.center.x, self.center.y)
-            for force in forces:
-                self.center = force.apply(Point(self.center.x, self.center.y))
+    def update(self, global_force):
+        print("Updating circle at:", self.center.x, self.center.y)
+        self.center = global_force.apply(Point(self.center.x, self.center.y))
 
 
 class Vector:
     def __init__(self, magnitude, direction):
         self.magnitude = magnitude
         self.direction = direction
+
+    def add_vectors(self, other):
+        x = self.magnitude * math.cos(self.direction) + other.magnitude * math.cos(other.direction)
+        y = self.magnitude * math.sin(self.direction) + other.magnitude * math.sin(other.direction)
+        return Vector(math.sqrt(x**2 + y**2), math.atan2(y, x))
 
 class Force:
     def __init__(self, vector):
@@ -63,12 +66,19 @@ class Force:
             point.y + self.vector.magnitude * math.sin(self.vector.direction)
         )
 
+    def add_forces(self, other):
+        return Force(self.vector.add_vectors(other.vector))
+
+    def __str__(self):
+        return f"Force with magnitude {self.vector.magnitude} and direction {self.vector.direction} radians"
+
 class Particle:
     def __init__(self, form, forces=None):
         if forces is None:
-            forces = []
+            forces = [Force(Vector(0, 0))]
         self.form = form
         self.forces = forces
+        self.global_force = Force(Vector(0, 0))
         self.is_bouncing = False
 
     def __del__(self):
@@ -79,7 +89,9 @@ class Particle:
         self.form.draw()
 
     def update(self, env):
-        self.form.update(self.forces)
+        self.combine_forces(self.forces)
+        print("Global force of: ", self.global_force)
+        self.form.update(self.global_force)
         if not self.is_inside_env(env):
             env.remove_particle(self)
             print("Particle is outside the environment, removing it.")
@@ -90,9 +102,18 @@ class Particle:
             self.bouncing()
 
     def add_force(self, force):
-        if self.forces is None:
-            self.forces = []
         self.forces.append(force)
+
+    def combine_forces(self, forces):
+        tmp_force = Force(Vector(0, 0))
+        self.reset_global_force()
+        for force in forces:
+            tmp_force = self.global_force.add_forces(force)
+
+        self.global_force = tmp_force
+
+    def reset_global_force(self):
+        self.global_force = Force(Vector(0, 0))
 
     def is_inside_env(self, env):
         return env.is_inside(self.form.center)
