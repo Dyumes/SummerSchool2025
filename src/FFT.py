@@ -132,81 +132,32 @@ def getharmonics(notelist,name):
 def pianovtrumpet(values):
     trumpetvalues = []
     pianovalues = []
+    allvalues = []
 
     for timeNote in values:
         trumpetnotes = []
         pianonotes = []
+        allnotes = []
 
         for name in NOTE_NAMES:
             harmonicslist = getharmonics(timeNote.notes,name)
             if len(harmonicslist)>1:
                 if harmonicslist[0].frequency < 1000 and harmonicslist[0].amplitude > 800000:
 
-                    if harmonicslist[0].amplitude *1.7 < harmonicslist[1].amplitude:
+                    if harmonicslist[0].amplitude *1.8 < harmonicslist[1].amplitude:
                         trumpetnotes.append(harmonicslist[0])
                     else:
                         pianonotes.append(harmonicslist[0])
+                    allnotes.append(harmonicslist[0])
 
         trumpetvalues.append(timeNotes(timeNote.step,trumpetnotes))
         pianovalues.append(timeNotes(timeNote.step,pianonotes))
+        allvalues.append(timeNotes(timeNote.step,allnotes))
 
-    return trumpetvalues,pianovalues
+    return trumpetvalues,pianovalues,allvalues
 
 
-trumpetvalues, pianovalues = pianovtrumpet(values)
-printvalues(trumpetvalues)
+trumpetvalues, pianovalues,allvalues = pianovtrumpet(values)
+
+printvalues(allvalues)
 printvalues(pianovalues)
-
-""""
-def pianovtrumpet(values):
-    trumpetvalues = []
-    pianovalues = []
-
-    for timeNote in values:
-        frequencies = timeNote.notes
-        trumpetfrequencises = []
-        pianofrequencies = []
-        notes = []
-        for note in frequencies:
-            if note.frequency <= 1000 and note.amplitude > 1500000:
-                notes.append([note.frequency, note.amplitude, NOTE_NAMES[round_note_num(freq_to_number(note.frequency))]])
-            if note.frequency > 1000:
-                searchednote = NOTE_NAMES[round_note_num(freq_to_number(note.frequency))]
-                for i in range(len(notes)):
-                    if searchednote == notes[i][2]:
-                        if notes[i][1] < note.amplitude:
-                            pianofrequencies.append(searchednote)
-                        else:
-                            trumpetfrequencises.append(searchednote)
-
-        trumpetvalues.append([timeNote.tick,trumpetfrequencises])
-        pianovalues.append([timeNote.tick,pianofrequencies])
-
-
-    return trumpetvalues, pianovalues
-
-trumpetnotes,pianonotes = pianovtrumpet(values)
-
-for timeNote in trumpetnotes:
-    print("_______________")
-    print("tick: ",timeNote[0]*FFT_WINDOW_SIZE, "seconds: ",timeNote[0]/fs*FFT_WINDOW_SIZE)
-    for note in timeNote[1]:
-        print(note)
-
-
-for timeNote in pianonotes:
-    print("_______________")
-    print("tick: ",timeNote[0]*FFT_WINDOW_SIZE, "seconds: ",timeNote[0]/fs*FFT_WINDOW_SIZE)
-    for note in timeNote[1]:
-        print(note)
-"""
-
-
-
-"""
-for value in values:
-    print (value.tick/fs*FFT_WINDOW_SIZE)
-    for j in value.frequencies:
-        if j.amplitude > 1000000:
-            print(j)
-"""
