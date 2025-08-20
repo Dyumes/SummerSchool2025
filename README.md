@@ -1,7 +1,7 @@
 # SummerSchool2025
 
 ## Overview  
-This project implements a **virtual orchestra synchronizable to any music**, transforming a `.mp3` audio input into a **music-synchronized animated video** (`.mp4`).  
+This project implements a **virtual orchestra synchronizable to any music**, transforming an audio input into a **music-synchronized animated video**.  
 The visualization is **procedurally generated** using only geometric primitives (triangles) and reacts to the music being played.
 
 ---
