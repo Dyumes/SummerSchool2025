@@ -15,20 +15,19 @@ def note_name_to_pitch(note_name, octave=4):
     base_pitch = note_names.index(note_name)
     return base_pitch + 12 * (octave + 1)  # MIDI: C4 = 60
 
-def ticks_to_seconds(ticks, fft_window_seconds):
+def ticks_to_seconds(ticks):
     """
     Convert ticks to seconds using the FFT window duration.
 
     Args:
         ticks (int): Number of ticks.
-        fft_window_seconds (float): Duration of one tick in seconds.
 
     Returns:
         float: Time in seconds.
     """
-    return ticks * fft_window_seconds
+    return ticks
 
-def add_note(instrument, note_name, start_tick, duration, fft_window_seconds, octave=4):
+def add_note(instrument, note_name, start_tick, duration, octave=4):
     """
     Add a note to a PrettyMIDI instrument.
 
@@ -37,12 +36,11 @@ def add_note(instrument, note_name, start_tick, duration, fft_window_seconds, oc
         note_name (str): Note name.
         start_tick (int): Start tick of the note.
         duration (int): Duration in ticks.
-        fft_window_seconds (float): Duration of one tick in seconds.
         octave (int): Octave number.
     """
     pitch = note_name_to_pitch(note_name, octave)
-    start_time = ticks_to_seconds(start_tick, fft_window_seconds)
-    end_time = ticks_to_seconds(start_tick+duration, fft_window_seconds)
+    start_time = ticks_to_seconds(start_tick)
+    end_time = ticks_to_seconds(start_tick+duration)
     instrument.notes.append(pretty_midi.Note(100, pitch, start_time, end_time))
 
 def create_piano():
