@@ -203,7 +203,6 @@ for timeNote in pianonotes:
 
 
 
-
 """
 for value in values:
     print (value.tick/fs*FFT_WINDOW_SIZE)
