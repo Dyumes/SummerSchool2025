@@ -168,11 +168,6 @@ for timeNote in pianonotes:
 
 
 
-### TEST WRITE MIDI FILE
-import test
-
-test.test_write_midi_file(notesAndDuration, FFT_WINDOW_SECONDS)
-
 """
 for value in values:
     print (value.tick/fs*FFT_WINDOW_SIZE)
