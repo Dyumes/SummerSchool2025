@@ -11,7 +11,6 @@ from matplotlib.widgets import Slider
 from sympy.core.random import random
 from win32api import GetSystemMetrics
 
-
 pygame.init()
 
 
@@ -33,14 +32,15 @@ class Sun:
         self.offset = 0
         self.maxReached = False
 
-    def update(self):
+    def update(self, bpm):
+
         if not self.maxReached:
-            self.offset += 1
-            if self.offset >= 50:
-                self.offset = 50
+            self.offset += 1 * bpm/60
+            if self.offset >= 60:
+                self.offset = 60
                 self.maxReached = True
         else:
-            self.offset -= 1
+            self.offset -= 1 * bpm/60
             if self.offset <= 0:
                 self.offset = 0
                 self.maxReached = False
@@ -277,8 +277,7 @@ def spawnMountain():
 firstLaunch = True
 s1 = Sun((GetSystemMetrics(0) - 100) / 2, (GetSystemMetrics(1) - 100)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
 g = Ground()
-def globalGeneration(time):
-
+def globalGeneration(time, bpm):
     if firstLaunch:
         spawnMountain()
         g.groundGeneration()
@@ -286,7 +285,7 @@ def globalGeneration(time):
     elif firstLaunch != True:
         g.draw()
         s1.draw()
-        s1.update()
+        s1.update(bpm)
         for mountain in mountains:
             mountain.draw()
             if mountain.canMove:
@@ -333,7 +332,7 @@ if __name__ == "__main__":
 
         window.fill((0, 0, 0))
 
-        globalGeneration(clock.tick())
+        globalGeneration(clock.tick(), 60)
         firstLaunch = False
         fps_counter(window, clock)
 
