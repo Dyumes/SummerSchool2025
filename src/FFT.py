@@ -2,13 +2,14 @@ from scipy.fft import rfft, rfftfreq
 from scipy.io import wavfile
 import os
 import numpy as np
+import scipy
 
 AUDIO_FILE = os.path.join("media","wav","PinkPanther_Piano_Only.wav")
 
 fs, data = wavfile.read(AUDIO_FILE)  #Return the sample rate (in samples/sec) and data from an LPCM WAV file
 audio = data.T[0]       # 1st channel of wav
 
-FFT_WINDOW_SIZE = 4096          # 2048 -> 50ms, 21 Hrz //4096 -> 100ms, 10Hz
+FFT_WINDOW_SIZE = 2048          # 2048 -> 50ms, 21 Hrz //4096 -> 100ms, 10Hz
 FFT_WINDOW_SECONDS = FFT_WINDOW_SIZE/fs # how many seconds of audio make up an FFT window
 #FFT_WINDOW_SIZE = int(fs * FFT_WINDOW_SECONDS)
 AUDIO_LENGTH_TICKS = len(audio)
@@ -38,6 +39,7 @@ def round_note_num(num): return int(round(num,0))%12
 
 # Hanning window function
 hanningWindow = 0.5 * (1 - np.cos(np.linspace(0, 2*np.pi, FFT_WINDOW_SIZE, False)))
+gaussianWindow = scipy.signal.windows.gaussian(FFT_WINDOW_SIZE,FFT_WINDOW_SIZE/8,False)
 
 class Note :
     def __init__(self,freq,ampl):
@@ -65,7 +67,7 @@ def dofft():
     values = []
     for step in range(STEP_NUMBER):
         sample = extract_sample(audio, step)
-        fft = rfft(sample * hanningWindow)
+        fft = rfft(sample * gaussianWindow)
 
         freqs = rfftfreq(FFT_WINDOW_SIZE,1/fs)
 
@@ -93,6 +95,13 @@ def interp_quadratic(x_1, x, x1):
 
     return max, max_magnitude
 
+def interp_gaussian(x_1, x, x1):
+    delta = (np.log(x1.amplitude/x_1.amplitude))/2/(np.log(np.square(x.amplitude))/x_1.amplitude*x1.amplitude)
+    max = x.frequency + delta*(x.frequency - x_1.frequency)
+
+    return max
+
+
 def filter(values):
     newvalues = []
     for timeNote in values:
@@ -105,9 +114,11 @@ def filter(values):
                     i += 1
                 if timeNote.notes[i].amplitude > timeNote.notes[i-1].amplitude:
 
-                    inter_max, inter_max_magnitude = interp_quadratic(timeNote.notes[i-1],timeNote.notes[i],timeNote.notes[i+1])
-                    newNote = Note(inter_max,inter_max_magnitude)
+                    quad_max, quad_max_magnitude = interp_quadratic(timeNote.notes[i-1],timeNote.notes[i],timeNote.notes[i+1])
+                    gauss_max = interp_gaussian(timeNote.notes[i-1],timeNote.notes[i],timeNote.notes[i+1])
+                    newNote = Note(gauss_max,quad_max_magnitude)
                     notes.append(newNote)
+
             i += 1
 
         newvalues.append(timeNotes(timeNote.step,notes))
