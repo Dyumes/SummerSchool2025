@@ -77,28 +77,63 @@ def compute_time_notes(audio, window, FFT_WINDOW_SIZE, fs):
 
 
 def find_estimated_note(values, fs, FFT_WINDOW_SIZE, NOTE_NAMES):
+    previous_note = None
+    note_start_tick = None
+    notes_with_duration = []
+
     for timeNote in values:
         i = 0
-        print("____________________________________")
-        print("SECONDS: ", timeNote.tick / fs * FFT_WINDOW_SIZE)
-        print("tick:", timeNote.tick * FFT_WINDOW_SIZE)
         while i < len(timeNote.frequencies):
             if timeNote.frequencies[i].amplitude > 2000000:
                 while i + 1 < len(timeNote.frequencies) and timeNote.frequencies[i].amplitude < timeNote.frequencies[i + 1].amplitude:
                     i += 1
+
+                estimated_note = None
                 if i > 0 and i + 1 < len(timeNote.frequencies) and timeNote.frequencies[i].amplitude > timeNote.frequencies[i - 1].amplitude:
-                    print(f"local maximum: {timeNote.frequencies[i]} between {timeNote.frequencies[i-1]} and {timeNote.frequencies[i+1]}")
-                    p = (timeNote.frequencies[i + 1].amplitude - timeNote.frequencies[i - 1].amplitude) / 2 / (
-                        2 * timeNote.frequencies[i].amplitude - timeNote.frequencies[i - 1].amplitude - timeNote.frequencies[i + 1].amplitude)
-                    inter_max = timeNote.frequencies[i].frequency + p * (
-                        timeNote.frequencies[i].frequency - timeNote.frequencies[i - 1].frequency)
-                    print("interpolated maximum:", inter_max)
-                    print("estimated note:", NOTE_NAMES[round_note_num(freq_to_number(inter_max))])
+                    inter_max = timeNote.frequencies[i].frequency + (
+                        (timeNote.frequencies[i + 1].amplitude - timeNote.frequencies[i - 1].amplitude) / 2 /
+                        (2 * timeNote.frequencies[i].amplitude - timeNote.frequencies[i - 1].amplitude - timeNote.frequencies[i + 1].amplitude)
+                    ) * (timeNote.frequencies[i].frequency - timeNote.frequencies[i - 1].frequency)
+                    estimated_note = NOTE_NAMES[round_note_num(freq_to_number(inter_max))]
+
+                if estimated_note is not None:
+                    if estimated_note != previous_note:
+                        if previous_note is not None and note_start_tick is not None:
+                            duration = timeNote.tick - note_start_tick
+                            notes_with_duration.append((previous_note, duration, note_start_tick))
+                        previous_note = estimated_note
+                        note_start_tick = timeNote.tick
             i += 1
 
-values = compute_time_notes(audio, window, FFT_WINDOW_SIZE, fs)
-find_estimated_note(values, fs, FFT_WINDOW_SIZE, NOTE_NAMES)
+    if previous_note is not None and note_start_tick is not None:
+        duration = (values[-1].tick + 1) - note_start_tick
+        notes_with_duration.append((previous_note, duration, note_start_tick))
 
+    notes_with_duration = [(note, duration, start_tick) for note, duration, start_tick in notes_with_duration if duration > 0]
+    return notes_with_duration
+
+
+def merge_short_notes(notes_with_duration):
+    merged = []
+    for note, duration, start_tick in notes_with_duration:
+        if duration == 1 and merged and merged[-1][0] == note:
+            # Fusionne avec la note précédente, conserve le start_tick initial
+            prev_note, prev_duration, prev_start_tick = merged[-1]
+            merged[-1] = (note, prev_duration + 1, prev_start_tick)
+        else:
+            merged.append((note, duration, start_tick))
+    return merged
+
+values = compute_time_notes(audio, window, FFT_WINDOW_SIZE, fs)
+notesAndDuration = find_estimated_note(values, fs, FFT_WINDOW_SIZE, NOTE_NAMES)
+notesAndDuration = merge_short_notes(notesAndDuration)
+for note, duration, start_tick in notesAndDuration:
+    print(f"Note: {note}, Duration (ticks) : {duration} ({duration * FFT_WINDOW_SECONDS:.5f} seconds), First tick : {start_tick}")
+
+### TEST WRITE MIDI FILE
+import test
+
+test.test_write_midi_file(notesAndDuration, FFT_WINDOW_SECONDS)
 
 """
 for value in values:
