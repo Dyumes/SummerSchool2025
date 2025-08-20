@@ -124,9 +124,29 @@ def merge_short_notes(notes_with_duration):
             merged.append((note, duration, start_tick))
     return merged
 
+# def add_silences(notes_with_duration):
+#     notes_and_silences = []
+#
+#     for i in range(len(notes_with_duration) -1):
+#         if notes_with_duration[i+1][2] > (notes_with_duration[i][2] + notes_with_duration[i][1]):
+#             silence_duration = notes_with_duration[i+1][2] - (notes_with_duration[i][2] + notes_with_duration[i][1])
+#             notes_and_silences.append((notes_with_duration[i][0], notes_with_duration[i][1], notes_with_duration[i][2]))
+#             notes_and_silences.append(("silence", silence_duration, notes_with_duration[i][2] + notes_with_duration[i][1]))
+#         else:
+#             notes_and_silences.append((notes_with_duration[i][0], notes_with_duration[i][1], notes_with_duration[i][2]))
+#
+#     # Add the last note
+#     notes_and_silences.append((notes_with_duration[-1][0], notes_with_duration[-1][1], notes_with_duration[-1][2]))
+#
+#     # Add silence at the end
+#     notes_and_silences.append(("silence", 10, notes_with_duration[-1][2] + notes_with_duration[-1][1]))
+#
+#     return notes_and_silences
+
 values = compute_time_notes(audio, window, FFT_WINDOW_SIZE, fs)
 notesAndDuration = find_estimated_note(values, fs, FFT_WINDOW_SIZE, NOTE_NAMES)
 notesAndDuration = merge_short_notes(notesAndDuration)
+#notesAndDuration = add_silences(notesAndDuration)
 for note, duration, start_tick in notesAndDuration:
     print(f"Note: {note}, Duration (ticks) : {duration} ({duration * FFT_WINDOW_SECONDS:.5f} seconds), First tick : {start_tick}")
 
