@@ -1,5 +1,30 @@
 # SummerSchool2025
 
+## Overview  
+This project implements a **virtual orchestra synchronizable to any music**, transforming a `.mp3` audio input into a **music-synchronized animated video** (`.mp4`).  
+The visualization is **procedurally generated** using only geometric primitives (triangles) and reacts to the music being played.
+
+---
+
+## Features  
+- 🎼 **Input:**  
+  - Accepts a `.mp3` file as input.  
+  - Supports **maximum 2 instruments** (currently: **piano** & **trumpet**).  
+  - Implemented using **Python** and standard libraries.
+
+- 🎥 **Output:**  
+  - Generates a `.mp4` video file.  
+  - Contains **music-synchronized animation**.  
+  - Visualization designed with **Pygame**.  
+
+- ✨ **Animation Characteristics:**  
+  - Only **triangles** used as graphical primitives.  
+  - Fully **procedural content** (no external images, textures, or video files).  
+  - **Animated**: shapes move over time and react to specific notes.  
+  - **Synchronized with music**: effects occur in sync with the score.  
+
+---
+
 ## FFmpeg Installation
 
 This project requires the **FFmpeg** tool for audio conversion.  
