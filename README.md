@@ -7,17 +7,17 @@ The visualization is **procedurally generated** using only geometric primitives 
 ---
 
 ## Features  
-- 🎼 **Input:**  
+- **Input:**  
   - Accepts a `.mp3` file as input.  
   - Supports **maximum 2 instruments** (currently: **piano** & **trumpet**).  
   - Implemented using **Python** and standard libraries.
 
-- 🎥 **Output:**  
+- **Output:**  
   - Generates a `.mp4` video file.  
   - Contains **music-synchronized animation**.  
   - Visualization designed with **Pygame**.  
 
-- ✨ **Animation Characteristics:**  
+- **Animation Characteristics:**  
   - Only **triangles** used as graphical primitives.  
   - Fully **procedural content** (no external images, textures, or video files).  
   - **Animated**: shapes move over time and react to specific notes.  
