@@ -95,7 +95,7 @@ class Mountain:
         self.height = 0
         self.maxReached = False
         self.triangles = []
-        self.canMove = True
+        self.canMove = False
 
     def update(self):
         if self.canMove == True:
@@ -108,6 +108,7 @@ class Mountain:
                 self.height -= self.growthSpeed * dt
                 if self.height <= 0:
                     self.height = 0
+                    self.canMove = False
                     self.maxReached = False
 
 
@@ -216,41 +217,44 @@ def fps_counter():
     window.blit(fps_t,(0,0))
 
 def playTrumpet(nbr): #TODO : SEE IF WE RECEIVE THE NOTE NAME OR THE PLACE
-    if mountains[nbr].canMove:
-        mountains[nbr].canMove = False
-    else:
-        mountains[nbr].canMove = True
+    mountains[nbr].canMove = True
+    # if mountains[nbr].canMove:
+    #     mountains[nbr].canMove = False
+    # else:
+    #     mountains[nbr].canMove = True
 
 
-running = True
+if __name__ == "__main__":
+
+    running = True
 
 
-while running:
+    while running:
 
-    window.fill((0, 0, 0))
+        window.fill((0, 0, 0))
 
-    globalGeneration()
-    firstLaunch = False
-    fps_counter()
+        globalGeneration()
+        firstLaunch = False
+        fps_counter()
 
-    for event in pygame.event.get():
+        for event in pygame.event.get():
 
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            running = False
-            quit()
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                running = False
+                quit()
 
-        if event.type == pygame.KEYDOWN:
-            match event.key :
-                case pygame.K_r:
-                    window.fill((0, 0, 0))
-                    clearAll()
-                    firstLaunch = True
-                case pygame.K_1:
-                    playTrumpet(1)
-
-
-    clock.tick(fps)
+            if event.type == pygame.KEYDOWN:
+                match event.key :
+                    case pygame.K_r:
+                        window.fill((0, 0, 0))
+                        clearAll()
+                        firstLaunch = True
+                    case pygame.K_1:
+                        playTrumpet(1)
 
 
-    pygame.display.update()
+        clock.tick(fps)
+
+
+        pygame.display.update()

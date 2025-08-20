@@ -30,14 +30,14 @@ class Sun:
         self.offset = 0
         self.maxReached = False
 
-    def update(self):
+    def update(self, tempo):
         if not self.maxReached:
-            self.offset += 1
-            if self.offset >= 50:
-                self.offset = 50
+            self.offset += 1/tempo
+            if self.offset >= 60:
+                self.offset = 60
                 self.maxReached = True
         else:
-            self.offset -= 1
+            self.offset -= 1/tempo
             if self.offset <= 0:
                 self.offset = 0
                 self.maxReached = False
@@ -200,7 +200,7 @@ def globalGeneration():
         #playTrumpet(1)
     elif firstLaunch != True:
         s1.draw()
-        s1.update()
+        s1.update(1)
         for mountain in mountains:
             mountain.draw()
             if mountain.canMove:
