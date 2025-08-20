@@ -1,6 +1,5 @@
 from scipy.fft import rfft, rfftfreq
 from scipy.io import wavfile
-from scipy import interpolate
 import os
 import numpy as np
 
@@ -9,18 +8,18 @@ AUDIO_FILE = os.path.join("media","wav","PinkPanther_Piano_Only.wav")
 fs, data = wavfile.read(AUDIO_FILE)  #Return the sample rate (in samples/sec) and data from an LPCM WAV file
 audio = data.T[0]       # 1st channel of wav
 
-
-FFT_WINDOW_SIZE = 4096
+FFT_WINDOW_SIZE = 4096          # 2048 -> 50ms, 21 Hrz //4096 -> 100ms, 10Hz
 FFT_WINDOW_SECONDS = FFT_WINDOW_SIZE/fs # how many seconds of audio make up an FFT window
-
-
 #FFT_WINDOW_SIZE = int(fs * FFT_WINDOW_SECONDS)
-AUDIO_LENGTH = len(audio)/fs
+AUDIO_LENGTH_TICKS = len(audio)
+AUDIO_LENGTH_SECONDS = len(audio)/fs    #audio length in seconds
 
 NOTE_NAMES = ["do", "do#", "ré", "ré#", "mi", "fa", "fa#", "sol", "sol#", "la", "la#", "si"]
 
-def extract_sample(audio, tick):
-    end = tick*FFT_WINDOW_SIZE
+STEP_NUMBER = int(len(audio)/FFT_WINDOW_SIZE)
+
+def extract_sample(audio, step):    #exctrats window size sample from audio with zero-padding
+    end = step*FFT_WINDOW_SIZE
     begin = int(end - FFT_WINDOW_SIZE)
 
     if end == 0:
@@ -38,117 +37,136 @@ def freq_to_number(freq): return (69 + 12*np.log2(freq/440.0))%12
 def round_note_num(num): return int(round(num,0))%12
 
 # Hanning window function
-window = 0.5 * (1 - np.cos(np.linspace(0, 2*np.pi, FFT_WINDOW_SIZE, False)))
-
-print(len(audio))
-print(FFT_WINDOW_SECONDS)
-
-#values = []
+hanningWindow = 0.5 * (1 - np.cos(np.linspace(0, 2*np.pi, FFT_WINDOW_SIZE, False)))
 
 class Note :
     def __init__(self,freq,ampl):
         self.frequency = freq
         self.amplitude = ampl
+        self.number = round_note_num(freq_to_number(self.frequency))        #number corresponding to note name
+        self.name = NOTE_NAMES[self.number]
+
     def __str__(self):
-        return f"|feq: {self.frequency}, amp: {self.amplitude}|"
+        return f"|FEQ: {self.frequency} AMP: {self.amplitude} NOTE: {self.name}|"
 
-class TimeNotes :
-    def __init__(self,tick,freqs):
-        self.frequencies = freqs
-        self.tick = tick
+class timeNotes :
+    def __init__(self,step,notes):
+        self.notes = notes
+        self.step = step
+        self.tick = self.step*FFT_WINDOW_SIZE
+        self.second = self.tick/fs
     def __str__(self):
-        return f"[tick: {self.tick}]"
+        string =f"[step: {self.step}  second = {self.second}]"
+        for note in self.notes:
+            string += str(note)
+        return string
 
-
-def compute_time_notes(audio, window, FFT_WINDOW_SIZE, fs):
+def dofft():
     values = []
-    for tick in range(int(len(audio)/FFT_WINDOW_SIZE)):
-        sample = extract_sample(audio, tick)
-        fft = rfft(sample * window)
-        freqs = rfftfreq(FFT_WINDOW_SIZE, 1/fs)
+    for step in range(STEP_NUMBER):
+        sample = extract_sample(audio, step)
+        fft = rfft(sample * hanningWindow)
+
+        freqs = rfftfreq(FFT_WINDOW_SIZE,1/fs)
+
         idx = 1
-        frequencies = []
-        while idx < len(freqs):
-            noteA = Note(freqs[idx], np.abs(fft[idx]))
-            frequencies.append(noteA)
+        notes = []
+
+        while idx<len(freqs):
+
+            noteA = Note(freqs[idx],np.abs(fft[idx]))       #frequence and amplitude put into note
+            notes.append(noteA)
+
             idx += 1
-        values.append(TimeNotes(tick, frequencies))
+
+        values.append(timeNotes(step,notes))
     return values
 
+print(AUDIO_LENGTH_TICKS)
+print(FFT_WINDOW_SECONDS)
+values = dofft()
 
-def find_estimated_note(values, fs, FFT_WINDOW_SIZE, NOTE_NAMES):
-    previous_note = None
-    note_start_tick = None
-    notes_with_duration = []
+def interp_quadratic(x_1, x, x1):
+    p = (x_1.amplitude - x1.amplitude) /2 /(2*x.amplitude - x_1.amplitude - x1.amplitude)
+    max = x.frequency +p*(x.frequency - x_1.frequency)
+    max_magnitude = x.amplitude- (x_1.amplitude - x1.amplitude)*p/4
 
+    return max, max_magnitude
+
+def filter(values):
+    newvalues = []
     for timeNote in values:
+        notes = []
+
         i = 0
-        while i < len(timeNote.frequencies):
-            if timeNote.frequencies[i].amplitude > 2000000:
-                while i + 1 < len(timeNote.frequencies) and timeNote.frequencies[i].amplitude < timeNote.frequencies[i + 1].amplitude:
+        while i < len(timeNote.notes):
+            if timeNote.notes[i].amplitude > 500000:
+                while timeNote.notes[i].amplitude < timeNote.notes[i+1].amplitude:
                     i += 1
+                if timeNote.notes[i].amplitude > timeNote.notes[i-1].amplitude:
 
-                estimated_note = None
-                if i > 0 and i + 1 < len(timeNote.frequencies) and timeNote.frequencies[i].amplitude > timeNote.frequencies[i - 1].amplitude:
-                    inter_max = timeNote.frequencies[i].frequency + (
-                        (timeNote.frequencies[i + 1].amplitude - timeNote.frequencies[i - 1].amplitude) / 2 /
-                        (2 * timeNote.frequencies[i].amplitude - timeNote.frequencies[i - 1].amplitude - timeNote.frequencies[i + 1].amplitude)
-                    ) * (timeNote.frequencies[i].frequency - timeNote.frequencies[i - 1].frequency)
-                    estimated_note = NOTE_NAMES[round_note_num(freq_to_number(inter_max))]
-
-                if estimated_note is not None:
-                    if estimated_note != previous_note:
-                        if previous_note is not None and note_start_tick is not None:
-                            duration = timeNote.tick - note_start_tick
-                            notes_with_duration.append((previous_note, duration, note_start_tick))
-                        previous_note = estimated_note
-                        note_start_tick = timeNote.tick
+                    inter_max, inter_max_magnitude = interp_quadratic(timeNote.notes[i-1],timeNote.notes[i],timeNote.notes[i+1])
+                    newNote = Note(inter_max,inter_max_magnitude)
+                    notes.append(newNote)
             i += 1
 
-    if previous_note is not None and note_start_tick is not None:
-        duration = (values[-1].tick + 1) - note_start_tick
-        notes_with_duration.append((previous_note, duration, note_start_tick))
+        newvalues.append(timeNotes(timeNote.step,notes))
+    return newvalues
 
-    notes_with_duration = [(note, duration, start_tick) for note, duration, start_tick in notes_with_duration if duration > 0]
-    return notes_with_duration
+values = filter(values)
+
+def printvalues(values):
+    for timeNote in values:
+        print(timeNote)
+
+printvalues(values)
 
 
-def merge_short_notes(notes_with_duration):
-    merged = []
-    for note, duration, start_tick in notes_with_duration:
-        if duration == 1 and merged and merged[-1][0] == note:
-            # Fusionne avec la note précédente, conserve le start_tick initial
-            prev_note, prev_duration, prev_start_tick = merged[-1]
-            merged[-1] = (note, prev_duration + 1, prev_start_tick)
-        else:
-            merged.append((note, duration, start_tick))
-    return merged
+""""
+def pianovtrumpet(values):
+    trumpetvalues = []
+    pianovalues = []
 
-# def add_silences(notes_with_duration):
-#     notes_and_silences = []
-#
-#     for i in range(len(notes_with_duration) -1):
-#         if notes_with_duration[i+1][2] > (notes_with_duration[i][2] + notes_with_duration[i][1]):
-#             silence_duration = notes_with_duration[i+1][2] - (notes_with_duration[i][2] + notes_with_duration[i][1])
-#             notes_and_silences.append((notes_with_duration[i][0], notes_with_duration[i][1], notes_with_duration[i][2]))
-#             notes_and_silences.append(("silence", silence_duration, notes_with_duration[i][2] + notes_with_duration[i][1]))
-#         else:
-#             notes_and_silences.append((notes_with_duration[i][0], notes_with_duration[i][1], notes_with_duration[i][2]))
-#
-#     # Add the last note
-#     notes_and_silences.append((notes_with_duration[-1][0], notes_with_duration[-1][1], notes_with_duration[-1][2]))
-#
-#     # Add silence at the end
-#     notes_and_silences.append(("silence", 10, notes_with_duration[-1][2] + notes_with_duration[-1][1]))
-#
-#     return notes_and_silences
+    for timeNote in values:
+        frequencies = timeNote.notes
+        trumpetfrequencises = []
+        pianofrequencies = []
+        notes = []
+        for note in frequencies:
+            if note.frequency <= 1000 and note.amplitude > 1500000:
+                notes.append([note.frequency, note.amplitude, NOTE_NAMES[round_note_num(freq_to_number(note.frequency))]])
+            if note.frequency > 1000:
+                searchednote = NOTE_NAMES[round_note_num(freq_to_number(note.frequency))]
+                for i in range(len(notes)):
+                    if searchednote == notes[i][2]:
+                        if notes[i][1] < note.amplitude:
+                            pianofrequencies.append(searchednote)
+                        else:
+                            trumpetfrequencises.append(searchednote)
 
-values = compute_time_notes(audio, window, FFT_WINDOW_SIZE, fs)
-notesAndDuration = find_estimated_note(values, fs, FFT_WINDOW_SIZE, NOTE_NAMES)
-notesAndDuration = merge_short_notes(notesAndDuration)
-#notesAndDuration = add_silences(notesAndDuration)
-for note, duration, start_tick in notesAndDuration:
-    print(f"Note: {note}, Duration (ticks) : {duration} ({duration * FFT_WINDOW_SECONDS:.5f} seconds), First tick : {start_tick}")
+        trumpetvalues.append([timeNote.tick,trumpetfrequencises])
+        pianovalues.append([timeNote.tick,pianofrequencies])
+
+
+    return trumpetvalues, pianovalues
+
+trumpetnotes,pianonotes = pianovtrumpet(values)
+
+for timeNote in trumpetnotes:
+    print("_______________")
+    print("tick: ",timeNote[0]*FFT_WINDOW_SIZE, "seconds: ",timeNote[0]/fs*FFT_WINDOW_SIZE)
+    for note in timeNote[1]:
+        print(note)
+
+
+for timeNote in pianonotes:
+    print("_______________")
+    print("tick: ",timeNote[0]*FFT_WINDOW_SIZE, "seconds: ",timeNote[0]/fs*FFT_WINDOW_SIZE)
+    for note in timeNote[1]:
+        print(note)
+"""
+
+
 
 ### TEST WRITE MIDI FILE
 import test
