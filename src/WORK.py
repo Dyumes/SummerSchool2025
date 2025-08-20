@@ -1,19 +1,25 @@
 import pygame
 import math
 import array as ar
+from random import randrange
 import pygame_widgets
 from fontTools.ttLib.tables.C_P_A_L_ import Color
 from pygame_widgets.textbox import TextBox
 from matplotlib.widgets import Slider
+from sympy.core.random import random
 from win32api import GetSystemMetrics
-
-#Display pygame with a bit smaller resolution than the screen itself
 
 pygame.init()
 
+
+#Display pygame with a bit smaller resolution than the screen itself no matter the os
 window = pygame.display.set_mode((GetSystemMetrics(0) - 100, GetSystemMetrics(1) - 100))
 
+fps = 60
 clock = pygame.time.Clock()
+dt = clock.tick(fps) / 1000
+
+mountains = []
 
 class Sun:
     def __init__(self, centerX, centerY, nbrTriangle, radius):
@@ -24,14 +30,14 @@ class Sun:
         self.offset = 0
         self.maxReached = False
 
-    def update(self):
+    def update(self, tempo):
         if not self.maxReached:
-            self.offset += 1
-            if self.offset >= 50:
-                self.offset = 50
+            self.offset += 1/tempo
+            if self.offset >= 60:
+                self.offset = 60
                 self.maxReached = True
         else:
-            self.offset -= 1
+            self.offset -= 1/tempo
             if self.offset <= 0:
                 self.offset = 0
                 self.maxReached = False
@@ -69,65 +75,166 @@ class Triangle:
         self.p1 = p1
         self.p2 = p2
         self.p3 = p3
+        self.sides = [(p1, p2), (p1, p3), (p2, p3)]
+
+    def get_color(self):
+        returnList = [self.color[0], self.color[1], self.color[2]]
+        return returnList
+    def get_position1(self):
+        return self.p1
+    def get_position2(self):
+        return self.p2
+    def get_position3(self):
+        return self.p3
 
 
 class Mountain:
     def __init__(self, position):
         self.position = position
+        self.growthSpeed = 500
         self.height = 0
         self.maxReached = False
         self.triangles = []
+        self.canMove = True
 
     def update(self):
-        if not self.maxReached:
-            self.height += 1
-            if self.height >= 200:
-                self.height = 200
-                self.maxReached = True
-        else:
-            self.height -= 1
-            if self.height <= 0:
-                self.height = 0
-                self.maxReached = False
+        if self.canMove == True:
+            if not self.maxReached:
+                self.height += self.growthSpeed * dt
+                if self.height >= 200:
+                    self.height = 200
+                    self.maxReached = True
+            else:
+                self.height -= self.growthSpeed * dt
+                if self.height <= 0:
+                    self.height = 0
+                    self.maxReached = False
+
+    def is_valid_new_point(p_new, triangles, min_dist=20):
+        for tri in triangles:
+            for v in [tri.p1, tri.p2, tri.p3]:
+                dx = p_new[0] - v[0]
+                dy = p_new[1] - v[1]
+                if (dx*dx + dy*dy) < (min_dist*min_dist):
+                    return False
+        return True
+
 
     def createMountain(self):
-        for t in range(5):
-            tri = Triangle((255, 0, 0), (self.position[0], self.position[1]), (150, 300 - self.height), (300, 400))
+        nbrTriangle = 5
+        intBlue = 100
+        baseY = self.position[1]
+        width = (GetSystemMetrics(0) - 100) / 12
+
+        # First triangle to display (basis)
+        p1 = (self.position[0], baseY)
+        p2 = (self.position[0] + width, baseY)
+
+        # Triangle width
+        tri_width = p2[0] - p1[0]
+
+        min_x = int(p1[0] + tri_width * 0.1)
+        max_x = int(p1[0] + tri_width * 0.9)
+        topX = randrange(min_x, max_x)
+
+        # Peak variation
+        topY = baseY - self.height
+        p3 = (topX, topY)
+
+        first_tri = Triangle((0, 0, intBlue), p1, p2, p3)
+        self.triangles.append(first_tri)
+
+        # Set the free sides for the next triangle
+        freeSides = [(p1, p2), (p1, p3), (p2, p3)]
+
+        #Add more triangles
+        for i in range(nbrTriangle):  #range(5) is the number of triangle to add
+            if not freeSides:
+                break
+            side = freeSides.pop(0)  # we select a free side
+            (a, b) = side
+
+            # Create a new peak
+            midX = (a[0] + b[0]) / 2
+            midY = (a[1] + b[1]) / 2
+            height = randrange(40, 120)
+            p_new = (midX, midY - height)
+
+            intBlue += int(155 / nbrTriangle)
+            tri = Triangle(
+                (0, 0, intBlue),
+                a, b, p_new
+            )
             self.triangles.append(tri)
 
+            # new sides to add except the one that is shared
+            freeSides.append((a, p_new))
+            freeSides.append((b, p_new))
+
+
     def draw(self):
-        pygame.draw.polygon(window, (255, 0, 0), [[self.position[0], self.position[1]], [150 + self.position[0], 300 - self.height], [300, 400]])
+        for tri in reversed(self.triangles):
+            color = tri.get_color()
+            pygame.draw.polygon(window, color, [(tri.p1[0], tri.p1[1]),(tri.p2[0], tri.p2[1]), (tri.p3[0], tri.p3[1] - self.height)])
+            #pygame.draw.circle(window, (255, 0, 0), (tri.p1[0], tri.p1[1]), 5)
+            #pygame.draw.circle(window, (0, 255, 0), (tri.p2[0], tri.p2[1]), 3)
+            #pygame.draw.circle(window, (0, 255, 255), (tri.p3[0], tri.p3[1] - self.height), 5)
 
-        pygame.draw.polygon(window, (0, 255, 0), [[self.position[0], self.position[1]], [75, 400 - self.height], [150 + self.position[0], 300 - self.height]])
-
-mountains = []
 
 def spawnMountain():
-    positionX = (GetSystemMetrics(0) - 100) / 18
-    positionY = (GetSystemMetrics(1) - 100) / 12
+    positionX = 0
+    positionY = (GetSystemMetrics(1) - 100) / 2
 
-    for m in range(11):
+    for m in range(12):
         mountain = Mountain((positionX, positionY))
         mountains.append(mountain)
+        mountain.createMountain()
 
-        positionX += positionX
-        positionY += positionY
+        positionX += (GetSystemMetrics(0) - 100) / 12
 
-t1 = Mountain((100, 400))
-s1 = Sun((GetSystemMetrics(0) - 100) / 2, (GetSystemMetrics(1) - 100)/1.8, 16, 100)
-
+firstLaunch = True
+s1 = Sun((GetSystemMetrics(0) - 100) / 2, (GetSystemMetrics(1) - 100)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
 def globalGeneration():
-    t1.draw()
-    s1.draw()
-    t1.update()
-    s1.update()
+    if firstLaunch:
+        spawnMountain()
+        #playTrumpet(1)
+    elif firstLaunch != True:
+        s1.draw()
+        s1.update(1)
+        for mountain in mountains:
+            mountain.draw()
+            if mountain.canMove:
+                mountain.update()
+
+
+def clearAll():
+    global mountains
+    mountains.clear()
+
+
+font = pygame.font.SysFont("Arial", 30)
+def fps_counter():
+    fps = str(int(clock.get_fps()))
+    fps_t = font.render(fps , 1, pygame.Color("RED"))
+    window.blit(fps_t,(0,0))
+
+def playTrumpet(nbr): #TODO : SEE IF WE RECEIVE THE NOTE NAME OR THE PLACE
+    if mountains[nbr].canMove:
+        mountains[nbr].canMove = False
+    else:
+        mountains[nbr].canMove = True
+
 
 running = True
+
+
 while running:
 
     window.fill((0, 0, 0))
 
     globalGeneration()
+    firstLaunch = False
+    fps_counter()
 
     for event in pygame.event.get():
 
@@ -136,6 +243,18 @@ while running:
             running = False
             quit()
 
-    clock.tick(60)
+        if event.type == pygame.KEYDOWN:
+            match event.key :
+                case pygame.K_r:
+                    window.fill((0, 0, 0))
+                    clearAll()
+                    firstLaunch = True
+                case pygame.K_1:
+                    playTrumpet(1)
+
+
+    clock.tick(fps)
+
+
     pygame.display.update()
 

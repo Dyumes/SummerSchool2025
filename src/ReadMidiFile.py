@@ -1,12 +1,13 @@
-import pygame
-import ReadMidiFile as rmf
-import os
 import pretty_midi
-import Generation as gn
-from win32api import GetSystemMetrics
+import os
+import pygame
 
 #INIT variables
 midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
+print(midi_data.estimate_tempo()) #Print estimate bpm (For the sun)
+
+tempo = 60 / midi_data.estimate_tempo()
+print(tempo)
 
 piano_notes = []
 flute_notes = []
@@ -15,31 +16,44 @@ active_flute_notes = []
 current_piano_index = 0
 current_flute_index = 0
 
-fps = 60
-
 # SETTINGS
-(width, height) = (GetSystemMetrics(0) - 100, GetSystemMetrics(1) - 100)
-background_colour = (0,0,0)
+(width, height) = (1920, 1080)
+background_colour = (255,255,255)
 screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
 
+def getNotes(pianoArr, fluteArr):
+    for instrument in midi_data.instruments:
+        print(instrument)
+        for note in instrument.notes:
+            note.pitch %= 12
+            if instrument.name == "Piano":
+                pianoArr.append(note)
+            elif instrument.name == "Flute":
+                fluteArr.append(note)
+
 # INIT
-rmf.getNotes(piano_notes, flute_notes)
+getNotes(piano_notes, flute_notes)
 pygame.display.flip()
 start_ticks = pygame.time.get_ticks()
 
 pygame.mixer.init()
-pygame.mixer.music.load(os.path.join("media","mp3","Ecossaise_Trumpet.mp3"))
+pygame.mixer.music.load(os.path.join("media","mp3","Ecossaise_Both.mp3"))
 pygame.mixer.music.play()
+
 
 # Reorder Note by the starting time
 piano_notes = sorted(piano_notes, key=lambda note: note.start)
 flute_notes = sorted(flute_notes, key=lambda note: note.start)
 
-def detectTrumpetNotes(notes):
+# TEST
+
+def drawNotes(notes, color, pos_y):
     for n in notes:
-        print(n.pitch)
-        gn.playTrumpet(n.pitch)
+        pygame.draw.circle(screen, color, (100 + 100 * n.pitch, pos_y), 10)
+
+# for e in piano_notes:
+#     print(e)
 
 if __name__ == "__main__":
     running = True
@@ -48,7 +62,6 @@ if __name__ == "__main__":
         for event in pygame.event.get():
           if event.type == pygame.QUIT:
             running = False
-
         # Programme
         current_time = (pygame.time.get_ticks() - start_ticks) / 1000.0
 
@@ -72,18 +85,15 @@ if __name__ == "__main__":
         # Drawing things
 
         screen.fill(background_colour)
-        gn.globalGeneration()
-        gn.firstLaunch = False
-        gn.fps_counter()
-        detectTrumpetNotes(active_flute_notes)
-        rmf.drawNotes(active_flute_notes, (0,255,255),700)
+        drawNotes(active_piano_notes, (0,255,255), 500)
+        drawNotes(active_flute_notes, (255,0,255), 700)
+
 
         # UPDATE the WINDOWS
         pygame.display.flip()
 
         # Manage refresh rate
-        clock.tick(fps)
+        clock.tick(60)
 
     # END
     pygame.display.quit()
-
