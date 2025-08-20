@@ -97,3 +97,24 @@ def write_midi_file(midi, filename):
         filename (str): Output file name.
     """
     midi.write(filename)
+
+
+### Example usage in an other file
+
+"""
+import WriteMidiFile
+
+def test_write_midi_file(notes):
+    # Test the creation of a MIDI file and adding a piano instrument
+    file = WriteMidiFile.create_midi_file()
+    WriteMidiFile.add_piano(file)
+    WriteMidiFile.add_trumpet(file)
+
+    # Add notes to the MIDI file
+    for note, duration, first_tick in notes:
+        WriteMidiFile.add_note(file.instruments[0], note.name, first_tick, duration)
+
+    # Save the MIDI file
+    WriteMidiFile.write_midi_file(file, "media/midi/test_output.mid")
+    print("MIDI file created successfully.")
+"""
