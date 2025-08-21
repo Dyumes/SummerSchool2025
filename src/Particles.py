@@ -204,15 +204,43 @@ class Particle:
             has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
             has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
             if not (has_neg and has_pos):
-                return True
-        return False
+                return True, triangle
+        return False, None
 
     def is_colliding_with_objects(self, object):
-        return self.is_inside_object(object)
+        return self.is_inside_object(object)[0]
 
-    def colliding_with_objects(self, object):
-        #TODO (use sides of the triangle to calculate the collision)
-        pass
+    def colliding_with_objects(self, object_triangle):
+        #TODO
+        def compute_center(triangle):
+            return Point(
+                (triangle.get_position1().x + triangle.get_position2().x + triangle.get_position3().x) / 3,
+                (triangle.get_position1().y + triangle.get_position2().y + triangle.get_position3().y) / 3
+            )
+
+        # Calcul du vecteur de collision
+        triangle_center = compute_center(object_triangle)
+        dx = triangle_center.x - self.form.center.x
+        dy = triangle_center.y - self.form.center.y
+        direction = math.atan2(dy, dx)
+
+        # Vitesse relative (ici, on utilise la magnitude du global_force)
+        relative_speed = abs(self.global_force.vector.magnitude - 0.2) # Pour simuler une absorption de la vitesse
+        collide_magnitude = max(relative_speed, 10)  # Valeur minimale pour éviter 0
+
+        # Force de collision opposée au contact
+        collide_force = Force(Vector(collide_magnitude, direction + math.pi), "ObjectColliding")
+        self.add_force(collide_force)
+
+        if not self.is_colliding_with_objects:
+            self.is_colliding_with_objects = True
+        if self.is_colliding_with_objects:
+            force = self.find_force("ObjectColliding")
+            if force is not None:
+                self.change_force("ObjectColliding", change_magnitude=-0.5, change_direction=0)
+                if force.vector.magnitude <= 0:
+                    self.forces.remove(force)
+                    self.is_colliding_with_objects = False
 
     def draw(self):
         self.form.draw()
