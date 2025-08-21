@@ -21,6 +21,8 @@ MAX_PARTICLES = 500
 GRAVITY_MAGNITUDE = 9.81
 GRAVITY_DIRECTION = math.pi / 2
 HANDLING_PARTICLES_COLLISIONS = True
+HANDLING_OBJECTS_COLLISIONS = True
+
 
 class Point:
     def __init__(self, x, y):
@@ -88,6 +90,7 @@ class Particle:
         self.global_force = Force(Vector(0, 0))
         self.is_bouncing = False
         self.is_colliding_with_particles = False
+        self.is_colliding_with_objects = False
 
     def __del__(self):
         #print("Particle deleted at:", self.form.center.x, self.form.center.y)
@@ -185,6 +188,17 @@ class Particle:
                     self.is_colliding_with_particles = False
                     #print("Particle stopped colliding at:", self.form.center.x, self.form.center.y)
 
+    def is_inside_object(self, object):
+        #TODO
+        pass
+
+    def is_colliding_with_objects(self, object):
+        return self.is_inside_object(object)
+
+    def colliding_with_objects(self, object):
+        #TODO
+        pass
+
     def draw(self):
         self.form.draw()
 
@@ -242,6 +256,17 @@ class Environment:
         except Exception as e:
             print("Erreur lors de la gestion des collisions de particules :", e)
 
+    def handle_collisions_with_objects(self, objects):
+        try:
+            for i in range(len(self.particles)):
+                for object in objects:
+                    if self.particles[i].is_colliding_with_objects(object):
+                        self.particles[i].colliding_with_objects(object)
+
+        except Exception as e:
+            print("Erreur lors de la gestion des collisions avec les objets :", e)
+
+
     def draw(self):
         for particle in self.particles:
             particle.draw()
@@ -253,13 +278,16 @@ class Environment:
         if HANDLING_PARTICLES_COLLISIONS:
             self.handle_particle_collisions()
 
+        if HANDLING_OBJECTS_COLLISIONS:
+            self.handle_collisions_with_objects([])
+
 
 if __name__ == "__main__":
 
     running = True
 
     env = Environment(WINDOW_SIZE)
-    gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))  # Gravity vector pointing downwards
+    gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))
     forces = [gravity]
 
     for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
