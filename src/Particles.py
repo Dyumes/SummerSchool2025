@@ -14,12 +14,13 @@ FPS = 60
 CLOCK = pygame.time.Clock()
 DT = CLOCK.tick(FPS) / 1000
 
-NBR_TRIANGLE_IN_CIRCLE = 10
-CIRCLE_RADIUS = 2
-MIN_PARTICLES = 1000
-MAX_PARTICLES = 1000
+NBR_TRIANGLE_IN_CIRCLE = 8
+CIRCLE_RADIUS = 10
+MIN_PARTICLES = 500
+MAX_PARTICLES = 500
 GRAVITY_MAGNITUDE = 9.81
 GRAVITY_DIRECTION = math.pi / 2
+HANDLING_PARTICLES_COLLISIONS = True
 
 class Point:
     def __init__(self, x, y):
@@ -47,7 +48,7 @@ class Circle:
                                                          self.center.y + (self.radius * math.sin(angle2))]])
 
     def update(self, global_force):
-        print("Updating circle at:", self.center.x, self.center.y)
+        #print("Updating circle at:", self.center.x, self.center.y)
         self.center = global_force.apply(Point(self.center.x, self.center.y))
 
 
@@ -86,10 +87,10 @@ class Particle:
         self.forces = forces
         self.global_force = Force(Vector(0, 0))
         self.is_bouncing = False
-        self.is_colliding = False
+        self.is_colliding_with_particles = False
 
     def __del__(self):
-        print("Particle deleted at:", self.form.center.x, self.form.center.y)
+        #print("Particle deleted at:", self.form.center.x, self.form.center.y)
         del self
 
     def add_force(self, force):
@@ -125,7 +126,7 @@ class Particle:
     def bouncing(self):
         if not self.is_bouncing:
             self.is_bouncing = True
-            print("Particle is bouncing at:", self.form.center.x, self.form.center.y)
+            #print("Particle is bouncing at:", self.form.center.x, self.form.center.y)
             rebounce_force = Force(Vector(20, -math.pi / 2), "GroundRebounce")
             self.add_force(rebounce_force)
         if self.is_bouncing:
@@ -135,7 +136,7 @@ class Particle:
                 if force.vector.magnitude <= 0:
                     self.forces.remove(force)  # Supprimer la force de rebond
                     self.is_bouncing = False
-                    print("Particle stopped bouncing at:", self.form.center.x, self.form.center.y)
+                    #print("Particle stopped bouncing at:", self.form.center.x, self.form.center.y)
 
         # Limite la position pour rester dans l'environnement
         self.form.center.x = max(self.form.radius, min(self.form.center.x, env.width - self.form.radius))
@@ -150,16 +151,16 @@ class Particle:
     def change_force(self, name, change_magnitude, change_direction):
         force = self.find_force(name)
         if force is not None:
-            print("Changing force:", force)
-            print("Change magnitude:", change_magnitude, "Change direction:", change_direction)
+            #print("Changing force:", force)
+            #print("Change magnitude:", change_magnitude, "Change direction:", change_direction)
             force.vector.magnitude += change_magnitude
             force.vector.direction += change_direction
 
-    def is_colliding_with(self, other):
+    def is_colliding_with_particle(self, other):
         distance = math.sqrt((self.form.center.x - other.form.center.x) ** 2 + (self.form.center.y - other.form.center.y) ** 2)
         return distance < (self.form.radius + other.form.radius)
 
-    def colliding(self, other):
+    def colliding_with_particles(self, other):
         # Calcul du vecteur de collision
         dx = other.form.center.x - self.form.center.x
         dy = other.form.center.y - self.form.center.y
@@ -173,33 +174,33 @@ class Particle:
         collide_force = Force(Vector(collide_magnitude, direction + math.pi), "Colliding")
         self.add_force(collide_force)
 
-        if not self.is_colliding:
-            self.is_colliding = True
-        if self.is_colliding:
+        if not self.is_colliding_with_particles:
+            self.is_colliding_with_particles = True
+        if self.is_colliding_with_particles:
             force = self.find_force("Colliding")
             if force is not None:
                 self.change_force("Colliding", change_magnitude=-0.5, change_direction=0)
                 if force.vector.magnitude <= 0:
                     self.forces.remove(force)
-                    self.is_colliding = False
-                    print("Particle stopped colliding at:", self.form.center.x, self.form.center.y)
+                    self.is_colliding_with_particles = False
+                    #print("Particle stopped colliding at:", self.form.center.x, self.form.center.y)
 
     def draw(self):
         self.form.draw()
 
     def update(self, env):
         self.combine_forces(self.forces)
-        print("Global force of: ", self.global_force)
+        #print("Global force of: ", self.global_force)
 
         if not self.is_inside_env(env):
             env.remove_particle(self)
-            print("Particle is outside the environment, removing it.")
+            #print("Particle is outside the environment, removing it.")
             self.__del__()
 
         if self.is_bouncing:
             self.bouncing()
         elif self.touch_env_bottom(env):
-            print("Particle touched the environment border at:", self.form.center.x, self.form.center.y)
+            #print("Particle touched the environment border at:", self.form.center.x, self.form.center.y)
             self.bouncing()
 
         self.form.update(self.global_force)
@@ -218,12 +219,12 @@ class Environment:
         y = random.randint(0, self.height)
         radius = CIRCLE_RADIUS
         self.particles.append(Particle(Circle(Point(x, y), radius, NBR_TRIANGLE_IN_CIRCLE)))
-        print("Particle created at:", x, y)
+        #print("Particle created at:", x, y)
 
     def remove_particle(self, particle):
         if particle in self.particles:
             self.particles.remove(particle)
-            print("Particle removed at:", particle.form.center.x, particle.form.center.y)
+            #print("Particle removed at:", particle.form.center.x, particle.form.center.y)
         else:
             print("Particle not found in environment.")
 
@@ -231,14 +232,12 @@ class Environment:
         try:
             for i in range(len(self.particles)):
                 for j in range(i + 1, len(self.particles)):
-                    if self.particles[i].is_colliding_with(self.particles[j]):
-                        print("Collision detected between particles at:", self.particles[i].form.center.x,
-                              self.particles[i].form.center.y,
-                              "and", self.particles[j].form.center.x, self.particles[j].form.center.y)
+                    if self.particles[i].is_colliding_with_particle(self.particles[j]):
+                        #print("Collision detected between particles at:", self.particles[i].form.center.x, self.particles[i].form.center.y, "and", self.particles[j].form.center.x, self.particles[j].form.center.y)
 
                         #self.remove_particle(self.particles[i])
-                        self.particles[i].colliding(self.particles[j])
-                        self.particles[j].colliding(self.particles[i])
+                        self.particles[i].colliding_with_particles(self.particles[j])
+                        self.particles[j].colliding_with_particles(self.particles[i])
 
         except Exception as e:
             print("Erreur lors de la gestion des collisions de particules :", e)
@@ -251,7 +250,8 @@ class Environment:
         for particle in self.particles:
             particle.update(self)
 
-        self.handle_particle_collisions()
+        if HANDLING_PARTICLES_COLLISIONS:
+            self.handle_particle_collisions()
 
 
 if __name__ == "__main__":
@@ -259,11 +259,8 @@ if __name__ == "__main__":
     running = True
 
     env = Environment(WINDOW_SIZE)
-    #c1 = Circle(Point(100, 100), 20, NBR_TRIANGLE_IN_CIRCLE)
     gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))  # Gravity vector pointing downwards
     forces = [gravity]
-    #p1 = Particle(c1)
-    #p1.add_force(gravity)
 
     for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
         env.create_particle()
@@ -276,8 +273,7 @@ if __name__ == "__main__":
     while running:
 
         WINDOW.fill((0, 0, 0))
-        #c1.draw()
-        #c1.update(forces)
+
         env.draw()
         env.update()
 
