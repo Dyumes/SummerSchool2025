@@ -202,7 +202,6 @@ class Environment:
                               self.particles[i].form.center.y,
                               "and", self.particles[j].form.center.x, self.particles[j].form.center.y)
 
-                        # Handle collision logic here (e.g., bounce off, merge, etc.)
                         self.remove_particle(self.particles[i])
         except Exception as e:
             print("Erreur lors de la gestion des collisions de particules :", e)
