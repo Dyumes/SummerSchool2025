@@ -15,6 +15,8 @@ CLOCK = pygame.time.Clock()
 DT = CLOCK.tick(FPS) / 1000
 
 NBR_TRIANGLE_IN_CIRCLE = 6
+MIN_PARTICLES = 1
+MAX_PARTICLES = 10
 
 class Point:
     def __init__(self, x, y):
@@ -164,6 +166,8 @@ class Particle:
             force.vector.magnitude += change_magnitude
             force.vector.direction += change_direction
 
+
+
 class Environment:
     def __init__(self, size):
         self.width = size[0]
@@ -207,7 +211,11 @@ if __name__ == "__main__":
     forces = [gravity]
     #p1 = Particle(c1)
     #p1.add_force(gravity)
-    env.create_particle()
+
+    for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
+        env.create_particle()
+
+
     for particle in env.particles:
         particle.add_force(gravity)
 
