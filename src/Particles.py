@@ -211,7 +211,7 @@ class Particle:
         return self.is_inside_object(object)
 
     def colliding_with_objects(self, object):
-        #TODO
+        #TODO (use sides of the triangle to calculate the collision)
         pass
 
     def draw(self):
