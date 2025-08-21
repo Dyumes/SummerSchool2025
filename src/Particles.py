@@ -14,9 +14,10 @@ FPS = 60
 CLOCK = pygame.time.Clock()
 DT = CLOCK.tick(FPS) / 1000
 
-NBR_TRIANGLE_IN_CIRCLE = 6
-MIN_PARTICLES = 1
-MAX_PARTICLES = 10
+NBR_TRIANGLE_IN_CIRCLE = 10
+CIRCLE_RADIUS = 2
+MIN_PARTICLES = 1000
+MAX_PARTICLES = 1000
 
 class Point:
     def __init__(self, x, y):
@@ -187,7 +188,7 @@ class Particle:
     def update(self, env):
         self.combine_forces(self.forces)
         print("Global force of: ", self.global_force)
-        #self.form.update(self.global_force)
+
         if not self.is_inside_env(env):
             env.remove_particle(self)
             print("Particle is outside the environment, removing it.")
@@ -213,7 +214,7 @@ class Environment:
     def create_particle(self):
         x = random.randint(0, self.width)
         y = random.randint(0, self.height)
-        radius = 20
+        radius = CIRCLE_RADIUS
         self.particles.append(Particle(Circle(Point(x, y), radius, NBR_TRIANGLE_IN_CIRCLE)))
         print("Particle created at:", x, y)
 
