@@ -16,8 +16,8 @@ DT = CLOCK.tick(FPS) / 1000
 
 NBR_TRIANGLE_IN_CIRCLE = 8
 CIRCLE_RADIUS = 10
-MIN_PARTICLES = 500
-MAX_PARTICLES = 500
+MIN_PARTICLES = 50
+MAX_PARTICLES = 100
 GRAVITY_MAGNITUDE = 9.81
 GRAVITY_DIRECTION = math.pi / 2
 HANDLING_PARTICLES_COLLISIONS = True
@@ -207,8 +207,8 @@ class Particle:
                 return True, triangle
         return False, None
 
-    def is_colliding_with_objects(self, object):
-        return self.is_inside_object(object)[0]
+    def is_colliding_with_object(self, object):
+        return self.is_inside_object(object)
 
     def colliding_with_objects(self, object_triangle):
         #TODO
@@ -303,8 +303,10 @@ class Environment:
         try:
             for i in range(len(self.particles)):
                 for object in objects:
-                    if self.particles[i].is_colliding_with_objects(object):
-                        self.particles[i].colliding_with_objects(object)
+                    info = self.particles[i].is_colliding_with_object(object)
+                    if info[0]:
+                        print("HIT")
+                        self.particles[i].colliding_with_objects(info[1])
 
         except Exception as e:
             print("Erreur lors de la gestion des collisions avec les objets :", e)
@@ -314,7 +316,7 @@ class Environment:
         for particle in self.particles:
             particle.draw()
 
-    def update(self):
+    def update(self, objects=[]):
         for particle in self.particles:
             particle.update(self)
 
@@ -322,16 +324,57 @@ class Environment:
             self.handle_particle_collisions()
 
         if HANDLING_OBJECTS_COLLISIONS:
-            self.handle_collisions_with_objects([])
+            self.handle_collisions_with_objects(objects)
 
 
 if __name__ == "__main__":
+
+    """ For testing purposes"""
+    class Triangle:
+        def __init__(self, color, p1, p2, p3):
+            self.color = color
+            self.p1 = p1
+            self.p2 = p2
+            self.p3 = p3
+            self.sides = [(p1, p2), (p1, p3), (p2, p3)]
+
+        def get_color(self):
+            returnList = [self.color[0], self.color[1], self.color[2]]
+            return returnList
+
+        def get_position1(self):
+            return self.p1
+
+        def get_position2(self):
+            return self.p2
+
+        def get_position3(self):
+            return self.p3
+
+        def draw(self):
+            pygame.draw.polygon(
+                WINDOW,
+                self.color,
+                [(self.p1.x, self.p1.y), (self.p2.x, self.p2.y), (self.p3.x, self.p3.y)]
+            )
+
+    class TestingObject:
+        def __init__(self, triangles):
+            self.triangles = triangles
+
 
     running = True
 
     env = Environment(WINDOW_SIZE)
     gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))
     forces = [gravity]
+    t1 = Triangle(
+        (0, 0, 255),
+        Point(WINDOW_SIZE[0] // 2 - 50, WINDOW_SIZE[1] // 2 - 50),
+        Point(WINDOW_SIZE[0] // 2 + 50, WINDOW_SIZE[1] // 2 - 50),
+        Point(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2 + 50)
+    )
+    o1 = TestingObject([t1])
 
     for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
         env.create_particle()
@@ -345,8 +388,11 @@ if __name__ == "__main__":
 
         WINDOW.fill((0, 0, 0))
 
+        t1.draw()
+        objects = [o1]
+
         env.draw()
-        env.update()
+        env.update(objects)
 
         for event in pygame.event.get():
 
