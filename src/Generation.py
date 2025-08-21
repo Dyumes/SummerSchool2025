@@ -107,10 +107,12 @@ class Mountain:
     def update(self, time):
         animationCurrentTime = time - self.startTime
         if self.canMove:
-            if  animationCurrentTime < 0.2 * self.animationTime:
-                self.height = (0.2 * self.animationTime) / self.maxHeight * animationCurrentTime
-            elif animationCurrentTime > 0.8 * self.animationTime:
-                self.height = -1 * (0.2 * self.animationTime) / self.maxHeight * animationCurrentTime
+            if animationCurrentTime >= self.animationTime:
+                self.height = 0
+            elif  animationCurrentTime < 0.2 * self.animationTime:
+                self.height = self.maxHeight / (0.2 * self.animationTime) * animationCurrentTime
+            elif animationCurrentTime > 0.6 * self.animationTime:
+                self.height = self.maxHeight / (0.6 * self.animationTime - self.animationTime) * animationCurrentTime + (self.maxHeight / 0.4)
             else:
                 self.height = self.maxHeight * 0.1 * math.sin(animationCurrentTime * 20) + self.maxHeight
             # if not self.maxReached:

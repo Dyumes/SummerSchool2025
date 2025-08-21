@@ -41,12 +41,8 @@ flute_notes = sorted(flute_notes, key=lambda note: note.start)
 
 def detectTrumpetNotes(notes):
     for n in notes:
-        print(n.pitch)
-        print(n.duration)
-        print(n.velocity * 2)
         gn.changeMountainAnimiationTime(n.duration,n.pitch)
         gn.changeMountainStartTime(current_time, n.pitch)
-        # gn.changeMountainGrowthSpeed(200/n.duration, n.pitch)
         gn.changeMountainMaxHeight(n.velocity * 2,n.pitch)
         gn.playTrumpet(n.pitch)
 
@@ -68,10 +64,8 @@ if __name__ == "__main__":
 
         # Programme
         current_time = (pygame.time.get_ticks() - start_ticks) / 1000.0
-        bpm = tempi[current_bpm_index]
 
         if startSong:
-
             # detect if a piano notes should play
             while current_piano_index < len(piano_notes) and piano_notes[current_piano_index].start <= current_time:
                 active_piano_notes.append(piano_notes[current_piano_index])
@@ -82,14 +76,20 @@ if __name__ == "__main__":
                 active_flute_notes.append(flute_notes[current_flute_index])
                 current_flute_index += 1
 
+            bpm = tempi[current_bpm_index]
+            if len(tempo_times) != current_bpm_index + 1:
+                if current_time >= tempo_times[current_bpm_index + 1]:
+                    current_bpm_index += 1
+                    bpm = tempi[current_bpm_index]
+
+        if not startSong or current_time >= midi_data.get_end_time():
+            bpm = 0
+
         # Drawing things
 
         screen.fill(background_colour)
 
-        if len(tempo_times) != current_bpm_index + 1:
-            if current_time >= tempo_times[current_bpm_index + 1]:
-                current_bpm_index += 1
-                bpm = tempi[current_bpm_index]
+
 
         gn.globalGeneration(current_time, bpm)
         gn.firstLaunch = False
