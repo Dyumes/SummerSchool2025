@@ -146,6 +146,10 @@ class Particle:
                     self.is_bouncing = False
                     print("Particle stopped bouncing at:", self.form.center.x, self.form.center.y)
 
+        # Limite la position pour rester dans l'environnement
+        self.form.center.x = max(self.form.radius, min(self.form.center.x, env.width - self.form.radius))
+        self.form.center.y = max(self.form.radius, min(self.form.center.y, env.height - self.form.radius))
+
     def find_force(self, name):
         for force in self.forces:
             if force.name == name:
