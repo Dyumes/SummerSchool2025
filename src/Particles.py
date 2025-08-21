@@ -16,12 +16,13 @@ DT = CLOCK.tick(FPS) / 1000
 
 NBR_TRIANGLE_IN_CIRCLE = 8
 CIRCLE_RADIUS = 10
-MIN_PARTICLES = 50
-MAX_PARTICLES = 100
+MIN_PARTICLES = 5
+MAX_PARTICLES = 10
 GRAVITY_MAGNITUDE = 9.81
 GRAVITY_DIRECTION = math.pi / 2
 HANDLING_PARTICLES_COLLISIONS = True
 HANDLING_OBJECTS_COLLISIONS = True
+HANDLING_SUN_COLLISIONS = True
 
 
 class Point:
@@ -211,7 +212,6 @@ class Particle:
         return self.is_inside_object(object)
 
     def colliding_with_objects(self, object_triangle):
-        #TODO
         def compute_center(triangle):
             return Point(
                 (triangle.get_position1().x + triangle.get_position2().x + triangle.get_position3().x) / 3,
@@ -238,6 +238,37 @@ class Particle:
             force = self.find_force("ObjectColliding")
             if force is not None:
                 self.change_force("ObjectColliding", change_magnitude=-0.5, change_direction=0)
+                if force.vector.magnitude <= 0:
+                    self.forces.remove(force)
+                    self.is_colliding_with_objects = False
+
+    def is_colliding_with_sun(self, sun):
+        dx = self.form.center.x - sun.centerX
+        dy = self.form.center.y - sun.centerY
+        distance = math.sqrt(dx * dx + dy * dy)
+
+        sun_radius = sun.radius + sun.offset
+        return distance < (sun_radius + self.form.radius)
+
+    def colliding_with_sun(self, sun):
+        dx = self.form.center.x - sun.centerX
+        dy = self.form.center.y - sun.centerY
+        direction = math.atan2(dy, dx)  # direction from sun → particle
+
+        # Relative speed based on current global force
+        relative_speed = abs(self.global_force.vector.magnitude)
+        collide_magnitude = max(relative_speed, 10)  # at least some bounce
+
+        # Repulsion force
+        collide_force = Force(Vector(collide_magnitude, direction), "SunColliding")
+        self.add_force(collide_force)
+
+        if not self.is_colliding_with_objects:
+            self.is_colliding_with_objects = True
+        if self.is_colliding_with_objects:
+            force = self.find_force("SunColliding")
+            if force is not None:
+                self.change_force("SunColliding", change_magnitude=-0.5, change_direction=0)
                 if force.vector.magnitude <= 0:
                     self.forces.remove(force)
                     self.is_colliding_with_objects = False
@@ -311,12 +342,20 @@ class Environment:
         except Exception as e:
             print("Erreur lors de la gestion des collisions avec les objets :", e)
 
+    def handle_collisions_with_sun(self, sun):
+        try:
+            for particle in self.particles:
+                if particle.is_colliding_with_sun(sun):
+                    particle.colliding_with_sun(sun)
+        except Exception as e:
+            print("Erreur lors de la gestion des collisions avec le soleil :", e)
+
 
     def draw(self):
         for particle in self.particles:
             particle.draw()
 
-    def update(self, objects=[]):
+    def update(self, objects=[], sun=None):
         for particle in self.particles:
             particle.update(self)
 
@@ -325,6 +364,9 @@ class Environment:
 
         if HANDLING_OBJECTS_COLLISIONS:
             self.handle_collisions_with_objects(objects)
+
+        if HANDLING_SUN_COLLISIONS:
+            self.handle_collisions_with_sun(sun)
 
 
 if __name__ == "__main__":
@@ -363,18 +405,73 @@ if __name__ == "__main__":
             self.triangles = triangles
 
 
+    class Sun:
+        def __init__(self, centerX, centerY, nbrTriangle, radius):
+            self.nbrTriangle = nbrTriangle
+            self.radius = radius
+            self.centerX = centerX
+            self.centerY = centerY
+            self.offset = 0
+            self.maxReached = False
+
+        def update(self, bpm):
+
+            if not self.maxReached:
+                self.offset += 1 * bpm / 60
+                if self.offset >= 60:
+                    self.offset = 60
+                    self.maxReached = True
+            else:
+                self.offset -= 1 * bpm / 60
+                if self.offset <= 0:
+                    self.offset = 0
+                    self.maxReached = False
+
+        def draw(self):
+            for t in range(self.nbrTriangle):
+                angle1 = (2 * math.pi * t) / self.nbrTriangle
+                angle2 = (2 * math.pi * (t + 1)) / self.nbrTriangle
+                midAngle = (angle1 + angle2) / 2
+
+                endCenterX = self.centerX + ((self.offset) * math.cos(midAngle))
+                endCenterY = self.centerY + ((self.offset) * math.sin(midAngle))
+
+                x1 = endCenterX + ((self.radius + self.offset) * math.cos(angle1))
+                y1 = endCenterY + ((self.radius + self.offset) * math.sin(angle1))
+                x2 = endCenterX + ((self.radius + self.offset) * math.cos(angle2))
+                y2 = endCenterY + ((self.radius + self.offset) * math.sin(angle2))
+
+                pygame.draw.polygon(WINDOW, (255, 100, 0), [[self.centerX, self.centerY],
+                                                            [self.centerX + (
+                                                                        (self.radius + self.offset) * math.cos(angle1)),
+                                                             self.centerY + ((self.radius + self.offset) * math.sin(
+                                                                 angle1))],
+                                                            [self.centerX + (
+                                                                        (self.radius + self.offset) * math.cos(angle2)),
+                                                             self.centerY + ((self.radius + self.offset) * math.sin(
+                                                                 angle2))]])
+
+                pygame.draw.polygon(WINDOW, (255, 167, 0), [[self.centerX, self.centerY], [x1, y1], [x2, y2]])
+
+                pygame.draw.polygon(WINDOW, (255, 255, 0), [
+                    [endCenterX, endCenterY], [x1, y1], [x2, y2]
+                ])
+
     running = True
 
     env = Environment(WINDOW_SIZE)
     gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))
-    forces = [gravity]
-    t1 = Triangle(
-        (0, 0, 255),
-        Point(WINDOW_SIZE[0] // 2 - 50, WINDOW_SIZE[1] // 2 - 50),
-        Point(WINDOW_SIZE[0] // 2 + 50, WINDOW_SIZE[1] // 2 - 50),
-        Point(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2 + 50)
-    )
-    o1 = TestingObject([t1])
+    #forces = [gravity]
+    forces = []
+    # t1 = Triangle(
+    #     (0, 0, 255),
+    #     Point(WINDOW_SIZE[0] // 2 - 50, WINDOW_SIZE[1] // 2 - 50),
+    #     Point(WINDOW_SIZE[0] // 2 + 50, WINDOW_SIZE[1] // 2 - 50),
+    #     Point(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2 + 50)
+    # )
+    # o1 = TestingObject([t1])
+
+    s1 = Sun((GetSystemMetrics(0) - 100) / 2, (GetSystemMetrics(1) - 100)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
 
     for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
         env.create_particle()
@@ -388,11 +485,14 @@ if __name__ == "__main__":
 
         WINDOW.fill((0, 0, 0))
 
-        t1.draw()
-        objects = [o1]
+        #t1.draw()
+        #objects = [o1]
+
+        s1.draw()
+        s1.update(60)
 
         env.draw()
-        env.update(objects)
+        env.update(sun=s1)
 
         for event in pygame.event.get():
 
