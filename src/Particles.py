@@ -23,7 +23,7 @@ GRAVITY_DIRECTION = math.pi / 2
 HANDLING_PARTICLES_COLLISIONS = False
 HANDLING_OBJECTS_COLLISIONS = True
 HANDLING_SUN_COLLISIONS = True
-SUN_GRAVITY_MAGNITUDE = 0.5
+SUN_GRAVITY_MAGNITUDE = 2
 
 
 class Point:
@@ -93,6 +93,7 @@ class Particle:
         self.is_bouncing = False
         self.is_colliding_with_particles = False
         self.is_colliding_with_objects = False
+        self.is_colliding_w_sun = False
 
     def __del__(self):
         #print("Particle deleted at:", self.form.center.x, self.form.center.y)
@@ -254,41 +255,40 @@ class Particle:
     def colliding_with_sun(self, sun):
         dx = self.form.center.x - sun.centerX
         dy = self.form.center.y - sun.centerY
-        direction = math.atan2(dy, dx)  # direction from sun → particle
+        direction = math.atan2(dy, dx)  # direction from sun to particle
 
         # Relative speed based on current global force
         relative_speed = abs(self.global_force.vector.magnitude)
-        collide_magnitude = max(relative_speed, 9)  # at least some bounce
+        collide_magnitude = max(relative_speed, 3)  # at least some bounce
 
         # Repulsion force
         collide_force = Force(Vector(collide_magnitude, direction), "SunColliding")
         self.add_force(collide_force)
 
-        if not self.is_colliding_with_objects:
-            self.is_colliding_with_objects = True
-        if self.is_colliding_with_objects:
+        if not self.is_colliding_w_sun:
+            self.is_colliding_w_sun = True
+        if self.is_colliding_w_sun:
             force = self.find_force("SunColliding")
             if force is not None:
                 self.change_force("SunColliding", change_magnitude=-2, change_direction=0)
                 if force.vector.magnitude <= 0:
                     self.forces.remove(force)
-                    self.is_colliding_with_objects = False
+                    print("Removing SunColliding force")
+                    self.is_colliding_w_sun = False
 
-    def apply_sun_gravity(self, sun, g=SUN_GRAVITY_MAGNITUDE):
+    def apply_sun_gravity(self, sun):
         dx = sun.centerX - self.form.center.x
         dy = sun.centerY - self.form.center.y
-        distance = math.sqrt(dx * dx + dy * dy)
-
-        # Prevent division by zero and limit excessive force
-        if distance < 5:
-            return
-
-        # Direction toward the sun
         direction = math.atan2(dy, dx)
 
-        # Add force toward sun
-        gravity_force = Force(Vector(0.5, direction), "SunGravity")
-        self.add_force(gravity_force)
+        # Check if SunGravity already exists
+        force = self.find_force("SunGravity")
+        if force:
+            force.vector.magnitude = SUN_GRAVITY_MAGNITUDE
+            force.vector.direction = direction
+        else:
+            gravity_force = Force(Vector(SUN_GRAVITY_MAGNITUDE, direction), "SunGravity")
+            self.add_force(gravity_force)
 
     def draw(self):
         self.form.draw()
