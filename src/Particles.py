@@ -189,8 +189,23 @@ class Particle:
                     #print("Particle stopped colliding at:", self.form.center.x, self.form.center.y)
 
     def is_inside_object(self, object):
-        #TODO
-        pass
+        # Détection si le centre de la particule est à l'intérieur d'un des triangles de l'objet
+        for triangle in object.triangles:
+            def sign(p1, p2, p3):
+                return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
+
+            pt = self.form.center
+            a = triangle.get_position1()
+            b = triangle.get_position2()
+            c = triangle.get_position3()
+            d1 = sign(pt, a, b)
+            d2 = sign(pt, b, c)
+            d3 = sign(pt, c, a)
+            has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
+            has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
+            if not (has_neg and has_pos):
+                return True
+        return False
 
     def is_colliding_with_objects(self, object):
         return self.is_inside_object(object)
