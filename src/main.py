@@ -15,6 +15,7 @@ active_piano_notes = []
 active_flute_notes = []
 current_piano_index = 0
 current_flute_index = 0
+bpm = 0
 current_bpm_index = 0
 
 startSong = False
