@@ -18,6 +18,8 @@ NBR_TRIANGLE_IN_CIRCLE = 10
 CIRCLE_RADIUS = 2
 MIN_PARTICLES = 1000
 MAX_PARTICLES = 1000
+GRAVITY_MAGNITUDE = 9.81
+GRAVITY_DIRECTION = math.pi / 2
 
 class Point:
     def __init__(self, x, y):
@@ -258,7 +260,7 @@ if __name__ == "__main__":
 
     env = Environment(WINDOW_SIZE)
     #c1 = Circle(Point(100, 100), 20, NBR_TRIANGLE_IN_CIRCLE)
-    gravity = Force(Vector(9.81, math.pi / 2))  # Gravity vector pointing downwards
+    gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))  # Gravity vector pointing downwards
     forces = [gravity]
     #p1 = Particle(c1)
     #p1.add_force(gravity)
