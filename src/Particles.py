@@ -92,26 +92,30 @@ class Particle:
     def update(self, env):
         self.combine_forces(self.forces)
         print("Global force of: ", self.global_force)
-        self.form.update(self.global_force)
+        #self.form.update(self.global_force)
         if not self.is_inside_env(env):
             env.remove_particle(self)
             print("Particle is outside the environment, removing it.")
             self.__del__()
 
-        if self.touch_env_border(env):
+        if self.is_bouncing:
+            self.bouncing()
+        elif self.touch_env_border(env):
             print("Particle touched the environment border at:", self.form.center.x, self.form.center.y)
             self.bouncing()
+
+        self.form.update(self.global_force)
 
     def add_force(self, force):
         self.forces.append(force)
 
     def combine_forces(self, forces):
         tmp_force = Force(Vector(0, 0))
-        self.reset_global_force()
         for force in forces:
-            tmp_force = self.global_force.add_forces(force)
+            tmp_force = tmp_force.add_forces(force)
 
         self.global_force = tmp_force
+
 
     def reset_global_force(self):
         self.global_force = Force(Vector(0, 0))
@@ -131,13 +135,14 @@ class Particle:
         if not self.is_bouncing:
             self.is_bouncing = True
             print("Particle is bouncing at:", self.form.center.x, self.form.center.y)
-            #TODO
-            rebounce_force = Force(Vector(20, -math.pi / 2))
+            rebounce_force = Force(Vector(20, -math.pi / 2), "GroundRebounce")
             self.add_force(rebounce_force)
         if self.is_bouncing:
-            if self.find_force("GroundRebounce") is not None:
+            force = self.find_force("GroundRebounce")
+            if force is not None:
                 self.change_force("GroundRebounce", change_magnitude=-0.5, change_direction=0)
-                if self.find_force("GroundRebounce").vector.magnitude <= 0:
+                if force.vector.magnitude <= 0:
+                    self.forces.remove(force)  # Supprimer la force de rebond
                     self.is_bouncing = False
                     print("Particle stopped bouncing at:", self.form.center.x, self.form.center.y)
 
@@ -150,6 +155,8 @@ class Particle:
     def change_force(self, name, change_magnitude, change_direction):
         force = self.find_force(name)
         if force is not None:
+            print("Changing force:", force)
+            print("Change magnitude:", change_magnitude, "Change direction:", change_direction)
             force.vector.magnitude += change_magnitude
             force.vector.direction += change_direction
 
