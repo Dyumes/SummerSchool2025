@@ -88,26 +88,6 @@ class Particle:
         print("Particle deleted at:", self.form.center.x, self.form.center.y)
         del self
 
-    def draw(self):
-        self.form.draw()
-
-    def update(self, env):
-        self.combine_forces(self.forces)
-        print("Global force of: ", self.global_force)
-        #self.form.update(self.global_force)
-        if not self.is_inside_env(env):
-            env.remove_particle(self)
-            print("Particle is outside the environment, removing it.")
-            self.__del__()
-
-        if self.is_bouncing:
-            self.bouncing()
-        elif self.touch_env_border(env):
-            print("Particle touched the environment border at:", self.form.center.x, self.form.center.y)
-            self.bouncing()
-
-        self.form.update(self.global_force)
-
     def add_force(self, force):
         self.forces.append(force)
 
@@ -166,21 +146,35 @@ class Particle:
             force.vector.magnitude += change_magnitude
             force.vector.direction += change_direction
 
+    def is_colliding(self, other):
+        distance = math.sqrt((self.form.center.x - other.form.center.x) ** 2 + (self.form.center.y - other.form.center.y) ** 2)
+        return distance < (self.form.radius + other.form.radius)
 
+    def draw(self):
+        self.form.draw()
+
+    def update(self, env):
+        self.combine_forces(self.forces)
+        print("Global force of: ", self.global_force)
+        #self.form.update(self.global_force)
+        if not self.is_inside_env(env):
+            env.remove_particle(self)
+            print("Particle is outside the environment, removing it.")
+            self.__del__()
+
+        if self.is_bouncing:
+            self.bouncing()
+        elif self.touch_env_border(env):
+            print("Particle touched the environment border at:", self.form.center.x, self.form.center.y)
+            self.bouncing()
+
+        self.form.update(self.global_force)
 
 class Environment:
     def __init__(self, size):
         self.width = size[0]
         self.height = size[1]
         self.particles = []
-
-    def draw(self):
-        for particle in self.particles:
-            particle.draw()
-
-    def update(self):
-        for particle in self.particles:
-            particle.update(self)
 
     def is_inside(self, point):
         return 0 <= point.x <= self.width and 0 <= point.y <= self.height
@@ -199,6 +193,29 @@ class Environment:
         else:
             print("Particle not found in environment.")
 
+    def handle_particle_collisions(self):
+        try:
+            for i in range(len(self.particles)):
+                for j in range(i + 1, len(self.particles)):
+                    if self.particles[i].is_colliding(self.particles[j]):
+                        print("Collision detected between particles at:", self.particles[i].form.center.x,
+                              self.particles[i].form.center.y,
+                              "and", self.particles[j].form.center.x, self.particles[j].form.center.y)
+
+                        # Handle collision logic here (e.g., bounce off, merge, etc.)
+                        self.remove_particle(self.particles[i])
+        except Exception as e:
+            print("Erreur lors de la gestion des collisions de particules :", e)
+
+    def draw(self):
+        for particle in self.particles:
+            particle.draw()
+
+    def update(self):
+        for particle in self.particles:
+            particle.update(self)
+
+        self.handle_particle_collisions()
 
 
 if __name__ == "__main__":
