@@ -83,6 +83,7 @@ class Particle:
         self.forces = forces
         self.global_force = Force(Vector(0, 0))
         self.is_bouncing = False
+        self.is_colliding = False
 
     def __del__(self):
         print("Particle deleted at:", self.form.center.x, self.form.center.y)
@@ -146,9 +147,35 @@ class Particle:
             force.vector.magnitude += change_magnitude
             force.vector.direction += change_direction
 
-    def is_colliding(self, other):
+    def is_colliding_with(self, other):
         distance = math.sqrt((self.form.center.x - other.form.center.x) ** 2 + (self.form.center.y - other.form.center.y) ** 2)
         return distance < (self.form.radius + other.form.radius)
+
+    def colliding(self, other):
+        # Calcul du vecteur de collision
+        dx = other.form.center.x - self.form.center.x
+        dy = other.form.center.y - self.form.center.y
+        direction = math.atan2(dy, dx)
+
+        # Vitesse relative (ici, on utilise la magnitude du global_force)
+        relative_speed = abs(self.global_force.vector.magnitude - other.global_force.vector.magnitude)
+        collide_magnitude = max(relative_speed, 10)  # Valeur minimale pour éviter 0
+
+        # Force de collision opposée au contact
+        #collide_force = Force(Vector(collide_magnitude, direction + math.pi), "Colliding")
+        collide_force = Force(Vector(20, direction + math.pi), "Colliding")
+        self.add_force(collide_force)
+
+        if not self.is_colliding:
+            self.is_colliding = True
+        if self.is_colliding:
+            force = self.find_force("Colliding")
+            if force is not None:
+                self.change_force("Colliding", change_magnitude=-0.5, change_direction=0)
+                if force.vector.magnitude <= 0:
+                    self.forces.remove(force)
+                    self.is_colliding = False
+                    print("Particle stopped colliding at:", self.form.center.x, self.form.center.y)
 
     def draw(self):
         self.form.draw()
@@ -197,12 +224,15 @@ class Environment:
         try:
             for i in range(len(self.particles)):
                 for j in range(i + 1, len(self.particles)):
-                    if self.particles[i].is_colliding(self.particles[j]):
+                    if self.particles[i].is_colliding_with(self.particles[j]):
                         print("Collision detected between particles at:", self.particles[i].form.center.x,
                               self.particles[i].form.center.y,
                               "and", self.particles[j].form.center.x, self.particles[j].form.center.y)
 
-                        self.remove_particle(self.particles[i])
+                        #self.remove_particle(self.particles[i])
+                        self.particles[i].colliding(self.particles[j])
+                        self.particles[j].colliding(self.particles[i])
+
         except Exception as e:
             print("Erreur lors de la gestion des collisions de particules :", e)
 
