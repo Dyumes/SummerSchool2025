@@ -7,6 +7,7 @@ from win32api import GetSystemMetrics
 
 #INIT variables
 midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
+tempo_times, tempi = midi_data.get_tempo_changes()
 
 piano_notes = []
 flute_notes = []
@@ -14,6 +15,7 @@ active_piano_notes = []
 active_flute_notes = []
 current_piano_index = 0
 current_flute_index = 0
+current_bpm_index = 0
 
 startSong = False
 
@@ -26,12 +28,12 @@ screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
 
 # INIT
-rmf.getNotes(piano_notes, flute_notes)
+rmf.getNotes(piano_notes, flute_notes, midi_data)
 pygame.display.flip()
 start_ticks = pygame.time.get_ticks()
 
 pygame.mixer.init()
-pygame.mixer.music.load(os.path.join("media", "mp3", "Ecossaise_Trumpet.mp3"))
+pygame.mixer.music.load(os.path.join("media", "mp3", "Ecossaise_Both.mp3"))
 
 # Reorder Note by the starting time
 piano_notes = sorted(piano_notes, key=lambda note: note.start)
@@ -66,6 +68,7 @@ if __name__ == "__main__":
 
         # Programme
         current_time = (pygame.time.get_ticks() - start_ticks) / 1000.0
+        bpm = tempi[current_bpm_index]
 
         if startSong:
 
@@ -82,7 +85,13 @@ if __name__ == "__main__":
         # Drawing things
 
         screen.fill(background_colour)
-        gn.globalGeneration(current_time)
+
+        if len(tempo_times) != current_bpm_index + 1:
+            if current_time >= tempo_times[current_bpm_index + 1]:
+                current_bpm_index += 1
+                bpm = tempi[current_bpm_index]
+
+        gn.globalGeneration(current_time, bpm)
         gn.firstLaunch = False
         gn.fps_counter(screen, clock)
         detectTrumpetNotes(active_flute_notes)
