@@ -283,10 +283,13 @@ class Particle:
 
         # Check if SunGravity already exists
         force = self.find_force("SunGravity")
-        if force:
-            force.vector.magnitude = SUN_GRAVITY_MAGNITUDE
-            force.vector.direction = direction
-        else:
+        # if force:
+        #     force.vector.magnitude = SUN_GRAVITY_MAGNITUDE
+        #     force.vector.direction = direction
+        # else:
+        #     gravity_force = Force(Vector(SUN_GRAVITY_MAGNITUDE, direction), "SunGravity")
+        #     self.add_force(gravity_force)
+        if not force:
             gravity_force = Force(Vector(SUN_GRAVITY_MAGNITUDE, direction), "SunGravity")
             self.add_force(gravity_force)
 
