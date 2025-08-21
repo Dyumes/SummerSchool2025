@@ -106,6 +106,11 @@ class Particle:
     def is_inside_env(self, env):
         return env.is_inside(self.form.center)
 
+    def touch_env_bottom(self, env):
+        if self.form.center.y + self.form.radius > env.height:
+            return True
+        return False
+
     def touch_env_border(self, env):
         if self.form.center.x - self.form.radius < 0 or \
            self.form.center.x + self.form.radius > env.width or \
@@ -162,8 +167,7 @@ class Particle:
         collide_magnitude = max(relative_speed, 10)  # Valeur minimale pour éviter 0
 
         # Force de collision opposée au contact
-        #collide_force = Force(Vector(collide_magnitude, direction + math.pi), "Colliding")
-        collide_force = Force(Vector(20, direction + math.pi), "Colliding")
+        collide_force = Force(Vector(collide_magnitude, direction + math.pi), "Colliding")
         self.add_force(collide_force)
 
         if not self.is_colliding:
@@ -191,7 +195,7 @@ class Particle:
 
         if self.is_bouncing:
             self.bouncing()
-        elif self.touch_env_border(env):
+        elif self.touch_env_bottom(env):
             print("Particle touched the environment border at:", self.form.center.x, self.form.center.y)
             self.bouncing()
 
