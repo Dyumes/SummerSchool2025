@@ -16,13 +16,14 @@ DT = CLOCK.tick(FPS) / 1000
 
 NBR_TRIANGLE_IN_CIRCLE = 8
 CIRCLE_RADIUS = 10
-MIN_PARTICLES = 5
-MAX_PARTICLES = 10
+MIN_PARTICLES = 20
+MAX_PARTICLES = 20
 GRAVITY_MAGNITUDE = 9.81
 GRAVITY_DIRECTION = math.pi / 2
-HANDLING_PARTICLES_COLLISIONS = True
+HANDLING_PARTICLES_COLLISIONS = False
 HANDLING_OBJECTS_COLLISIONS = True
 HANDLING_SUN_COLLISIONS = True
+SUN_GRAVITY_MAGNITUDE = 0.5
 
 
 class Point:
@@ -257,7 +258,7 @@ class Particle:
 
         # Relative speed based on current global force
         relative_speed = abs(self.global_force.vector.magnitude)
-        collide_magnitude = max(relative_speed, 10)  # at least some bounce
+        collide_magnitude = max(relative_speed, 9)  # at least some bounce
 
         # Repulsion force
         collide_force = Force(Vector(collide_magnitude, direction), "SunColliding")
@@ -268,10 +269,26 @@ class Particle:
         if self.is_colliding_with_objects:
             force = self.find_force("SunColliding")
             if force is not None:
-                self.change_force("SunColliding", change_magnitude=-0.5, change_direction=0)
+                self.change_force("SunColliding", change_magnitude=-2, change_direction=0)
                 if force.vector.magnitude <= 0:
                     self.forces.remove(force)
                     self.is_colliding_with_objects = False
+
+    def apply_sun_gravity(self, sun, g=SUN_GRAVITY_MAGNITUDE):
+        dx = sun.centerX - self.form.center.x
+        dy = sun.centerY - self.form.center.y
+        distance = math.sqrt(dx * dx + dy * dy)
+
+        # Prevent division by zero and limit excessive force
+        if distance < 5:
+            return
+
+        # Direction toward the sun
+        direction = math.atan2(dy, dx)
+
+        # Add force toward sun
+        gravity_force = Force(Vector(0.5, direction), "SunGravity")
+        self.add_force(gravity_force)
 
     def draw(self):
         self.form.draw()
@@ -358,6 +375,8 @@ class Environment:
     def update(self, objects=[], sun=None):
         for particle in self.particles:
             particle.update(self)
+            if sun is not None:
+                particle.apply_sun_gravity(sun)
 
         if HANDLING_PARTICLES_COLLISIONS:
             self.handle_particle_collisions()
@@ -461,8 +480,9 @@ if __name__ == "__main__":
 
     env = Environment(WINDOW_SIZE)
     gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))
+    #sun_gravity = Force(Vector(GRAVITY_MAGNITUDE / 2, GRAVITY_DIRECTION + math.pi / 2), "SunGravity")
     #forces = [gravity]
-    forces = []
+    #forces = []
     # t1 = Triangle(
     #     (0, 0, 255),
     #     Point(WINDOW_SIZE[0] // 2 - 50, WINDOW_SIZE[1] // 2 - 50),
@@ -471,14 +491,15 @@ if __name__ == "__main__":
     # )
     # o1 = TestingObject([t1])
 
-    s1 = Sun((GetSystemMetrics(0) - 100) / 2, (GetSystemMetrics(1) - 100)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
+    s1 = Sun(WINDOW_SIZE[0] / 2, WINDOW_SIZE[1] / 2, 16, 100)
 
     for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
         env.create_particle()
 
 
     for particle in env.particles:
-        particle.add_force(gravity)
+        #particle.add_force(gravity)
+        pass
 
 
     while running:
