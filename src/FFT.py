@@ -82,6 +82,8 @@ def dofft(window):
             fft = rfft(sample*hanningWindow,n=ZERO_PADDING_FACTOR*FFT_WINDOW_SIZE)
         elif window == "gaussian":
             fft = rfft(sample*gaussianWindow,n=ZERO_PADDING_FACTOR*FFT_WINDOW_SIZE)
+        elif window == "none":
+            fft = rfft(sample,n=ZERO_PADDING_FACTOR*FFT_WINDOW_SIZE)
 
         freqs = rfftfreq(ZERO_PADDING_FACTOR*FFT_WINDOW_SIZE,1/fs)
 
@@ -238,9 +240,9 @@ def freq_anal(values):
 
 def hide_noise(values,strength):
     outvalues = []
-    for i in range(strength,len(values)-strength):
+    for i in range(1,len(values)-strength):
         enclosing_notes = []
-        for note in values[i-strength].notes:
+        for note in values[i-1].notes:
             enclosing_notes.append(note.name())
         for note in values[i+strength].notes:
             enclosing_notes.append(note.name())
@@ -256,14 +258,15 @@ def hide_noise(values,strength):
 
 
 unfiltered_values_gauss = dofft("gaussian")
-#unfiltered_values_hanning = dofft("hanning")
+unfiltered_values_hanning = dofft("hanning")
+unfilterd_values_none = dofft("none")
 
 gaussvalues = filter(unfiltered_values_gauss,"gaussian")
-#paravalues = filter(unfiltered_values_hanning,"parabolic")
+paravalues = filter(unfiltered_values_hanning,"parabolic")
 
 allvalues = freq_anal(gaussvalues)
 
-allvalues = hide_noise(hide_noise(allvalues,2),1)
+allvalues = hide_noise(hide_noise(allvalues,2),2)
 
 printvalues(allvalues)
 
@@ -285,16 +288,20 @@ def submit(text):
     frq_unf_gauss, amp_unf_gauss = get_feq_amp(unfiltered_values_gauss,step)
     frq_fil_gauss, amp_fil_gauss = get_feq_amp(gaussvalues,step)
 
-    #frq_unf_hanning, amp_unf_hanning = get_feq_amp(unfiltered_values_hanning,step)
-    #frq_fil_para, amp_fil_para = get_feq_amp(paravalues,step)
+    frq_unf_hanning, amp_unf_hanning = get_feq_amp(unfiltered_values_hanning,step)
+    frq_fil_para, amp_fil_para = get_feq_amp(paravalues,step)
+
+    frq_unfil_none,amp_unfil_none = get_feq_amp(unfilterd_values_none,step)
 
     # Create a figure containing a single Axes.
     ax.plot(frq_unf_gauss,amp_unf_gauss,label="gauss window",color="red")# Plot some data on the Axes.
     ax.scatter(frq_unf_gauss,amp_unf_gauss, s=2)
     ax.scatter(frq_fil_gauss,amp_fil_gauss,label = "gauss interpolation", color ="orange")
 
-    #ax.plot(frq_unf_hanning,amp_unf_hanning,label="hanning window",color="blue")
-    #ax.scatter(frq_fil_para,amp_fil_para,label = "parabolic interpolation", color="green")
+    ax.plot(frq_unf_hanning,amp_unf_hanning,label="hanning window",color="blue")
+    ax.scatter(frq_fil_para,amp_fil_para,label = "parabolic interpolation", color="green")
+
+    ax.plot(frq_unfil_none,amp_unfil_none,label="no window",color="grey")
 
     ax.legend()
     ax.grid()
