@@ -16,14 +16,14 @@ DT = CLOCK.tick(FPS) / 1000
 
 NBR_TRIANGLE_IN_CIRCLE = 8
 CIRCLE_RADIUS = 10
-MIN_PARTICLES = 20
-MAX_PARTICLES = 20
+MIN_PARTICLES = 2
+MAX_PARTICLES = 2
 GRAVITY_MAGNITUDE = 9.81
 GRAVITY_DIRECTION = math.pi / 2
 HANDLING_PARTICLES_COLLISIONS = False
 HANDLING_OBJECTS_COLLISIONS = True
 HANDLING_SUN_COLLISIONS = True
-SUN_GRAVITY_MAGNITUDE = 2
+SUN_GRAVITY_MAGNITUDE = 1
 
 
 class Point:
@@ -38,9 +38,21 @@ class Circle:
         self.nbrTriangle = nbrTriangle
 
     def contains(self, point):
+        """
+            Check if a point is inside the circle.
+
+            Args:
+                point (Point): The point to check.
+
+            Returns:
+                bool: True if inside, False otherwise.
+        """
         return (point[0] - self.center.x) ** 2 + (point[1] - self.center.y) ** 2 <= self.radius ** 2
 
     def draw(self):
+        """
+            Draw the circle as a polygon made of triangular slices.
+        """
         for t in range(self.nbrTriangle):
             angle1 = (2 * math.pi * t) / self.nbrTriangle
             angle2 = (2 * math.pi * (t + 1)) / self.nbrTriangle
@@ -52,6 +64,12 @@ class Circle:
                                                          self.center.y + (self.radius * math.sin(angle2))]])
 
     def update(self, global_force):
+        """
+            Update the circle position based on a global force.
+
+            Args:
+                global_force (Force): The global force to apply.
+        """
         #print("Updating circle at:", self.center.x, self.center.y)
         self.center = global_force.apply(Point(self.center.x, self.center.y))
 
@@ -62,6 +80,16 @@ class Vector:
         self.direction = direction
 
     def add_vectors(self, other):
+        """
+            Add two vectors and return the resulting vector.
+
+            Args:
+                other (Vector): The vector to add.
+
+            Returns:
+                Vector: The resulting vector after addition.
+        """
+
         x = self.magnitude * math.cos(self.direction) + other.magnitude * math.cos(other.direction)
         y = self.magnitude * math.sin(self.direction) + other.magnitude * math.sin(other.direction)
         return Vector(math.sqrt(x**2 + y**2), math.atan2(y, x))
@@ -72,12 +100,31 @@ class Force:
         self.name = name
 
     def apply(self, point):
+        """
+            Apply force to a point and return the new position.
+
+            Args:
+                point (Point): The point where the force is applied.
+
+            Returns:
+                Point: The new point after applying the force.
+        """
+
         return Point(
             point.x + self.vector.magnitude * math.cos(self.vector.direction),
             point.y + self.vector.magnitude * math.sin(self.vector.direction)
         )
 
     def add_forces(self, other):
+        """
+            Combine two forces into a single resultant force.
+
+            Args:
+                other (Force): The force to combine with.
+
+            Returns:
+                Force: The combined force.
+        """
         return Force(self.vector.add_vectors(other.vector))
 
     def __str__(self):
@@ -96,13 +143,29 @@ class Particle:
         self.is_colliding_w_sun = False
 
     def __del__(self):
+        """
+            Destructor for cleanup when the particle is removed.
+        """
         #print("Particle deleted at:", self.form.center.x, self.form.center.y)
         del self
 
     def add_force(self, force):
+        """
+            Add a new force to the particle.
+
+            Args:
+                force (Force): The force to add.
+        """
+
         self.forces.append(force)
 
     def combine_forces(self, forces):
+        """
+            Combine multiple forces into a single global force.
+
+            Args:
+                forces (list[Force]): List of forces to combine.
+        """
         tmp_force = Force(Vector(0, 0))
         for force in forces:
             tmp_force = tmp_force.add_forces(force)
@@ -111,17 +174,47 @@ class Particle:
 
 
     def reset_global_force(self):
+        """
+            Reset the global force acting on the particle.
+        """
         self.global_force = Force(Vector(0, 0))
 
     def is_inside_env(self, env):
+        """
+            Check if the particle is inside the environment.
+
+            Args:
+                env (Environment): The environment to check against.
+
+            Returns:
+                bool: True if inside, False otherwise.
+        """
         return env.is_inside(self.form.center)
 
     def touch_env_bottom(self, env):
+        """
+            Check if the particle touches the bottom of the environment.
+
+            Args:
+                env (Environment): The environment to check against.
+
+            Returns:
+                bool: True if touching, False otherwise.
+        """
         if self.form.center.y + self.form.radius > env.height:
             return True
         return False
 
     def touch_env_border(self, env):
+        """
+            Check if the particle touches any environment border.
+
+            Args:
+                env (Environment): The environment to check against.
+
+            Returns:
+                bool: True if touching a border, False otherwise.
+        """
         if self.form.center.x - self.form.radius < 0 or \
            self.form.center.x + self.form.radius > env.width or \
            self.form.center.y - self.form.radius < 0 or \
@@ -130,6 +223,9 @@ class Particle:
         return False
 
     def bouncing(self):
+        """
+            Simulate particle bouncing when hitting the ground.
+        """
         if not self.is_bouncing:
             self.is_bouncing = True
             #print("Particle is bouncing at:", self.form.center.x, self.form.center.y)
@@ -149,12 +245,29 @@ class Particle:
         self.form.center.y = max(self.form.radius, min(self.form.center.y, env.height - self.form.radius))
 
     def find_force(self, name):
+        """
+            Find a force by its name.
+
+            Args:
+                name (str): The name of the force.
+
+            Returns:
+                Force | None: The force if found, otherwise None.
+        """
         for force in self.forces:
             if force.name == name:
                 return force
         return None
 
     def change_force(self, name, change_magnitude, change_direction):
+        """
+            Modify an existing force's magnitude and/or direction.
+
+            Args:
+                name (str): Name of the force to change.
+                change_magnitude (float): Value to add to the magnitude.
+                change_direction (float): Value to add to the direction (radians).
+        """
         force = self.find_force(name)
         if force is not None:
             #print("Changing force:", force)
@@ -163,10 +276,25 @@ class Particle:
             force.vector.direction += change_direction
 
     def is_colliding_with_particle(self, other):
+        """
+            Check if the particle is colliding with another particle.
+
+            Args:
+                other (Particle): Another particle to check collision with.
+
+            Returns:
+                bool: True if colliding, False otherwise.
+        """
         distance = math.sqrt((self.form.center.x - other.form.center.x) ** 2 + (self.form.center.y - other.form.center.y) ** 2)
         return distance < (self.form.radius + other.form.radius)
 
     def colliding_with_particles(self, other):
+        """
+            Handle collision response with another particle.
+
+            Args:
+                other (Particle): The particle collided with.
+        """
         # Calcul du vecteur de collision
         dx = other.form.center.x - self.form.center.x
         dy = other.form.center.y - self.form.center.y
@@ -192,6 +320,16 @@ class Particle:
                     #print("Particle stopped colliding at:", self.form.center.x, self.form.center.y)
 
     def is_inside_object(self, object):
+        """
+            Check if the particle is inside a triangular object.
+
+            Args:
+                object (TestingObject): Object composed of triangles.
+
+            Returns:
+                tuple[bool, Triangle | None]: True and the triangle if inside,
+                                              otherwise False and None.
+        """
         # Détection si le centre de la particule est à l'intérieur d'un des triangles de l'objet
         for triangle in object.triangles:
             def sign(p1, p2, p3):
@@ -211,9 +349,24 @@ class Particle:
         return False, None
 
     def is_colliding_with_object(self, object):
+        """
+            Check if particle collides with an object.
+
+            Args:
+                object (TestingObject): Object to check collision with.
+
+            Returns:
+                tuple[bool, Triangle | None]: Collision info.
+        """
         return self.is_inside_object(object)
 
     def colliding_with_objects(self, object_triangle):
+        """
+            Handle collision response with an object (triangle).
+
+            Args:
+                object_triangle (Triangle): The triangle the particle collides with.
+        """
         def compute_center(triangle):
             return Point(
                 (triangle.get_position1().x + triangle.get_position2().x + triangle.get_position3().x) / 3,
@@ -245,6 +398,15 @@ class Particle:
                     self.is_colliding_with_objects = False
 
     def is_colliding_with_sun(self, sun):
+        """
+            Check if the particle is colliding with the sun.
+
+            Args:
+                sun (Sun): The sun object.
+
+            Returns:
+                bool: True if colliding, False otherwise.
+        """
         dx = self.form.center.x - sun.centerX
         dy = self.form.center.y - sun.centerY
         distance = math.sqrt(dx * dx + dy * dy)
@@ -253,6 +415,12 @@ class Particle:
         return distance < (sun_radius + self.form.radius)
 
     def colliding_with_sun(self, sun):
+        """
+            Handle collision response with the sun.
+
+            Args:
+                sun (Sun): The sun object.
+        """
         dx = self.form.center.x - sun.centerX
         dy = self.form.center.y - sun.centerY
         direction = math.atan2(dy, dx)  # direction from sun to particle
@@ -263,20 +431,27 @@ class Particle:
 
         # Repulsion force
         collide_force = Force(Vector(collide_magnitude, direction), "SunColliding")
-        self.add_force(collide_force)
+        #self.add_force(collide_force)
 
         if not self.is_colliding_w_sun:
             self.is_colliding_w_sun = True
+            self.add_force(collide_force)
         if self.is_colliding_w_sun:
             force = self.find_force("SunColliding")
             if force is not None:
-                self.change_force("SunColliding", change_magnitude=-2, change_direction=0)
+                self.change_force("SunColliding", change_magnitude=-1, change_direction=0)
                 if force.vector.magnitude <= 0:
                     self.forces.remove(force)
                     print("Removing SunColliding force")
                     self.is_colliding_w_sun = False
 
     def apply_sun_gravity(self, sun):
+        """
+            Apply gravitational attraction from the sun.
+
+            Args:
+                sun (Sun): The sun object.
+        """
         dx = sun.centerX - self.form.center.x
         dy = sun.centerY - self.form.center.y
         direction = math.atan2(dy, dx)
@@ -292,11 +467,21 @@ class Particle:
         if not force:
             gravity_force = Force(Vector(SUN_GRAVITY_MAGNITUDE, direction), "SunGravity")
             self.add_force(gravity_force)
+            print("Adding SunGravity force at:", self.form.center.x, self.form.center.y)
 
     def draw(self):
+        """
+            Draw the particle.
+        """
         self.form.draw()
 
     def update(self, env):
+        """
+            Update the particle state each frame.
+
+            Args:
+                env (Environment): The environment the particle is in.
+        """
         self.combine_forces(self.forces)
         #print("Global force of: ", self.global_force)
 
@@ -312,6 +497,7 @@ class Particle:
             self.bouncing()
 
         self.form.update(self.global_force)
+        print("Forces on particle at:", self.form.center.x, self.form.center.y, "->", [force.name for force in self.forces])
 
 class Environment:
     def __init__(self, size):
@@ -320,9 +506,25 @@ class Environment:
         self.particles = []
 
     def is_inside(self, point):
+        """
+            Check if a point is inside the environment boundaries.
+
+            Args:
+                point (Point): The point to check.
+
+            Returns:
+                bool: True if inside, False otherwise.
+        """
+
         return 0 <= point.x <= self.width and 0 <= point.y <= self.height
 
     def create_particle(self):
+        """
+            Create a new particle at a random location.
+
+            Returns:
+                Particle: The newly created particle.
+        """
         x = random.randint(0, self.width)
         y = random.randint(0, self.height)
         radius = CIRCLE_RADIUS
@@ -330,6 +532,12 @@ class Environment:
         #print("Particle created at:", x, y)
 
     def remove_particle(self, particle):
+        """
+            Remove a particle from the environment.
+
+            Args:
+                particle (Particle): The particle to remove.
+        """
         if particle in self.particles:
             self.particles.remove(particle)
             #print("Particle removed at:", particle.form.center.x, particle.form.center.y)
@@ -337,6 +545,9 @@ class Environment:
             print("Particle not found in environment.")
 
     def handle_particle_collisions(self):
+        """
+            Check and handle collisions between particles.
+        """
         try:
             for i in range(len(self.particles)):
                 for j in range(i + 1, len(self.particles)):
@@ -351,6 +562,12 @@ class Environment:
             print("Erreur lors de la gestion des collisions de particules :", e)
 
     def handle_collisions_with_objects(self, objects):
+        """
+            Check and handle collisions between particles and objects.
+
+            Args:
+                objects (list[TestingObject]): List of objects to check collisions with.
+        """
         try:
             for i in range(len(self.particles)):
                 for object in objects:
@@ -363,6 +580,12 @@ class Environment:
             print("Erreur lors de la gestion des collisions avec les objets :", e)
 
     def handle_collisions_with_sun(self, sun):
+        """
+            Check and handle collisions between particles and the sun.
+
+            Args:
+                sun (Sun): The sun object.
+        """
         try:
             for particle in self.particles:
                 if particle.is_colliding_with_sun(sun):
@@ -372,10 +595,16 @@ class Environment:
 
 
     def draw(self):
+        """
+            Draw the environment and all its particles.
+        """
         for particle in self.particles:
             particle.draw()
 
     def update(self, objects=[], sun=None):
+        """
+            Update all particles in the environment.
+        """
         for particle in self.particles:
             particle.update(self)
             if sun is not None:
