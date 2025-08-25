@@ -16,12 +16,12 @@ DT = CLOCK.tick(FPS) / 1000
 
 NBR_TRIANGLE_IN_CIRCLE = 8
 CIRCLE_RADIUS = 10
-MIN_PARTICLES = 2
-MAX_PARTICLES = 2
+MIN_PARTICLES = 5
+MAX_PARTICLES = 5
 GRAVITY_MAGNITUDE = 9.81
 GRAVITY_DIRECTION = math.pi / 2
 HANDLING_PARTICLES_COLLISIONS = False
-HANDLING_OBJECTS_COLLISIONS = True
+HANDLING_OBJECTS_COLLISIONS = False
 HANDLING_SUN_COLLISIONS = True
 SUN_GRAVITY_MAGNITUDE = 1
 
@@ -436,13 +436,16 @@ class Particle:
         if not self.is_colliding_w_sun:
             self.is_colliding_w_sun = True
             self.add_force(collide_force)
-        if self.is_colliding_w_sun:
+        else:
+            # Mettre à jour la force de rebond si elle existe
             force = self.find_force("SunColliding")
-            if force is not None:
+            if force:
+                force.vector.magnitude = max(force.vector.magnitude, collide_magnitude)
+                force.vector.direction = direction
+                # Diminution progressive
                 self.change_force("SunColliding", change_magnitude=-1, change_direction=0)
                 if force.vector.magnitude <= 0:
                     self.forces.remove(force)
-                    print("Removing SunColliding force")
                     self.is_colliding_w_sun = False
 
     def apply_sun_gravity(self, sun):
@@ -458,16 +461,16 @@ class Particle:
 
         # Check if SunGravity already exists
         force = self.find_force("SunGravity")
-        # if force:
-        #     force.vector.magnitude = SUN_GRAVITY_MAGNITUDE
-        #     force.vector.direction = direction
-        # else:
-        #     gravity_force = Force(Vector(SUN_GRAVITY_MAGNITUDE, direction), "SunGravity")
-        #     self.add_force(gravity_force)
-        if not force:
+        if force:
+            force.vector.magnitude = SUN_GRAVITY_MAGNITUDE
+            force.vector.direction = direction
+        else:
             gravity_force = Force(Vector(SUN_GRAVITY_MAGNITUDE, direction), "SunGravity")
             self.add_force(gravity_force)
-            print("Adding SunGravity force at:", self.form.center.x, self.form.center.y)
+        # if not force:
+        #     gravity_force = Force(Vector(SUN_GRAVITY_MAGNITUDE, direction), "SunGravity")
+        #     self.add_force(gravity_force)
+        #     print("Adding SunGravity force at:", self.form.center.x, self.form.center.y)
 
     def draw(self):
         """
@@ -746,6 +749,7 @@ if __name__ == "__main__":
 
         env.draw()
         env.update(sun=s1)
+        #env.update()
 
         for event in pygame.event.get():
 
