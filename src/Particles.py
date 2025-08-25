@@ -416,61 +416,75 @@ class Particle:
 
     def colliding_with_sun(self, sun):
         """
-            Handle collision response with the sun.
+        Handle collision response with the sun.
 
-            Args:
-                sun (Sun): The sun object.
+        Args:
+            sun (Sun): The sun object.
         """
+        # Calculer la direction d'éloignement du soleil
         dx = self.form.center.x - sun.centerX
         dy = self.form.center.y - sun.centerY
-        direction = math.atan2(dy, dx)  # direction from sun to particle
+        distance = math.sqrt(dx * dx + dy * dy)
+        direction = math.atan2(dy, dx)
 
-        # Relative speed based on current global force
-        relative_speed = abs(self.global_force.vector.magnitude)
-        collide_magnitude = max(relative_speed, 3)  # at least some bounce
+        # Force de rebond proportionnelle à la proximité
+        bounce_magnitude = 8 * (sun.radius + sun.offset - distance + self.form.radius) / self.form.radius
+        bounce_magnitude = max(bounce_magnitude, 4)  # Valeur minimale pour éviter 0
 
-        # Repulsion force
-        collide_force = Force(Vector(collide_magnitude, direction), "SunColliding")
-        #self.add_force(collide_force)
-
+        # Vérifier si on est déjà en train de rebondir
         if not self.is_colliding_w_sun:
             self.is_colliding_w_sun = True
-            self.add_force(collide_force)
+            self.add_force(Force(Vector(bounce_magnitude, direction), "SunColliding"))
         else:
             # Mettre à jour la force de rebond si elle existe
             force = self.find_force("SunColliding")
-            if force:
-                force.vector.magnitude = max(force.vector.magnitude, collide_magnitude)
-                force.vector.direction = direction
+            if force is not None:
+                print("Updating SunColliding force")
+                #force.vector.magnitude = max(force.vector.magnitude, bounce_magnitude)
+                #force.vector.direction = direction
                 # Diminution progressive
-                self.change_force("SunColliding", change_magnitude=-1, change_direction=0)
+                self.change_force("SunColliding", change_magnitude=-0.3, change_direction=0)
                 if force.vector.magnitude <= 0:
                     self.forces.remove(force)
+                    print("Removing SunColliding force")
                     self.is_colliding_w_sun = False
 
     def apply_sun_gravity(self, sun):
         """
-            Apply gravitational attraction from the sun.
+        Apply gravitational attraction from the sun.
 
-            Args:
-                sun (Sun): The sun object.
+        Args:
+            sun (Sun): The sun object.
         """
+        # Calculer la direction vers le soleil
         dx = sun.centerX - self.form.center.x
         dy = sun.centerY - self.form.center.y
+        distance = math.sqrt(dx * dx + dy * dy)
         direction = math.atan2(dy, dx)
 
-        # Check if SunGravity already exists
+        # Force gravitationnelle inversement proportionnelle à la distance
+        gravity_strength = SUN_GRAVITY_MAGNITUDE * 2000 / (distance + 50)
+
+        # Mettre à jour la force existante ou en créer une nouvelle
         force = self.find_force("SunGravity")
         if force:
-            force.vector.magnitude = SUN_GRAVITY_MAGNITUDE
+            force.vector.magnitude = min(gravity_strength, 2)  # Limiter la force maximale
             force.vector.direction = direction
         else:
-            gravity_force = Force(Vector(SUN_GRAVITY_MAGNITUDE, direction), "SunGravity")
+            gravity_force = Force(Vector(min(gravity_strength, 5), direction), "SunGravity")
             self.add_force(gravity_force)
-        # if not force:
-        #     gravity_force = Force(Vector(SUN_GRAVITY_MAGNITUDE, direction), "SunGravity")
-        #     self.add_force(gravity_force)
-        #     print("Adding SunGravity force at:", self.form.center.x, self.form.center.y)
+
+    def decay_sun_colliding_force(self):
+        """
+        Gradually decay and remove the 'SunColliding' force after a certain time.
+        """
+        force = self.find_force("SunColliding")
+        if force:
+            # Gradually reduce the magnitude
+            force.vector.magnitude -= 0.1  # Decay rate
+            if force.vector.magnitude <= 0:
+                self.forces.remove(force)
+                self.is_colliding_w_sun = False
 
     def draw(self):
         """
@@ -480,10 +494,10 @@ class Particle:
 
     def update(self, env):
         """
-            Update the particle state each frame.
+        Update the particle state each frame.
 
-            Args:
-                env (Environment): The environment the particle is in.
+        Args:
+            env (Environment): The environment the particle is in.
         """
         self.combine_forces(self.forces)
         #print("Global force of: ", self.global_force)
@@ -500,7 +514,8 @@ class Particle:
             self.bouncing()
 
         self.form.update(self.global_force)
-        print("Forces on particle at:", self.form.center.x, self.form.center.y, "->", [force.name for force in self.forces])
+        self.decay_sun_colliding_force() # Fixes the problems with the sun collision force not being removed
+        #print("Forces on particle at:", self.form.center.x, self.form.center.y, "->", [force.name for force in self.forces])
 
 class Environment:
     def __init__(self, size):
