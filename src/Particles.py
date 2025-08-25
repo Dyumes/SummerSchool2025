@@ -17,6 +17,9 @@ DT = CLOCK.tick(FPS) / 1000
 NBR_TRIANGLE_IN_CIRCLE = 8
 CIRCLE_RADIUS = 10
 SUN_PARTICLE_RADIUS = 5
+PARTICLE_COLOR = (255, 100, 0)
+SUN_PARTICLE_COLOR = (100, 255, 0)
+SUN_PARTICLE_COLOR_DELTA = 150
 MIN_PARTICLES = 300
 MAX_PARTICLES = 300
 GRAVITY_MAGNITUDE = 9.81
@@ -50,7 +53,7 @@ class Circle:
         """
         return (point[0] - self.center.x) ** 2 + (point[1] - self.center.y) ** 2 <= self.radius ** 2
 
-    def draw(self):
+    def draw(self, color=PARTICLE_COLOR):
         """
             Draw the circle as a polygon made of triangular slices.
         """
@@ -58,7 +61,7 @@ class Circle:
             angle1 = (2 * math.pi * t) / self.nbrTriangle
             angle2 = (2 * math.pi * (t + 1)) / self.nbrTriangle
 
-            pygame.draw.polygon(WINDOW, (255, 100, 0), [[self.center.x, self.center.y],
+            pygame.draw.polygon(WINDOW, color, [[self.center.x, self.center.y],
                                                         [self.center.x + (self.radius * math.cos(angle1)),
                                                          self.center.y + (self.radius * math.sin(angle1))],
                                                         [self.center.x + (self.radius * math.cos(angle2)),
@@ -489,11 +492,11 @@ class Particle:
                 self.forces.remove(force)
                 self.is_colliding_w_sun = False
 
-    def draw(self):
+    def draw(self, color=PARTICLE_COLOR):
         """
             Draw the particle.
         """
-        self.form.draw()
+        self.form.draw(color=color)
 
     def update(self, env):
         """
@@ -521,10 +524,11 @@ class Particle:
         #print("Forces on particle at:", self.form.center.x, self.form.center.y, "->", [force.name for force in self.forces])
 
 class Environment:
-    def __init__(self, size):
+    def __init__(self, size, sun=None):
         self.width = size[0]
         self.height = size[1]
         self.particles = []
+        self.sun = sun
 
     def is_inside(self, point):
         """
@@ -634,16 +638,30 @@ class Environment:
             Draw the environment and all its particles.
         """
         for particle in self.particles:
-            particle.draw()
+            color = PARTICLE_COLOR
+            if HANDLING_SUN_COLLISIONS:
+                # Change color based on distance to sun
+                dx = particle.form.center.x - self.sun.centerX
+                dy = particle.form.center.y - self.sun.centerY
+                distance = math.sqrt(dx * dx + dy * dy)
+                max_distance = (WINDOW_SIZE[0] + WINDOW_SIZE[1]) / 4
+                intensity = max(0, 255 - int((distance / max_distance) * 255))
+                color = (
+                    max(0, min(255, SUN_PARTICLE_COLOR[0] + intensity * SUN_PARTICLE_COLOR_DELTA // 255)),
+                    max(0, min(255, SUN_PARTICLE_COLOR[1] - intensity * SUN_PARTICLE_COLOR_DELTA // 255)),
+                    max(0, min(255, SUN_PARTICLE_COLOR[2]))
+                )
+                #print("Color based on distance:", color)
+            particle.draw(color)
 
-    def update(self, objects=[], sun=None):
+    def update(self, objects=[]):
         """
             Update all particles in the environment.
         """
         for particle in self.particles:
             particle.update(self)
-            if sun is not None:
-                particle.apply_sun_gravity(sun)
+            if self.sun is not None:
+                particle.apply_sun_gravity(self.sun)
 
         if HANDLING_PARTICLES_COLLISIONS:
             self.handle_particle_collisions()
@@ -652,7 +670,7 @@ class Environment:
             self.handle_collisions_with_objects(objects)
 
         if HANDLING_SUN_COLLISIONS:
-            self.handle_collisions_with_sun(sun)
+            self.handle_collisions_with_sun(self.sun)
 
 
 if __name__ == "__main__":
@@ -759,6 +777,7 @@ if __name__ == "__main__":
     # o1 = TestingObject([t1])
 
     s1 = Sun(WINDOW_SIZE[0] / 2, WINDOW_SIZE[1] / 2, 16, 100)
+    env.sun = s1
 
     if HANDLING_SUN_COLLISIONS:
         for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
@@ -784,8 +803,7 @@ if __name__ == "__main__":
         s1.update(60)
 
         env.draw()
-        env.update(sun=s1)
-        #env.update()
+        env.update()
 
         for event in pygame.event.get():
 
