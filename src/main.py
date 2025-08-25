@@ -3,6 +3,7 @@ import ReadMidiFile as rmf
 import os
 import pretty_midi
 import Generation as gn
+import Mountain_Generation as gn2
 from win32api import GetSystemMetrics
 
 #INIT variables
@@ -42,12 +43,40 @@ flute_notes = sorted(flute_notes, key=lambda note: note.start)
 
 def detectTrumpetNotes(notes):
     for n in notes:
-        gn.changeMountainAnimiationTime(n.duration,n.pitch)
-        gn.changeMountainStartTime(current_time, n.pitch)
-        gn.changeMountainMaxHeight(n.velocity * 2,n.pitch)
-        gn.playTrumpet(n.pitch)
+        mountains[n.pitch].animation_time = n.duration
+        mountains[n.pitch].start_time = current_time
+        mountains[n.pitch].animation_max_height = n.velocity * 10
+        mountains[n.pitch].can_move = True
+
+        # gn.changeMountainAnimiationTime(n.duration,n.pitch)
+        # gn.changeMountainStartTime(current_time, n.pitch)
+        # gn.changeMountainMaxHeight(n.velocity * 2,n.pitch)
+        # gn.playTrumpet(n.pitch)
+
 
 if __name__ == "__main__":
+
+    mountains = []
+    static_mountains = []
+
+    for i in range(12):
+        temp = gn2.MountainV2()
+        temp.width = screen.get_width() / 12
+        temp.pos_x = temp.width * i
+        temp.floor_position = height/2
+        temp.generate()
+        mountains.append(temp)
+
+    for i in range(13):
+        factor = 50
+        temp = gn2.MountainV2()
+        temp.width = screen.get_width() / 12 + factor
+        temp.max_height = 500
+        temp.pos_x = (temp.width - factor) * (i-1) + mountains[0].width/2
+        temp.floor_position = height/2
+        temp.generate()
+        static_mountains.append(temp)
+
     running = True
     while running:
         # Close the Windows if the button close is pressed
@@ -62,6 +91,9 @@ if __name__ == "__main__":
                             startSong = True
                             pygame.mixer.music.play()
                             start_ticks = pygame.time.get_ticks()
+
+                    case pygame.K_ESCAPE:
+                        running = False
 
         # Programme
         current_time = (pygame.time.get_ticks() - start_ticks) / 1000.0
@@ -91,11 +123,19 @@ if __name__ == "__main__":
         screen.fill(background_colour)
 
 
-
         gn.globalGeneration(current_time, bpm)
         gn.firstLaunch = False
         gn.fps_counter(screen, clock)
+
         detectTrumpetNotes(active_flute_notes)
+
+        for e in mountains:
+            e.manage_mountain(screen, current_time)
+
+        for e in static_mountains:
+            e.manage_mountain(screen, current_time)
+
+        # detectTrumpetNotes(active_flute_notes)
 
         for n in active_flute_notes:
             # if n.end <= current_time:
