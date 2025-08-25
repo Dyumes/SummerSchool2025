@@ -16,8 +16,9 @@ DT = CLOCK.tick(FPS) / 1000
 
 NBR_TRIANGLE_IN_CIRCLE = 8
 CIRCLE_RADIUS = 10
-MIN_PARTICLES = 5
-MAX_PARTICLES = 5
+SUN_PARTICLE_RADIUS = 5
+MIN_PARTICLES = 300
+MAX_PARTICLES = 300
 GRAVITY_MAGNITUDE = 9.81
 GRAVITY_DIRECTION = math.pi / 2
 HANDLING_PARTICLES_COLLISIONS = False
@@ -427,9 +428,11 @@ class Particle:
         distance = math.sqrt(dx * dx + dy * dy)
         direction = math.atan2(dy, dx)
 
-        # Force de rebond proportionnelle à la proximité
-        bounce_magnitude = 8 * (sun.radius + sun.offset - distance + self.form.radius) / self.form.radius
-        bounce_magnitude = max(bounce_magnitude, 4)  # Valeur minimale pour éviter 0
+        # # Reduce the bounce magnitude to make the rebounce less powerful
+        # bounce_magnitude = 4 * (sun.radius + sun.offset - distance + self.form.radius) / self.form.radius
+        # bounce_magnitude = max(bounce_magnitude, 1)  # Lower the minimum value to reduce power
+        # Set a fixed bounce magnitude independent of particle size
+        bounce_magnitude = 6  # Fixed value for rebounce power
 
         # Vérifier si on est déjà en train de rebondir
         if not self.is_colliding_w_sun:
@@ -439,14 +442,14 @@ class Particle:
             # Mettre à jour la force de rebond si elle existe
             force = self.find_force("SunColliding")
             if force is not None:
-                print("Updating SunColliding force")
+                # print("Updating SunColliding force")
                 #force.vector.magnitude = max(force.vector.magnitude, bounce_magnitude)
                 #force.vector.direction = direction
                 # Diminution progressive
                 self.change_force("SunColliding", change_magnitude=-0.3, change_direction=0)
                 if force.vector.magnitude <= 0:
                     self.forces.remove(force)
-                    print("Removing SunColliding force")
+                    # print("Removing SunColliding force")
                     self.is_colliding_w_sun = False
 
     def apply_sun_gravity(self, sun):
@@ -500,7 +503,7 @@ class Particle:
             env (Environment): The environment the particle is in.
         """
         self.combine_forces(self.forces)
-        #print("Global force of: ", self.global_force)
+        # print("Global force of: ", self.global_force)
 
         if not self.is_inside_env(env):
             env.remove_particle(self)
@@ -548,6 +551,20 @@ class Environment:
         radius = CIRCLE_RADIUS
         self.particles.append(Particle(Circle(Point(x, y), radius, NBR_TRIANGLE_IN_CIRCLE)))
         #print("Particle created at:", x, y)
+
+    def create_particle_around_sun(self, sun):
+        """
+        Create a new particle at a random position around the sun.
+
+        Args:
+            sun (Sun): The sun object to spawn particles around.
+        """
+        angle = random.uniform(0, 2 * math.pi)
+        distance = random.uniform(sun.radius, sun.radius + 50)  # Random distance within a range
+        x = sun.centerX + distance * math.cos(angle)
+        y = sun.centerY + distance * math.sin(angle)
+        radius = SUN_PARTICLE_RADIUS
+        self.particles.append(Particle(Circle(Point(x, y), radius, NBR_TRIANGLE_IN_CIRCLE)))
 
     def remove_particle(self, particle):
         """
@@ -743,8 +760,12 @@ if __name__ == "__main__":
 
     s1 = Sun(WINDOW_SIZE[0] / 2, WINDOW_SIZE[1] / 2, 16, 100)
 
-    for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
-        env.create_particle()
+    if HANDLING_SUN_COLLISIONS:
+        for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
+            env.create_particle_around_sun(s1)
+    else:
+        for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
+            env.create_particle()
 
 
     for particle in env.particles:
