@@ -129,7 +129,7 @@ class Mountain:
 
 
     def createMountain(self):
-        nbrTriangle = 5
+        nbrTriangle = 10
         intBlue = 100
         baseY = self.position[1]
         width = (GetSystemMetrics(0) - 100) / 12
@@ -281,17 +281,17 @@ s1 = Sun((GetSystemMetrics(0) - 100) / 2, (GetSystemMetrics(1) - 100)/ 2 - (GetS
 g = Ground()
 def globalGeneration(time, bpm):
     if firstLaunch:
-        spawnMountain()
+        # spawnMountain()
         g.groundGeneration()
         #playTrumpet(1)
     elif firstLaunch != True:
         g.draw()
         s1.draw()
         s1.update(bpm)
-        for mountain in mountains:
-            mountain.draw()
-            if mountain.canMove:
-                mountain.update(time)
+        # for mountain in mountains:
+        #     mountain.draw()
+        #     if mountain.canMove:
+        #         mountain.update(time)
 
 
 def clearAll():
