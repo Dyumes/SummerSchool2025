@@ -18,7 +18,7 @@ NBR_TRIANGLE_IN_CIRCLE = 8
 CIRCLE_RADIUS = 10
 SUN_PARTICLE_RADIUS = 5
 PARTICLE_COLOR = (255, 100, 0)
-SUN_PARTICLE_COLOR = (100, 255, 0)
+SUN_PARTICLE_COLOR = (255, 255, 0)
 SUN_PARTICLE_COLOR_DELTA = 150
 MIN_PARTICLES = 300
 MAX_PARTICLES = 300
@@ -564,7 +564,7 @@ class Environment:
             sun (Sun): The sun object to spawn particles around.
         """
         angle = random.uniform(0, 2 * math.pi)
-        distance = random.uniform(sun.radius, sun.radius + 50)  # Random distance within a range
+        distance = random.uniform(sun.radius, sun.radius + 50)
         x = sun.centerX + distance * math.cos(angle)
         y = sun.centerY + distance * math.sin(angle)
         radius = SUN_PARTICLE_RADIUS
