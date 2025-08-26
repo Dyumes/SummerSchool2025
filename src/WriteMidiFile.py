@@ -133,38 +133,6 @@ def sort_notes_by_start(notes):
 def sort_notes_by_pitch(notes):
     return sorted(notes, key=lambda note: note["pitch"])
 
-# def concat_notes(notes):
-#     print("Concatenation des notes...")
-#
-#     if not notes:
-#         print("Aucune note à concatener")
-#         return []
-#
-#     final_notes = []
-#     used = [False] * len(notes)
-#
-#     for i in range(len(notes)):
-#         if used[i]:
-#             continue
-#         current = notes[i]
-#         for j in range(i + 1, len(notes)):
-#             if (
-#                 not used[j]
-#                 and current["pitch"] == notes[j]["pitch"]
-#                 and abs(notes[j]["start"] - current["end"]) < 1e-6
-#             ):
-#                 current = {
-#                     "pitch": current["pitch"],
-#                     "start": current["start"],
-#                     "end": notes[j]["end"],
-#                     "velocity": notes[j]["velocity"],
-#                     "instrument": notes[j]["instrument"]
-#                 }
-#                 used[j] = True
-#         final_notes.append(current)
-#
-#     return final_notes
-
 def concat_notes(notes):
     print("Concatenation des notes...")
     if not notes:
