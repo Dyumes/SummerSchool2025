@@ -25,7 +25,7 @@ fps = 60
 
 # SETTINGS
 (width, height) = (GetSystemMetrics(0) - 100, GetSystemMetrics(1) - 100)
-background_colour = (0,0,0)
+background_colour = (15, 0, 35)
 screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
 
@@ -47,11 +47,6 @@ def detectTrumpetNotes(notes):
         mountains[n.pitch].start_time = current_time
         mountains[n.pitch].animation_max_height = n.velocity * 10
         mountains[n.pitch].can_move = True
-
-        # gn.changeMountainAnimiationTime(n.duration,n.pitch)
-        # gn.changeMountainStartTime(current_time, n.pitch)
-        # gn.changeMountainMaxHeight(n.velocity * 2,n.pitch)
-        # gn.playTrumpet(n.pitch)
 
 
 if __name__ == "__main__":

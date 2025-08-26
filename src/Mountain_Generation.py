@@ -1,6 +1,8 @@
 import random
 import pygame
 import math
+import Triangle
+import Point2D
 
 class MountainV2:
     def __init__(self):
@@ -14,12 +16,12 @@ class MountainV2:
         self.floor_position = 600
         self.seed = random.randint(0, 10000)
         self.all_triangles = []
-        self.nb_layers = 10
+        self.nb_layers = 5
         self.snow_height_trigger = 0.75 * self.max_height
         self.rock_height_trigger = 0.4 * self.max_height
-        self.grass_color = (10, 36, 60)
-        self.rock_color = (36, 79, 129)
-        self.snow_color = (117, 129, 137)
+        self.grass_color = 	(0,18,255)
+        self.rock_color = (70,83,255)
+        self.snow_color = 	(239,240,255)
         self.animation_time = 1
         self.start_time = 0
         self.can_move = False
@@ -38,7 +40,7 @@ class MountainV2:
         middle_y = middle_y + y_offset
         middle_y = max(self.floor_position - max_height, min(self.floor_position - 0.2 * max_height, middle_y))
 
-        mid = Point2D(middle_x,middle_y)
+        mid = Point2D.Point2D(middle_x,middle_y)
 
         self.midpoint_displacement(start,mid, max_height/2, nb_subdivision - 1, result)
         self.midpoint_displacement(mid,end, max_height/2, nb_subdivision - 1, result)
@@ -52,7 +54,7 @@ class MountainV2:
                 interpolation_factor = i / nb_layers
                 x = p.x
                 y = floor_y - (floor_y - p.y) * interpolation_factor
-                column.append(Point2D(x,y))
+                column.append(Point2D.Point2D(x,y))
             columns.append(column)
 
         triangles = []
@@ -66,18 +68,18 @@ class MountainV2:
                 c = next_column[j]
                 d = next_column[j + 1]
 
-                color = self.color_for_triangle(Triangle(a, c, b, None))
-                triangles.append(Triangle(a, c, b, color))
+                color = self.color_for_triangle(Triangle.Triangle(a, c, b, None))
+                triangles.append(Triangle.Triangle(a, c, b, color))
 
-                color = self.color_for_triangle(Triangle(b, c, d, None))
-                triangles.append(Triangle(b, c, d, color))
+                color = self.color_for_triangle(Triangle.Triangle(b, c, d, None))
+                triangles.append(Triangle.Triangle(b, c, d, color))
         self.all_triangles = triangles
 
     def generate(self):
         random.seed(self.seed)
         res = []
-        self.midpoint_displacement(Point2D(self.pos_x,self.floor_position),Point2D(self.pos_x + self.width,self.floor_position),self.max_height,self.nb_subdivision, res)
-        res.append(Point2D(self.pos_x + self.width, self.floor_position))
+        self.midpoint_displacement(Point2D.Point2D(self.pos_x,self.floor_position),Point2D.Point2D(self.pos_x + self.width,self.floor_position),self.max_height,self.nb_subdivision, res)
+        res.append(Point2D.Point2D(self.pos_x + self.width, self.floor_position))
 
         max_altitude = self.floor_position - res[0].y
         for p in res:
@@ -114,7 +116,7 @@ class MountainV2:
 
     def update(self, time):
         animation_current_time = time - self.start_time
-        print(self.height)
+
         if self.can_move:
             if animation_current_time >= self.animation_time:
                 self.height = 0 + self.max_height
@@ -133,26 +135,6 @@ class MountainV2:
             p2 = (tri.b.x, self.floor_position - (self.floor_position - tri.b.y) * scale)
             p3 = (tri.c.x, self.floor_position - (self.floor_position - tri.c.y) * scale)
             pygame.draw.polygon(screen, tri.color, [p1, p2, p3])
-
-class Point2D:
-    def __init__(self, pos_x, pos_y):
-        self.x = pos_x
-        self.y = pos_y
-
-    def display(self):
-        print(f"position x: {self.x}, position y: {self.y}")
-
-class Triangle:
-    def __init__(self,corner_a, corner_b, corner_c, color):
-        self.a = corner_a
-        self.b = corner_b
-        self.c = corner_c
-        self.color = color
-
-    def to_pygame_point(self):
-        return [(self.a.x, self.a.y),
-                (self.b.x, self.b.y),
-                (self.c.x, self.c.y)]
 
 if __name__ == "__main__":
     pygame.init()
@@ -174,9 +156,11 @@ if __name__ == "__main__":
             if event.type == pygame.QUIT:
                 running = False
 
+        current_time = pygame.time.get_ticks() / 1000.0
+
         screen.fill((255, 255, 255))
         for e in mountains:
-            e.manage_mountain(screen)
+            e.manage_mountain(screen, current_time)
 
         pygame.display.flip()
         clock.tick(60)
