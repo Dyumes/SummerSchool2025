@@ -133,37 +133,60 @@ def sort_notes_by_start(notes):
 def sort_notes_by_pitch(notes):
     return sorted(notes, key=lambda note: note["pitch"])
 
+# def concat_notes(notes):
+#     print("Concatenation des notes...")
+#
+#     if not notes:
+#         print("Aucune note à concatener")
+#         return []
+#
+#     final_notes = []
+#     used = [False] * len(notes)
+#
+#     for i in range(len(notes)):
+#         if used[i]:
+#             continue
+#         current = notes[i]
+#         for j in range(i + 1, len(notes)):
+#             if (
+#                 not used[j]
+#                 and current["pitch"] == notes[j]["pitch"]
+#                 and abs(notes[j]["start"] - current["end"]) < 1e-6
+#             ):
+#                 current = {
+#                     "pitch": current["pitch"],
+#                     "start": current["start"],
+#                     "end": notes[j]["end"],
+#                     "velocity": notes[j]["velocity"],
+#                     "instrument": notes[j]["instrument"]
+#                 }
+#                 used[j] = True
+#         final_notes.append(current)
+#
+#     return final_notes
+
 def concat_notes(notes):
     print("Concatenation des notes...")
-
     if not notes:
-        print("Aucune note à concaténer")
         return []
 
-    final_notes = []
-    used = [False] * len(notes)
+    # Sort notes by pitch, then by start time
+    notes.sort(key=lambda n: (n["pitch"], n["start"]))
 
-    for i in range(len(notes)):
-        if used[i]:
-            continue
-        current = notes[i]
-        for j in range(i + 1, len(notes)):
-            if (
-                not used[j]
-                and current["pitch"] == notes[j]["pitch"]
-                and abs(notes[j]["start"] - current["end"]) < 1e-6
-            ):
-                current = {
-                    "pitch": current["pitch"],
-                    "start": current["start"],
-                    "end": notes[j]["end"],
-                    "velocity": notes[j]["velocity"],
-                    "instrument": notes[j]["instrument"]
-                }
-                used[j] = True
-        final_notes.append(current)
+    merged_notes = []
+    current = notes[0]
 
-    return final_notes
+    for next_note in notes[1:]:
+        if next_note["pitch"] == current["pitch"] and next_note["start"] <= current["end"]:
+            # Merge overlapping/consecutive notes
+            current["end"] = max(current["end"], next_note["end"])
+            current["velocity"] = max(current["velocity"], next_note["velocity"])
+        else:
+            merged_notes.append(current)
+            current = next_note
+
+    merged_notes.append(current)
+    return merged_notes
 
 
 piano_notes, trumpet_notes = separate_instruments(get_all_notes(os.path.join("media", "midi", "test_output.mid")))
@@ -171,34 +194,8 @@ piano_notes, trumpet_notes = separate_instruments(get_all_notes(os.path.join("me
 piano_notes_sorted = sort_notes_by_start(piano_notes)
 trumpet_notes_sorted = sort_notes_by_start(trumpet_notes)
 
-print(piano_notes_sorted)
-
-#piano_notes_sorted = sort_notes_by_pitch(piano_notes_sorted)
-#trumpet_notes_sorted = sort_notes_by_pitch(trumpet_notes_sorted)
-
-# from tqdm import tqdm
-# piano_notes_concat = concat_notes(list(tqdm(piano_notes, desc="Traitement des notes piano")))
-# trumpet_notes_concat = concat_notes(list(tqdm(trumpet_notes, desc="Traitement des notes trompette")))
-
 piano_notes_concat = concat_notes(piano_notes_sorted)
-piano_notes_concat = concat_notes(piano_notes_concat)
 trumpet_notes_concat = concat_notes(trumpet_notes_sorted)
-
-print("------------------------------------------------------")
-print("------------------------------------------------------")
-print("------------------------------------------------------")
-print(piano_notes_concat)
-
-#print(piano_notes)
-# print("------------------------------------------------------")
-# print("------------------------------------------------------")
-# print("------------------------------------------------------")
-#print(piano_notes_concat)
-
-
-
-
-
 
 file = create_midi_file()
 add_piano(file)
