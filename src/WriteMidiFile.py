@@ -1,19 +1,24 @@
+import os
 import pretty_midi
+
 
 def note_name_to_pitch(note_name, octave=4):
     """
     Convert a note name to MIDI pitch value.
 
     Args:
-        note_name (str): Note name.
+        note_name: Note name.
         octave (int): Octave number.
 
     Returns:
         int: MIDI pitch value.
     """
-    note_names = ["do", "do#", "ré", "ré#", "mi", "fa", "fa#", "sol", "sol#", "la", "la#", "si"]
-    base_pitch = note_names.index(note_name)
-    return base_pitch + 12 * (octave + 1)  # MIDI: C4 = 60
+    if isinstance(note_name, str):
+        note_names = ["do", "do#", "ré", "ré#", "mi", "fa", "fa#", "sol", "sol#", "la", "la#", "si"]
+        base_pitch = note_names.index(note_name)
+        return base_pitch + 12 * (octave + 1)  # MIDI: C4 = 60
+
+    return note_name
 
 def ticks_to_seconds(ticks):
     """
@@ -98,23 +103,82 @@ def write_midi_file(midi, filename):
     """
     midi.write(filename)
 
+def get_all_notes(filename):
+    data = pretty_midi.PrettyMIDI(filename)
+    notes = []
+    for instrument in data.instruments:
+        for note in instrument.notes:
+            notes.append({
+                "pitch": note.pitch,
+                "start": note.start,
+                "end": note.end,
+                "velocity": note.velocity,
+                "instrument": instrument.program
+            })
+    return notes
 
-### Example usage in an other file
+def separate_instruments(notes):
+    piano_notes = []
+    trumpet_notes = []
+    for note in notes:
+        if note["instrument"] == 0:
+            piano_notes.append(note)
+        elif note["instrument"] == 56:
+            trumpet_notes.append(note)
+    return piano_notes, trumpet_notes
 
-"""
-import WriteMidiFile
+def sort_notes_by_start(notes):
+    return sorted(notes, key=lambda note: note["start"])
 
-def test_write_midi_file(notes):
-    # Test the creation of a MIDI file and adding a piano instrument
-    file = WriteMidiFile.create_midi_file()
-    WriteMidiFile.add_piano(file)
-    WriteMidiFile.add_trumpet(file)
+def sort_notes_by_pitch(notes):
+    return sorted(notes, key=lambda note: note["pitch"])
 
-    # Add notes to the MIDI file
-    for note, duration, first_tick in notes:
-        WriteMidiFile.add_note(file.instruments[0], note.name, first_tick, duration)
+def concat_notes(notes):
 
-    # Save the MIDI file
-    WriteMidiFile.write_midi_file(file, "media/midi/test_output.mid")
-    print("MIDI file created successfully.")
-"""
+    if not notes:
+        return []
+
+    # Sort notes by pitch, then by start time
+    notes.sort(key=lambda n: (n["pitch"], n["start"]))
+
+    merged_notes = []
+    current = notes[0]
+
+    for next_note in notes[1:]:
+        if next_note["pitch"] == current["pitch"] and next_note["start"] <= current["end"]:
+            # Merge overlapping/consecutive notes
+            current["end"] = max(current["end"], next_note["end"])
+            current["velocity"] = max(current["velocity"], next_note["velocity"])
+        else:
+            merged_notes.append(current)
+            current = next_note
+
+    merged_notes.append(current)
+    return merged_notes
+
+
+piano_notes, trumpet_notes = separate_instruments(get_all_notes(os.path.join("media", "midi", "test_output.mid")))
+
+piano_notes_concat = concat_notes(piano_notes)
+trumpet_notes_concat = concat_notes(trumpet_notes)
+
+file = create_midi_file()
+add_piano(file)
+add_trumpet(file)
+
+# Add notes to the MIDI file
+if piano_notes_concat:
+    print("Traitement des notes de piano")
+    for note in piano_notes_concat:
+        #print("Piano note:", note)
+        add_note(file.instruments[0], note["pitch"], note["start"], (note["end"] - note["start"]))
+
+if trumpet_notes_concat:
+    print("Traitement des notes de trompette")
+    for note in trumpet_notes_concat:
+        add_note(file.instruments[1], note["pitch"], note["start"], (note["end"] - note["start"]))
+
+# Save the MIDI file
+write_midi_file(file, "media/midi/test_output_clean.mid")
+print("MIDI file created successfully.")
+
