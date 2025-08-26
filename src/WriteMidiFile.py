@@ -134,7 +134,7 @@ def sort_notes_by_pitch(notes):
     return sorted(notes, key=lambda note: note["pitch"])
 
 def concat_notes(notes):
-    print("Concatenation des notes...")
+
     if not notes:
         return []
 
@@ -159,11 +159,8 @@ def concat_notes(notes):
 
 piano_notes, trumpet_notes = separate_instruments(get_all_notes(os.path.join("media", "midi", "test_output.mid")))
 
-piano_notes_sorted = sort_notes_by_start(piano_notes)
-trumpet_notes_sorted = sort_notes_by_start(trumpet_notes)
-
-piano_notes_concat = concat_notes(piano_notes_sorted)
-trumpet_notes_concat = concat_notes(trumpet_notes_sorted)
+piano_notes_concat = concat_notes(piano_notes)
+trumpet_notes_concat = concat_notes(trumpet_notes)
 
 file = create_midi_file()
 add_piano(file)
