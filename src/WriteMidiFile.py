@@ -156,6 +156,11 @@ def concat_notes(notes):
     merged_notes.append(current)
     return merged_notes
 
+if __name__ == "__main__":
+    piano_notes, trumpet_notes = separate_instruments(get_all_notes(os.path.join("media", "midi", "test_output.mid")))
+
+    piano_notes_concat = concat_notes(piano_notes)
+    trumpet_notes_concat = concat_notes(trumpet_notes)
 def merge_notes(filename, new_filename):
     piano_notes, trumpet_notes = separate_instruments(get_all_notes(filename))
     piano_notes_concat = concat_notes(piano_notes)
@@ -167,14 +172,19 @@ def merge_notes(filename, new_filename):
 
     # Add notes to the MIDI file
     if piano_notes_concat:
+        print("Traitement des notes de piano")
         for note in piano_notes_concat:
+            #print("Piano note:", note)
             add_note(file.instruments[0], note["pitch"], note["start"], (note["end"] - note["start"]))
 
+
     if trumpet_notes_concat:
+        print("Traitement des notes de trompette")
         for note in trumpet_notes_concat:
             add_note(file.instruments[1], note["pitch"], note["start"], (note["end"] - note["start"]))
 
-    write_midi_file(file, new_filename)
+    # Save the MIDI file
+    write_midi_file(file, "media/midi/test_output_clean.mid")
     print("MIDI file created successfully.")
 
 # piano_notes, trumpet_notes = separate_instruments(get_all_notes(os.path.join("media", "midi", "test_output.mid")))

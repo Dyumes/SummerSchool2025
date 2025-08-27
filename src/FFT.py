@@ -256,7 +256,7 @@ def hide_noise(values,strength):
         outvalues.append(timeNotes(values[i].step,outnotes))
     return outvalues
 
-
+"""
 unfiltered_values_gauss = dofft("gaussian")
 unfiltered_values_hanning = dofft("hanning")
 unfilterd_values_none = dofft("none")
@@ -269,6 +269,7 @@ allvalues = freq_anal(gaussvalues)
 allvalues = hide_noise(hide_noise(allvalues,2),2)
 
 printvalues(allvalues)
+"""
 
 
 
@@ -348,6 +349,6 @@ def test_write_midi_file(values):
     WriteMidiFile.merge_notes("media/midi/test_output.mid", "media/midi/test_output_clean.mid")
 
 
-test_write_midi_file(allvalues)
-
-plot()
+#test_write_midi_file(allvalues)
+#plot()
+test_write_midi_file(hide_noise(freq_anal(filter(dofft("gaussian"),"gaussian")),2))
