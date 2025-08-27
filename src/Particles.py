@@ -433,7 +433,7 @@ class Particle:
         sun_radius = sun.radius + sun.offset
 
         if sun.is_static:
-            # Si la particule est à l'intérieur du soleil, repositionnez-la à sa limite
+            # Put the particle outside the sun
             if distance < sun_radius + self.form.radius:
                 overlap = (sun_radius + self.form.radius) - distance
                 self.form.center.x += overlap * math.cos(direction)
