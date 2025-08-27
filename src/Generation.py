@@ -31,6 +31,8 @@ class Sun:
         self.centerY = centerY
         self.offset = 0
         self.maxReached = False
+        self.previous_offset = None
+        self.is_static = False
 
     def update(self, bpm):
 
@@ -44,6 +46,11 @@ class Sun:
             if self.offset <= 0:
                 self.offset = 0
                 self.maxReached = False
+
+        if self.previous_offset == self.offset:
+            self.is_static = True
+        else:
+            self.is_static = False
 
 
     def draw(self):
