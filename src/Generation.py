@@ -1,27 +1,49 @@
+import random
 import pygame
+#from Demos.win32console_demo import window_size
 from pygame import gfxdraw
 import math
 import numpy as np
-import array as ar
-from random import randrange
-import pygame_widgets
-from fontTools.ttLib.tables.C_P_A_L_ import Color
-from pygame_widgets.textbox import TextBox
-from matplotlib.widgets import Slider
-from sympy.core.random import random
 from win32api import GetSystemMetrics
+from Particles import Environment, Force, Vector
+
+#TODO : PALM TREE, FILL EMPTY ZONE WITH A FLAT SQUARE, SUN SCALING
 
 pygame.init()
 
-
+windowWidth = GetSystemMetrics(0) - 100
+windowHeight = GetSystemMetrics(1) - 100
+WINDOW_SIZE = (windowWidth, windowHeight)
 #Display pygame with a bit smaller resolution than the screen itself no matter the os
-window = pygame.display.set_mode((GetSystemMetrics(0) - 100, GetSystemMetrics(1) - 100))
+window = pygame.display.set_mode((windowWidth, windowHeight))
 
 fps = 60
 clock = pygame.time.Clock()
 dt = clock.tick(fps) / 1000
 
+NBR_TRIANGLE_IN_CIRCLE = 8
+CIRCLE_RADIUS = 10
+SUN_PARTICLE_RADIUS = 5
+PARTICLE_COLOR = (255, 100, 0)
+SUN_PARTICLE_COLOR = (255, 255, 0)
+SUN_PARTICLE_COLOR_DELTA = 150
+MIN_PARTICLES = 300
+MAX_PARTICLES = 300
+GRAVITY_MAGNITUDE = 9.81
+GRAVITY_DIRECTION = math.pi / 2
+HANDLING_PARTICLES_COLLISIONS = False
+HANDLING_OBJECTS_COLLISIONS = False
+HANDLING_SUN_COLLISIONS = True
+SUN_GRAVITY_MAGNITUDE = 1
+
+suns = []
 mountains = []
+cubes = []
+palms = []
+grounds = []
+validGround = []
+
+
 
 class Sun:
     def __init__(self, centerX, centerY, nbrTriangle, radius):
@@ -90,7 +112,8 @@ class Triangle:
     def get_position3(self):
         return self.p3
 
-
+#Old mountain generation
+"""
 class Mountain:
     def __init__(self, position):
         self.position = position
@@ -132,7 +155,7 @@ class Mountain:
         nbrTriangle = 10
         intBlue = 100
         baseY = self.position[1]
-        width = (GetSystemMetrics(0) - 100) / 12
+        width = (windowWidth) / 12
 
         # First triangle to display (basis)
         p1 = (self.position[0], baseY)
@@ -143,7 +166,7 @@ class Mountain:
 
         min_x = int(p1[0] + tri_width * 0.1)
         max_x = int(p1[0] + tri_width * 0.9)
-        topX = randrange(min_x, max_x)
+        topX = random.randrange(min_x, max_x)
 
         # Peak variation
         topY = baseY - self.height
@@ -167,7 +190,8 @@ class Mountain:
             midY = (a[1] + b[1]) / 2
             a = (a[0], a[1] - self.height)
             b = (b[0], b[1] - self.height)
-            height = randrange(40, 120)
+            b = (b[0], b[1] - self.height)
+            height = random.randrange(40, 120)
             p_new = (midX, midY - height)
 
             intBlue += int(155 / nbrTriangle)
@@ -194,6 +218,108 @@ class Mountain:
             #pygame.draw.circle(window, (0, 255, 0), (tri.p2[0], tri.p2[1]), 3)
             #pygame.draw.circle(window, (0, 255, 255), (tri.p3[0], tri.p3[1] - self.height), 5)
 
+"""
+class Cube:
+    def __init__(self, triangle1:Triangle, triangle2:Triangle):
+        self.triangle1 = triangle1
+        self.triangle2 = triangle2
+        self.p1 = triangle1.get_position1()
+        self.p2 = triangle1.get_position2()
+        self.p3 = triangle1.get_position3()
+        self.p4 = triangle2.get_position3()
+        self.baseColor = [120, 0, 120]
+        self.speed = 10
+        self.height = 0
+        self.maxHeight = 50
+        self.animationTime = 1
+        self.maxReached = False
+        self.offset = random.randrange(0, 1000)
+        self.isValid = False
+        self.canMove = False
+        self.startTime = 0
+
+    def getBaseColor(self):
+        return self.baseColor.copy()
+
+    def changeColor(self, color):
+        self.baseColor = list(color)
+
+
+    def update(self, time):
+        if self.canMove and self.isValid:
+            self.height = 30 * math.sin((time + self.offset) * 0.005) + 30
+        """
+        animationCurrentTime = time - self.startTime
+        if self.canMove and self.isValid:
+            if  animationCurrentTime < 0.2 * self.animationTime:
+                self.height = (0.2 * self.animationTime) / self.maxHeight * animationCurrentTime
+            elif animationCurrentTime > 0.8 * self.animationTime:
+                self.height = 1 * (0.2 * self.animationTime) / self.maxHeight * animationCurrentTime
+            else:
+                self.height = -self.maxHeight * 0.1 * math.sin(animationCurrentTime * 20) + self.maxHeight
+        """
+    def draw(self):
+        p1 = self.p1
+        p2 = self.p2
+        p3 = self.p3
+        p4 = self.p4
+
+        if p1[1] <= GetSystemMetrics(1)/2  or p2[0] > GetSystemMetrics(0) or p1[0] < 0:
+            self.isValid = False
+        else:
+            self.isValid = True
+            p1h = (p1[0], p1[1] - self.height)
+            p2h = (p2[0], p2[1] - self.height)
+            p3h = (p3[0], p3[1] - self.height)
+            p4h = (p4[0], p4[1] - self.height)
+
+
+            if p1[1] > GetSystemMetrics(1)/2:
+
+                # right
+                pygame.draw.polygon(window,
+                                    (self.baseColor[0], self.baseColor[1], self.baseColor[2]),
+                                    [p2, p3, p3h])
+                pygame.draw.polygon(window, (self.baseColor[0], self.baseColor[1], self.baseColor[2]), [p2, p3h, p2h])
+
+                # left
+                pygame.draw.polygon(window, (self.baseColor[0] + 50, self.baseColor[1], self.baseColor[2] + 50), [p4, p1, p1h])
+                pygame.draw.polygon(window, (self.baseColor[0] + 50, self.baseColor[1], self.baseColor[2] + 50), [p4, p1h, p4h])
+
+                # front
+                pygame.draw.polygon(window, (self.baseColor[0] + 30, self.baseColor[1], self.baseColor[2] + 30), [p1, p2, p2h])
+                pygame.draw.polygon(window, (self.baseColor[0] + 30, self.baseColor[1], self.baseColor[2] + 30), [p1, p2h, p1h])
+
+            else:
+                # right
+                pygame.draw.polygon(window, (self.baseColor[0], self.baseColor[1], self.baseColor[2]), [p2, p3, p3h])
+                pygame.draw.polygon(window, (self.baseColor[0], self.baseColor[1], self.baseColor[2]), [p2, p3h, p2h])
+
+            # top
+            pygame.draw.polygon(window, (self.baseColor[0] + 80, self.baseColor[1], self.baseColor[2] + 80), [p1h, p2h, p3h])
+            pygame.draw.polygon(window, (self.baseColor[0] + 80, self.baseColor[1], self.baseColor[2] + 80), [p1h, p3h, p4h])
+
+
+    def linear_interpolation_color(self,color1, color2, factor):
+        color = (int(color1[0] + (color2[0] - color1[0])*factor),
+                 int(color1[1] + (color2[1] - color1[1])*factor),
+                 int(color1[2] + (color2[2] - color1[2])*factor))
+
+        return color
+
+    def get_depth(self):
+        return (self.p1[1] + self.p2[1] + self.p3[1] + self.p4[1]) / 4
+
+    def get_xmean(self):
+        return (self.p1[0] + self.p2[0] + self.p3[0] + self.p4[0]) / 4
+
+def createValidGround():
+    for cube in cubes:
+        if cubes.index(cube) < 7:
+            pass
+        else:
+            validGround.append(cube)
+    pass
 
 def get_transformation(src, dst):
     A = []
@@ -231,8 +357,8 @@ class Ground():
         dest = [
             (GetSystemMetrics(0)/2-(GetSystemMetrics(0)*4)-50, base_y),
             (GetSystemMetrics(0)/2+(GetSystemMetrics(0)*4)-50, base_y),
-            (GetSystemMetrics(0) -50 -GetSystemMetrics(0)/5, (GetSystemMetrics(1) - 100) *7/16 ),
-            (-50 +GetSystemMetrics(0)/5, (GetSystemMetrics(1) - 100) *7/16)
+            (GetSystemMetrics(0) -50 -GetSystemMetrics(0)/5, (windowHeight) *7/16 ),
+            (-50 +GetSystemMetrics(0)/5, (windowHeight) *7/16)
         ]
 
         transfo = get_transformation(src, dest)
@@ -249,43 +375,190 @@ class Ground():
                 P3 = apply_transformation(p3, transfo)
                 P4 = apply_transformation(p4, transfo)
 
-                color = (127,0,255)
-                t1 = Triangle(color, (int(P1[0]),int(P1[1])), (int(P2[0]),int(P2[1])), (int(P3[0]),int(P3[1])) )
-                t2 = Triangle(color, (int(P1[0]),int(P1[1])), (int(P3[0]),int(P3[1])), (int(P4[0]),int(P4[1])) )
+                if P1[1] > GetSystemMetrics(1)/2 + 10 and P1[0] > 0 and P2[0] < windowWidth:
+                    color = (127,0,255)
+                    t1 = Triangle(color, (int(P1[0]),int(P1[1])), (int(P2[0]),int(P2[1])), (int(P3[0]),int(P3[1])) )
+                    t2 = Triangle(color, (int(P1[0]),int(P1[1])), (int(P3[0]),int(P3[1])), (int(P4[0]),int(P4[1])) )
+                    self.triangles.append(t1)
+                    self.triangles.append(t2)
 
-                self.triangles.append(t1)
-                self.triangles.append(t2)
+                    cube = Cube(t1, t2)
+                    cubes.append(cube)
+
 
     def draw(self):
         for tri in reversed(self.triangles):
             color = tri.get_color()
             pygame.gfxdraw.trigon(window, tri.p1[0], tri.p1[1],tri.p2[0], tri.p2[1], tri.p3[0], tri.p3[1],color)
 
+        #draw a rectangle for hiding extended triangles going beyond mountains
+        """
+        pygame.draw.polygon(window,
+                            (0, 0, 0),
+                            ((0, 0),
+                             (0, (windowHeight) / 2),
+                             (GetSystemMetrics(0), (windowHeight) / 2))
+                            )
+        pygame.draw.polygon(window,
+                            (0, 0, 0),
+                            ((0, 0),
+                             (GetSystemMetrics(0), 0),
+                             (GetSystemMetrics(0),(windowHeight) / 2))
+                            )
+        """
     def clear(self):
         self.triangles = []
 
 
-def spawnMountain():
+class Palm:
+    def __init__(self):
+        self.triangles = []
+        self.DARK_BROWN = (101, 67, 33)
+        self.LIGHT_BROWN = (205, 133, 63)
+        self.DARK_GREEN = (0, 100, 0)
+        self.GREEN = (34, 139, 34)
+        self.LIGHT_GREEN = (144, 238, 144)
+
+    def createGradientRectangleTriangles(self, x, y, width, height, angle, color1, color2):
+        halfWidth = width / 2
+        halfHeight = height / 2
+
+        # rectangle debout (hauteur dans l'axe Y)
+        points = [
+            (-halfWidth, 0),
+            (halfWidth, 0),
+            (halfWidth, height),
+            (-halfWidth, height)
+        ]
+
+        angleRad = math.radians(angle)
+        rotatedPoints = []
+        for px, py in points:
+            rx = px * math.cos(angleRad) - py * math.sin(angleRad)
+            ry = px * math.sin(angleRad) + py * math.cos(angleRad)
+            rotatedPoints.append((x + rx, y + ry))
+
+        # 2 triangles pour former le rectangle
+        t1 = Triangle(color1, rotatedPoints[0], rotatedPoints[1], rotatedPoints[2])
+        t2 = Triangle(color2, rotatedPoints[0], rotatedPoints[2], rotatedPoints[3])
+        return [t1, t2]
+
+
+    def generatePalm(self, x, y, depth, maxDepth, width, angle):
+        triangles = []
+        length = 100
+
+        # on trace un segment dans la direction "angle"
+        endX = x + length * math.cos(math.radians(angle))
+        endY = y + length * math.sin(math.radians(angle))
+
+        segmentTriangles = self.createGradientRectangleTriangles(
+            (x + endX) / 2,
+            (y + endY) / 2,
+            width,
+            length,
+            angle,   # <== correction : on passe l'angle courant
+            self.DARK_BROWN,
+            self.LIGHT_BROWN
+        )
+        triangles.extend(segmentTriangles)
+
+        new_width = width * 0.7
+
+        # on génère les branches
+        if depth < maxDepth:
+            numBranches = random.randint(2, 3)
+            for _ in range(numBranches):
+                newAngle = angle + random.uniform(-30, 30)
+                branchTriangles = self.generatePalm(endX, endY, depth + 1, maxDepth, new_width, newAngle)
+                triangles.extend(branchTriangles)
+
+        # si on est en bout de tronc -> feuilles
+        if depth >= maxDepth - 1:
+            leafCount = random.randint(3, 6)
+            for _ in range(leafCount):
+                leafSize = length * random.uniform(0.8, 1.5)
+                leafAngle = random.uniform(0, 360)
+                leafDistance = random.uniform(0.5, 1.0)
+
+                leafX = endX + (length * leafDistance) * math.cos(math.radians(angle))
+                leafY = endY + (length * leafDistance) * math.sin(math.radians(angle))
+
+                leafPoints = [
+                    (leafX, leafY),
+                    (leafX + leafSize * math.cos(math.radians(leafAngle)),
+                     leafY + leafSize * math.sin(math.radians(leafAngle))),
+                    (leafX + leafSize * math.cos(math.radians(leafAngle + 120)),
+                     leafY + leafSize * math.sin(math.radians(leafAngle + 120)))
+                ]
+
+                leafColor = random.choice([self.DARK_GREEN, self.GREEN, self.LIGHT_GREEN])
+                triangles.append(Triangle(leafColor, leafPoints[0], leafPoints[1], leafPoints[2]))
+
+        return triangles
+
+    def draw(self):
+        for triangle in self.triangles:
+            pygame.draw.polygon(window,
+                                triangle.get_color(),
+                                (triangle.p1, triangle.p2, triangle.p3))
+
+    def clear(self):
+        self.triangles.clear()
+
+"""
+def spawnMountains():
     positionX = 0
-    positionY = (GetSystemMetrics(1) - 100) / 2
+    positionY = (GetSystemMetrics(1)) / 2
 
     for m in range(12):
         mountain = Mountain((positionX, positionY))
         mountains.append(mountain)
         mountain.createMountain()
 
-        positionX += (GetSystemMetrics(0) - 100) / 12
-
+        positionX += (windowWidth) / 12
+"""
 firstLaunch = True
-s1 = Sun((GetSystemMetrics(0) - 100) / 2, (GetSystemMetrics(1) - 100)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
+s1 = Sun((windowWidth) / 2, (windowHeight)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
 g = Ground()
+p1 = Palm()
+
+# Sort by depth and side
+def getSortKey(cube):
+    depth = cube.get_depth()
+    x_mean = cube.get_xmean()
+    if x_mean < GetSystemMetrics(0) / 2:
+        return (depth, x_mean)   # left side : left to right
+    else:
+        return (depth, -x_mean)  # right side : right to left
+
 def globalGeneration(time, bpm):
+    global s1
     if firstLaunch:
         # spawnMountain()
+        s1 = Sun((windowWidth) / 2, (windowHeight)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
+        suns.append(s1)
+        #spawnMountains()
         g.groundGeneration()
+        generateValidGround()
+        assignCubesToColumns()
+        grounds.append(g)
         #playTrumpet(1)
-    elif firstLaunch != True:
+        p1.generatePalm(windowWidth / 2, windowHeight / 2, 0, 5, 50, 90)
+        palms.append(p1)
+    elif not firstLaunch:
         g.draw()
+        for sun in suns:
+            sun.draw()
+            sun.update(bpm)
+
+        env.draw()
+        env.update()
+
+        for mountain in mountains:
+            mountain.draw()
+            if mountain.canMove:
+                mountain.update(time)
         s1.draw()
         s1.update(bpm)
         # for mountain in mountains:
@@ -294,10 +567,24 @@ def globalGeneration(time, bpm):
         #         mountain.update(time)
 
 
+        cubes_sorted = sorted(validGround, key=getSortKey)
+        for cube in cubes_sorted:
+            cube.update(pygame.time.get_ticks())
+            cube.draw()
+
+        for palm in palms:
+            palm.draw()
+
+
+
 def clearAll():
     global mountains
+    global cubes
+    suns.clear()
     mountains.clear()
-    g.clear()
+    cubes.clear()
+    palms.clear()
+    grounds.clear()
 
 
 font = pygame.font.SysFont("Arial", 30)
@@ -306,12 +593,72 @@ def fps_counter(win, clk):
     fps_t = font.render(fps , 1, pygame.Color("RED"))
     win.blit(fps_t,(0,0))
 
-def playTrumpet(nbr): #TODO : SEE IF WE RECEIVE THE NOTE NAME OR THE PLACE
+def playTrumpet(nbr):
     mountains[nbr].canMove = True
     # if mountains[nbr].canMove:
     #     mountains[nbr].canMove = False
     # else:
     #     mountains[nbr].canMove = True
+
+notes = []
+for i in range(12):
+    notes.append((i,(14 *(i + 1), 0, 14 * (i + 1))))
+
+def generateValidGround():
+    for cube in cubes:
+        if 7 < cubes.index(cube) < 20 or 21 < cubes.index(cube) < 34 or 39 < cubes.index(cube) < 52 or 60 < cubes.index(cube) < 73 or 84 < cubes.index(cube) < 97 or 112 < cubes.index(cube) < 125:
+            validGround.append(cube)
+        else:
+            pass
+
+cubes_by_column = [[] for _ in range(12)]
+
+def assignCubesToColumns():
+    global cubes_by_column
+    cubes_by_column = [[] for _ in range(12)]
+    col_width = windowWidth / 12
+    for cube in validGround:
+        col = int(cube.get_xmean() // col_width)
+        col = max(0, min(11, col))
+        cubes_by_column[col].append(cube)
+
+
+allMoving = False
+def playPiano(note):
+    global allMoving
+
+    if not cubes_by_column[note]:
+        return
+
+    available_cubes = [c for c in cubes_by_column[note] if not c.canMove]
+
+    if not available_cubes:
+        for c in cubes_by_column[note]:
+            c.height = 0
+            c.changeColor(c.getBaseColor())
+            c.canMove = False
+
+        available_cubes = cubes_by_column[note]
+
+    cube = random.choice(available_cubes)
+    cube.changeColor(notes[note][1])
+    cube.canMove = True
+
+    if all(c.canMove for c in validGround):
+        playPianoAll()
+
+
+
+def playPianoAll():
+    for cube in cubes:
+        if cube.canMove:
+            cube.height = 0
+            cube.changeColor((cube.getBaseColor()[0], cube.getBaseColor()[1], cube.getBaseColor()[2]))
+            cube.canMove = False
+        else :
+            cube.canMove = True
+
+
 
 def changeMountainGrowthSpeed(newSpeed, nbr):
     mountains[nbr].growthSpeed = newSpeed
@@ -325,19 +672,47 @@ def changeMountainAnimiationTime(newAnimiationTime, nbr):
 def changeMountainStartTime(newStartTime, nbr):
     mountains[nbr].startTime = newStartTime
 
+def changeCubeGrowthSpeed(newSpeed, nbr):
+    cubes[nbr].growthSpeed = newSpeed
+
+def changeCubeMaxHeight(newHeight, nbr):
+    cubes[nbr].maxHeight = newHeight
+
+def changeCubeAnimiationTime(newAnimiationTime, nbr):
+    cubes[nbr].animationTime = newAnimiationTime
+
+def changeCubeStartTime(newStartTime, nbr):
+    cubes[nbr].startTime = newStartTime
+
+
+env = Environment(WINDOW_SIZE)
+gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))
+
+env.sun = s1
+
+if HANDLING_SUN_COLLISIONS:
+    for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
+        env.create_particle_around_sun(s1)
+else:
+    for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
+        env.create_particle()
+
+
+for particle in env.particles:
+    #particle.add_force(gravity)
+    pass
+
 if __name__ == "__main__":
 
     running = True
 
-
     while running:
 
-        window.fill((0, 0, 0))
+        #window.fill((0, 0, 0))
 
         globalGeneration(clock.tick(), 60)
         firstLaunch = False
         fps_counter(window, clock)
-
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
@@ -353,6 +728,13 @@ if __name__ == "__main__":
                         firstLaunch = True
                     case pygame.K_1:
                         playTrumpet(1)
+                        note = random.randint(0, 11)
+                        print(f"note : {note}")
+                        playPiano(note)
+
+                    case pygame.K_2:
+                        playPianoAll()
+
 
 
         clock.tick(fps)

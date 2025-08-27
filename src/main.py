@@ -49,6 +49,17 @@ def detectTrumpetNotes(notes):
         mountains[n.pitch].can_move = True
 
 
+def detectPianoNotes(notes):
+    for n in notes:
+        print(n.pitch)
+        print(n.duration)
+        print(n.velocity * 2)
+        gn.changeCubeAnimiationTime(n.duration,n.pitch)
+        gn.changeCubeStartTime(current_time, n.pitch)
+        # gn.changeMountainGrowthSpeed(200/n.duration, n.pitch)
+        gn.changeCubeMaxHeight(n.velocity * 2,n.pitch)
+        gn.playPiano(n.pitch)
+
 if __name__ == "__main__":
 
     mountains = []
@@ -58,7 +69,7 @@ if __name__ == "__main__":
         temp = gn2.MountainV2()
         temp.width = screen.get_width() / 12
         temp.pos_x = temp.width * i
-        temp.floor_position = height/2
+        temp.floor_position = height/2 + 50
         temp.generate()
         mountains.append(temp)
 
@@ -68,7 +79,7 @@ if __name__ == "__main__":
         temp.width = screen.get_width() / 12 + factor
         temp.max_height = 500
         temp.pos_x = (temp.width - factor) * (i-1) + mountains[0].width/2
-        temp.floor_position = height/2
+        temp.floor_position = height/2 + 50
         temp.generate()
         static_mountains.append(temp)
 
@@ -94,6 +105,7 @@ if __name__ == "__main__":
         current_time = (pygame.time.get_ticks() - start_ticks) / 1000.0
 
         if startSong:
+
             # detect if a piano notes should play
             while current_piano_index < len(piano_notes) and piano_notes[current_piano_index].start <= current_time:
                 active_piano_notes.append(piano_notes[current_piano_index])
@@ -117,12 +129,8 @@ if __name__ == "__main__":
 
         screen.fill(background_colour)
 
-
-        gn.globalGeneration(current_time, bpm)
-        gn.firstLaunch = False
-        gn.fps_counter(screen, clock)
-
         detectTrumpetNotes(active_flute_notes)
+        detectPianoNotes(active_piano_notes)
 
         for e in mountains:
             e.manage_mountain(screen, current_time)
@@ -130,6 +138,9 @@ if __name__ == "__main__":
         for e in static_mountains:
             e.manage_mountain(screen, current_time)
 
+        gn.globalGeneration(current_time, bpm)
+        gn.firstLaunch = False
+        gn.fps_counter(screen, clock)
         # detectTrumpetNotes(active_flute_notes)
 
         for n in active_flute_notes:
