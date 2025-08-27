@@ -425,11 +425,26 @@ class Particle:
         Args:
             sun (Sun): The sun object.
         """
-        # Calculer la direction d'éloignement du soleil
         dx = self.form.center.x - sun.centerX
         dy = self.form.center.y - sun.centerY
         distance = math.sqrt(dx * dx + dy * dy)
         direction = math.atan2(dy, dx)
+
+        sun_radius = sun.radius + sun.offset
+
+        if sun.is_static:
+            # Si la particule est à l'intérieur du soleil, repositionnez-la à sa limite
+            if distance < sun_radius + self.form.radius:
+                overlap = (sun_radius + self.form.radius) - distance
+                self.form.center.x += overlap * math.cos(direction)
+                self.form.center.y += overlap * math.sin(direction)
+            return
+
+        # Calculer la direction d'éloignement du soleil
+        #dx = self.form.center.x - sun.centerX
+        #dy = self.form.center.y - sun.centerY
+        #distance = math.sqrt(dx * dx + dy * dy)
+        #direction = math.atan2(dy, dx)
 
         # # Reduce the bounce magnitude to make the rebounce less powerful
         # bounce_magnitude = 4 * (sun.radius + sun.offset - distance + self.form.radius) / self.form.radius
@@ -717,6 +732,8 @@ if __name__ == "__main__":
             self.centerY = centerY
             self.offset = 0
             self.maxReached = False
+            self.previous_offset = None
+            self.is_static = False
 
         def update(self, bpm):
 
@@ -730,6 +747,12 @@ if __name__ == "__main__":
                 if self.offset <= 0:
                     self.offset = 0
                     self.maxReached = False
+            #self.previous_offset = self.offset
+
+            if self.previous_offset == self.offset:
+                self.is_static = True
+            else:
+                self.is_static = False
 
         def draw(self):
             for t in range(self.nbrTriangle):
