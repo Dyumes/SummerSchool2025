@@ -344,6 +344,9 @@ def test_write_midi_file(values):
     WriteMidiFile.write_midi_file(file, "media/midi/test_output.mid")
     print("MIDI file created successfully.")
 
+    # Clean the MIDI file by merging overlapping notes
+    WriteMidiFile.merge_notes("media/midi/test_output.mid", "media/midi/test_output_clean.mid")
+
 
 test_write_midi_file(allvalues)
 
