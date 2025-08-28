@@ -193,6 +193,11 @@ class Particle:
             Returns:
                 bool: True if inside, False otherwise.
         """
+        if env.handling_sun_collisions:
+            # Allow particles to go slightly outside the environment when sun collisions are handled
+            margin = 50
+            return (-margin <= self.form.center.x <= env.width + margin and
+                    -margin <= self.form.center.y <= env.height + margin)
         return env.is_inside(self.form.center)
 
     def touch_env_bottom(self, env):
