@@ -223,7 +223,7 @@ def freq_anal(values):
                 if abs(fraction_excess) < freq_ana_precision:
                     bunch.append([fraction_int,note])
 
-            result.append(bunch)
+                result.append(bunch)
 
         r = []
 
@@ -240,6 +240,8 @@ def freq_anal(values):
                 if freq[0]<= 8:
                     piano_indice += abs(piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
                     trumpet_indice += abs(trumpet_comparison[freq[0]]-(freq[1].amplitude/base_freq))
+                    #print("pian",piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
+                    #print("trum",trumpet_comparison[freq[0]]-(freq[1].amplitude/base_freq))
 
             print("piano",piano_indice)
             print("trumpet",trumpet_indice)
