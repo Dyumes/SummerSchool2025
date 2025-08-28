@@ -17,6 +17,7 @@ FFT_WINDOW_SECONDS = FFT_WINDOW_SIZE/fs # how many seconds of audio make up an F
 #FFT_WINDOW_SIZE = int(fs * FFT_WINDOW_SECONDS)
 AUDIO_LENGTH_TICKS = len(audio)
 AUDIO_LENGTH_SECONDS = len(audio)/fs    #audio length in seconds
+freq_ana_precision = 0.1
 
 ZERO_PADDING_FACTOR = 2 #doubles precision(time or frequency)
 
@@ -24,8 +25,8 @@ NOTE_NAMES = ["do", "do#", "ré", "ré#", "mi", "fa", "fa#", "sol", "sol#", "la"
 
 STEP_NUMBER = int(len(audio)/FFT_WINDOW_SIZE)
 
-BASE_TRESH = 250000
-ANY_TRESH = 50000
+BASE_TRESH = 200000
+ANY_TRESH = 10000
 
 def extract_sample(audio, step):    #exctrats window size sample from audio with zero-padding
     end = step*FFT_WINDOW_SIZE
@@ -158,7 +159,8 @@ def getaudiblefreqs(notelist):
     audiblefreqs = []
     for note in notelist:
         if note.frequency < 2000 and note.frequency > 10 and note.amplitude > BASE_TRESH:
-            audiblefreqs.append(note)
+            if note.frequency < 1000 or note.amplitude > 1.5 * BASE_TRESH:
+                audiblefreqs.append(note)
     return audiblefreqs
 
 def get_feq_amp(values,step):
@@ -183,6 +185,7 @@ def certainty(note):
 
     return diff/(high_freq-low_freq)
 
+piano_freqs = []
 
 def freq_anal(values):
 
@@ -191,10 +194,6 @@ def freq_anal(values):
     for timeNote in values:
         base_notes = getaudiblefreqs(timeNote.notes)
         base_notes_ref = getaudiblefreqs(timeNote.notes)
-        if timeNote.step == 170:
-            for n in base_notes:
-                print(n)
-
         result = []
 
         for base_noteA in base_notes_ref:
@@ -205,7 +204,7 @@ def freq_anal(values):
                 #if timeNote.step == 170:
                 #    print(base_noteA.frequency,base_noteB.frequency,fraction_excess)
 
-                if abs(fraction_excess) < 0.05 and fraction_int>1:
+                if abs(fraction_excess) < freq_ana_precision and fraction_int>1:
                     if base_noteA in base_notes:
                         base_notes.remove(base_noteA)
 
@@ -221,7 +220,7 @@ def freq_anal(values):
                 #if timeNote.step == 170:
                 #    print(fraction_int,base_note.frequency,note,fraction_excess)
 
-                if abs(fraction_excess) < 0.05:
+                if abs(fraction_excess) < freq_ana_precision:
                     bunch.append([fraction_int,note])
 
             result.append(bunch)
@@ -232,6 +231,10 @@ def freq_anal(values):
             if len(bunch) >1:
                 r.append(bunch[0][1])
 
+            if len(bunch) >2:
+                for note in bunch:
+                    piano_freqs.append(note[1])
+
 
 
         return_values.append(timeNotes(timeNote.step,r))
@@ -240,9 +243,9 @@ def freq_anal(values):
 
 def hide_noise(values,strength):
     outvalues = []
-    for i in range(1,len(values)-strength):
+    for i in range(strength,len(values)-strength):
         enclosing_notes = []
-        for note in values[i-1].notes:
+        for note in values[i-strength].notes:
             enclosing_notes.append(note.name())
         for note in values[i+strength].notes:
             enclosing_notes.append(note.name())
@@ -285,7 +288,7 @@ def submit(text):
 
     notes = [16.35, 17.32, 18.35, 19.44, 20.6, 21.82, 23.12, 24.5, 25.95, 27.5, 29.13, 30.86, 32.7, 34.64, 36.7, 38.89, 41.2, 43.65, 46.24, 48.99, 51.91, 54.99, 58.26, 61.73, 65.4, 69.29, 73.41, 77.77, 82.4, 87.3, 92.49, 97.99, 103.82, 109.99, 116.53, 123.46, 130.8, 138.58, 146.82, 155.55, 164.8, 174.6, 184.98, 195.98, 207.63, 219.98, 233.06, 246.92, 261.6, 277.16, 293.64, 311.1, 329.6, 349.19, 369.96, 391.96, 415.26, 439.96, 466.12, 493.84, 523.2, 554.31, 587.27, 622.19, 659.19, 698.39, 739.92, 783.91, 830.52, 880.0, 932.24, 987.68, 1046.48, 1108.62, 1174.55, 1244.37, 1318.38, 1396.78, 1479.83, 1567.82, 1661.23, 1760.0, 1864.48, 1975.37, 2092.95, 2217.25, 2349.09, 2488.73, 2636.75, 2793.55, 2959.65, 3135.65, 3322.45, 3520.0, 3728.96, 3950.74, 4185.9, 4434.5, 4698.18, 4977.46, 5273.5, 5587.1, 5919.29, 6271.3, 6644.9, 7040.0, 7457.91, 7901.48, 8371.8, 8869.0, 9396.37, 9954.92, 10547.01, 11174.21, 11838.59, 12542.6, 13289.79, 14080.0, 14915.83, 15803.0, 16743.59, 17739.01, 18792.75, 19909.84]
     ax.set_xticks(notes)
-
+    """
     frq_unf_gauss, amp_unf_gauss = get_feq_amp(unfiltered_values_gauss,step)
     frq_fil_gauss, amp_fil_gauss = get_feq_amp(gaussvalues,step)
 
@@ -303,7 +306,9 @@ def submit(text):
     ax.scatter(frq_fil_para,amp_fil_para,label = "parabolic interpolation", color="green")
 
     ax.plot(frq_unfil_none,amp_unfil_none,label="no window",color="grey")
-
+    """
+    frq, amp = get_feq_amp(fftvalues,step)
+    ax.plot(frq,amp)
     ax.legend()
     ax.grid()
 
@@ -350,5 +355,12 @@ def test_write_midi_file(values):
 
 
 #test_write_midi_file(allvalues)
+
+fftvalues = dofft("gaussian")
+totalvalues = filter(fftvalues,"gaussian")
+davalues = hide_noise(freq_anal(totalvalues),1)
+test_write_midi_file(davalues)
+#printvalues(davalues)
 #plot()
-test_write_midi_file(hide_noise(freq_anal(filter(dofft("gaussian"),"gaussian")),2))
+
+printvalues(piano_freqs)
