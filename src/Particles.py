@@ -530,6 +530,8 @@ class Particle:
 
         sun_radius = sun.radius + sun.offset
 
+        #TODO : ça ne marche pas avec l'animation complète ->
+        """
         if sun.is_static:
             # Put the particle outside the sun
             if distance < sun_radius + self.form.radius:
@@ -537,6 +539,7 @@ class Particle:
                 self.form.center.x += overlap * math.cos(direction)
                 self.form.center.y += overlap * math.sin(direction)
             return
+        """
 
         # Calculer la direction d'éloignement du soleil
         #dx = self.form.center.x - sun.centerX

@@ -2,6 +2,7 @@ import random
 import pygame
 #from Demos.win32console_demo import window_size
 from pygame import gfxdraw
+import pyautogui
 import math
 import numpy as np
 from win32api import GetSystemMetrics
@@ -11,8 +12,9 @@ from Particles import Environment, Force, Vector
 
 pygame.init()
 
-windowWidth = GetSystemMetrics(0) - 100
-windowHeight = GetSystemMetrics(1) - 100
+windowWidth = pyautogui.size()[0] - 100
+windowHeight = pyautogui.size()[1] - 100
+print(f"pyautogui : {windowWidth} - {windowHeight}\nautre : {pyautogui.size()[0]} - {pyautogui.size()[1]}")
 WINDOW_SIZE = (windowWidth, windowHeight)
 #Display pygame with a bit smaller resolution than the screen itself no matter the os
 window = pygame.display.set_mode((windowWidth, windowHeight))
@@ -27,13 +29,13 @@ SUN_PARTICLE_RADIUS = 5
 PARTICLE_COLOR = (255, 100, 0)
 SUN_PARTICLE_COLOR = (255, 255, 0)
 SUN_PARTICLE_COLOR_DELTA = 150
-#MIN_PARTICLES = 10
-#MAX_PARTICLES = 10
+MIN_PARTICLES = 300
+MAX_PARTICLES = 300
 GRAVITY_MAGNITUDE = 9.81
 GRAVITY_DIRECTION = math.pi / 2
-# HANDLING_PARTICLES_COLLISIONS = False
-# HANDLING_OBJECTS_COLLISIONS = False
-# HANDLING_SUN_COLLISIONS = True
+HANDLING_PARTICLES_COLLISIONS = False
+HANDLING_OBJECTS_COLLISIONS = False
+HANDLING_SUN_COLLISIONS = True
 SUN_GRAVITY_MAGNITUDE = 1
 
 suns = []
@@ -244,6 +246,21 @@ class Cube:
         self.isValid = False
         self.canMove = False
         self.startTime = 0
+        self.neighbors = []
+        self.wave_active = False
+        self.wave_start_time = 0
+        self.wave_delay = 0
+
+
+    def trigger_wave(self, time, delay=0):
+        self.wave_active = True
+        self.wave_start_time = time
+        self.wave_delay = delay
+        self.canMove = True
+
+        for neighbor in self.neighbors:
+            if not neighbor.wave_active:
+                neighbor.trigger_wave(time, delay + 0.1)
 
     def getBaseColor(self):
         return self.baseColor.copy()
@@ -253,8 +270,16 @@ class Cube:
 
 
     def update(self, time):
-        if self.canMove and self.isValid:
-            self.height = 30 * math.sin((time + self.offset) * 0.005) + 30
+        if self.wave_active:
+            elapsed = (time - self.wave_start_time) / 1000 - self.wave_delay
+
+            if elapsed >= 0:
+                self.height = 2 * self.maxHeight * math.sin(elapsed * 5) * math.exp(-elapsed * 2)
+
+                if elapsed > 2:  # 2 secondes
+                    self.wave_active = False
+                    self.canMove = False
+                    self.height = 0
         """
         animationCurrentTime = time - self.startTime
         if self.canMove and self.isValid:
@@ -271,7 +296,7 @@ class Cube:
         p3 = self.p3
         p4 = self.p4
 
-        if p1[1] <= GetSystemMetrics(1)/2  or p2[0] > GetSystemMetrics(0) or p1[0] < 0:
+        if p1[1] <= pyautogui.size()[1]/2  or p2[0] > pyautogui.size()[0] or p1[0] < 0:
             self.isValid = False
         else:
             self.isValid = True
@@ -281,7 +306,7 @@ class Cube:
             p4h = (p4[0], p4[1] - self.height)
 
 
-            if p1[1] > GetSystemMetrics(1)/2:
+            if p1[1] > pyautogui.size()[1]/2:
 
                 # right
                 pygame.draw.polygon(window,
@@ -320,14 +345,43 @@ class Cube:
     def get_xmean(self):
         return (self.p1[0] + self.p2[0] + self.p3[0] + self.p4[0]) / 4
 
-def createValidGround():
-    for cube in cubes:
-        if cubes.index(cube) < 7:
+def find_neighbors():
+    for cube in validGround:
+        cube.neighbors = []
+
+        left = validGround.index(cube) - 1
+        if left >= 72 or left % 12 < 1:
             pass
         else:
-            validGround.append(cube)
-    pass
+            cube.neighbors.append(validGround[left])
+        right = validGround.index(cube) + 1
+        if right >= 72 or right%12 < 1:
+            pass
+        else:
+            cube.neighbors.append(validGround[right])
 
+        """
+        bottom = validGround.index(cube) - 12
+        if bottom >= 72 or bottom % 12  < 1:
+            pass
+        else:
+            cube.neighbors.append(validGround[bottom])
+
+        """
+    """ Changement algo 
+    for i, cube in enumerate(validGround):
+        x_mean = cube.get_xmean()
+        y_mean = cube.get_depth()
+
+        for other in validGround:
+            if cube != other:
+                other_x = other.get_xmean()
+                other_y = other.get_depth()
+
+                distance = math.sqrt((x_mean - other_x)**2 + (y_mean - other_y)**2)
+                if distance < 100:
+                    cube.neighbors.append(other)
+    """
 def get_transformation(src, dst):
     A = []
     for (x,y), (X,Y) in zip(src, dst):
@@ -345,6 +399,7 @@ def apply_transformation(pt, H):
     res = H.dot(vec)
     return (res[0]/res[2], res[1]/res[2])
 
+#TODO : Do it window scaled
 class Ground():
     def __init__(self):
         self.cols = 12*6
@@ -360,12 +415,12 @@ class Ground():
 
         src = [(0, 0), (W, 0), (W, H), (0,H)]
 
-        base_y = GetSystemMetrics(1)
+        base_y = pyautogui.size()[1]
         dest = [
-            (GetSystemMetrics(0)/2-(GetSystemMetrics(0)*4)-50, base_y),
-            (GetSystemMetrics(0)/2+(GetSystemMetrics(0)*4)-50, base_y),
-            (GetSystemMetrics(0) -50 -GetSystemMetrics(0)/5, (windowHeight) *7/16 ),
-            (-50 +GetSystemMetrics(0)/5, (windowHeight) *7/16)
+            (pyautogui.size()[0]/2-(pyautogui.size()[0]*4)-50, base_y),
+            (pyautogui.size()[0]/2+(pyautogui.size()[0]*4)-50, base_y),
+            (pyautogui.size()[0] -50 -pyautogui.size()[0]/5, (windowHeight) *7/16 ),
+            (-50 +pyautogui.size()[0]/5, (windowHeight) * 7/16)
         ]
 
         transfo = get_transformation(src, dest)
@@ -382,7 +437,7 @@ class Ground():
                 P3 = apply_transformation(p3, transfo)
                 P4 = apply_transformation(p4, transfo)
 
-                if P1[1] > GetSystemMetrics(1)/2 + 10 and P1[0] > 0 and P2[0] < windowWidth:
+                if P1[1] > pyautogui.size()[1]/2 + 10 and P1[0] > 0 and P2[0] < windowWidth:
                     color = (127,0,255)
                     t1 = Triangle(color, (int(P1[0]),int(P1[1])), (int(P2[0]),int(P2[1])), (int(P3[0]),int(P3[1])) )
                     t2 = Triangle(color, (int(P1[0]),int(P1[1])), (int(P3[0]),int(P3[1])), (int(P4[0]),int(P4[1])) )
@@ -404,13 +459,13 @@ class Ground():
                             (0, 0, 0),
                             ((0, 0),
                              (0, (windowHeight) / 2),
-                             (GetSystemMetrics(0), (windowHeight) / 2))
+                             (pyautogui.size()[0], (windowHeight) / 2))
                             )
         pygame.draw.polygon(window,
                             (0, 0, 0),
                             ((0, 0),
-                             (GetSystemMetrics(0), 0),
-                             (GetSystemMetrics(0),(windowHeight) / 2))
+                             (pyautogui.size()[0], 0),
+                             (pyautogui.size()[0],(windowHeight) / 2))
                             )
         """
     def clear(self):
@@ -516,7 +571,7 @@ class Palm:
 """
 def spawnMountains():
     positionX = 0
-    positionY = (GetSystemMetrics(1)) / 2
+    positionY = (pyautogui.size()[1]) / 2
 
     for m in range(12):
         mountain = Mountain((positionX, positionY))
@@ -526,7 +581,7 @@ def spawnMountains():
         positionX += (windowWidth) / 12
 """
 firstLaunch = True
-s1 = Sun((windowWidth) / 2, (windowHeight)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
+s1 = Sun((windowWidth) / 2, (windowHeight)/ 2 - (pyautogui.size()[1]/4), 16, 100)
 g = Ground()
 p1 = Palm()
 
@@ -534,21 +589,29 @@ p1 = Palm()
 def getSortKey(cube):
     depth = cube.get_depth()
     x_mean = cube.get_xmean()
-    if x_mean < GetSystemMetrics(0) / 2:
+    if x_mean < pyautogui.size()[0] / 2:
         return (depth, x_mean)   # left side : left to right
     else:
         return (depth, -x_mean)  # right side : right to left
+
+
+#only for debug
+#font = pygame.font.Font('freesansbold.ttf', 32)
+
 
 def globalGeneration(time, bpm):
     global s1
     if firstLaunch:
         # spawnMountain()
+        #s1 = Sun((windowWidth) / 2, (windowHeight)/ 2 - (pyautogui.size()[1]/4), 16, 100)
+        #suns.append(s1)
         #s1 = Sun((windowWidth) / 2, (windowHeight)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
         #suns.append(s1)
         #spawnMountains()
         g.groundGeneration()
         generateValidGround()
         assignCubesToColumns()
+        printCubesPerColumn()
         grounds.append(g)
         #playTrumpet(1)
         p1.generatePalm(windowWidth / 2, windowHeight / 2, 0, 5, 50, 90)
@@ -579,9 +642,13 @@ def globalGeneration(time, bpm):
 
 
         cubes_sorted = sorted(validGround, key=getSortKey)
+        timeAnimation = 0
         for cube in cubes_sorted:
+
             cube.update(pygame.time.get_ticks())
             cube.draw()
+           # text = font.render('GeeksForGeeks', True, (125, 125, 125), (125, 0, 125))
+           # window.blit(text, (cube.get_xmean, cube.get_depth))
 
         for palm in palms:
             palm.draw()
@@ -621,6 +688,7 @@ def generateValidGround():
             validGround.append(cube)
         else:
             pass
+    find_neighbors()
 
 cubes_by_column = [[] for _ in range(12)]
 
@@ -633,6 +701,14 @@ def assignCubesToColumns():
         col = max(0, min(11, col))
         cubes_by_column[col].append(cube)
 
+def printCubesPerColumn():
+    counter = 0
+    for i in cubes_by_column:
+        for j in i:
+            print("Cube - ", end='')
+            counter += 1
+        print(";")
+    print(f"nbr of cubes : {counter}")
 
 allMoving = False
 def playPiano(note):
@@ -641,27 +717,22 @@ def playPiano(note):
     if not cubes_by_column[note]:
         return
 
-    available_cubes = [c for c in cubes_by_column[note] if not c.canMove]
+    available_cubes = [c for c in cubes_by_column[note] if not c.wave_active]
 
     if not available_cubes:
-        for c in cubes_by_column[note]:
-            c.height = 0
-            c.changeColor(c.getBaseColor())
-            c.canMove = False
-
-        available_cubes = cubes_by_column[note]
+        return
 
     cube = random.choice(available_cubes)
     cube.changeColor(notes[note][1])
-    cube.canMove = True
 
-    if all(c.canMove for c in validGround):
-        playPianoAll()
+    # Déclencher l'effet de vague au lieu d'activer simplement le cube
+    current_time = pygame.time.get_ticks()
+    cube.trigger_wave(current_time)
 
 
 
 def playPianoAll():
-    for cube in cubes:
+    for cube in validGround:
         if cube.canMove:
             cube.height = 0
             cube.changeColor((cube.getBaseColor()[0], cube.getBaseColor()[1], cube.getBaseColor()[2]))
@@ -748,8 +819,8 @@ if __name__ == "__main__":
                         clearAll()
                         firstLaunch = True
                     case pygame.K_1:
-                        playTrumpet(1)
-                        note = random.randint(0, 11)
+                        #playTrumpet(1)
+                        note = random.randint(8, 9)
                         print(f"note : {note}")
                         playPiano(note)
 
