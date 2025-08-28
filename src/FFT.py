@@ -362,18 +362,47 @@ test_write_midi_file(davalues)
 #printvalues(davalues)
 #plot()
 
-piano_analysis = []
-for i in range(33):
-    piano_analysis.append(None)
-print(piano_analysis)
 
+
+full_piano_anal = []
 for bunch in piano_freqs:
-    base_amp = bunch[0][0]
+
     print("Bunch:")
-    for note in bunch:
-        if note[0]< 33:
-            print(note[0],note[1])
-            piano_analysis[note[0]] = note[1]
+
+    piano_analysis = []
+    for i in range(9):
+        piano_analysis.append(None)
+    base_amp = bunch[0][1].amplitude
+
+    single_note = True
+
+    for i in range (1,len(bunch)):
+        if bunch[i][0] == 1:
+            single_note = False
+
+    if single_note:     # if there is only one base note to get good freqs
+        for note in bunch:
+            if note[0]< 9:
+                print(note[0],note[1].amplitude/base_amp)
+                piano_analysis[note[0]] = note[1].amplitude/base_amp
+        full_piano_anal.append(piano_analysis)
+
+#print(full_piano_anal)
+freq_table =[]
+for i in range(9):
+    freq_table.append(0)
+length_table = freq_table.copy()
+for note in full_piano_anal:
+    for i in range(1,9):
+        if note[i]:
+            length_table[i] += 1
+            freq_table[i] += note[i]
+
+for i in range(1,9):
+    freq_table[i]/= length_table[i]
+
+print(freq_table)
+
 
 
 
