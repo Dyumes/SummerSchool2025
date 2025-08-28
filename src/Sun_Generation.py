@@ -1,3 +1,5 @@
+from Demos.mmapfile_demo import offset
+
 import Triangle
 import Point2D
 import random
@@ -8,29 +10,51 @@ class SunV2():
     def __init__(self, center_point):
         self.circle_center = center_point
         self.all_triangles = []
-        self.nb_triangle_circle = 100
-        self.circle_radius = 500
+        self.nb_triangle_circle = 20
+        self.circle_radius = 75
         self.seed = random.randint(0,10000)
         self.top_color = (255, 220, 120)
         self.bottom_color = (255, 70, 160)
+        self.max_reached = False
+        self.percentage = 0.5
+        self.offset = 0
+
+        self.ray_big_distance = self.circle_radius + 75
+        self.ray_tiny_distance = self.circle_radius + 50
+        self.ray_speed = 60
+        self.ray_gap = 0
 
     def generate(self):
-        random.seed(self.seed)
-
         angle = 2*math.pi/self.nb_triangle_circle
 
         for i in range(self.nb_triangle_circle):
             a = self.circle_center
-            b = Point2D.Point2D(self.circle_center.x + self.circle_radius * math.cos(angle * i),self.circle_center.y + self.circle_radius * math.sin(angle * i))
-            c = Point2D.Point2D(self.circle_center.x + self.circle_radius * math.cos(angle * (i+1)),self.circle_center.y + self.circle_radius * math.sin(angle * (i+1)))
+            b = Point2D.Point2D(self.circle_center.x + self.circle_radius * math.cos(angle * i), self.circle_center.y + self.circle_radius * math.sin(angle * i))
+            c = Point2D.Point2D(self.circle_center.x + self.circle_radius * math.cos(angle * (i+1)), self.circle_center.y + self.circle_radius * math.sin(angle * (i+1)))
             self.all_triangles.append(Triangle.Triangle(a, b, c, (0, 0, 0)))
+
+        for i in range(self.nb_triangle_circle):
+            if i % 2 == 0:
+                a = Point2D.Point2D(self.circle_center.x + self.ray_big_distance * math.cos(angle * i + (angle * (i + 1) - angle * i) / 2), self.circle_center.y + self.ray_big_distance * math.sin(angle * i + (angle * (i + 1) - angle * i) / 2))
+                b = Point2D.Point2D(self.circle_center.x + (self.circle_radius + self.ray_gap) * math.cos(angle * i), self.circle_center.y + (self.circle_radius + self.ray_gap) * math.sin(angle * i))
+                c = Point2D.Point2D(self.circle_center.x + (self.circle_radius + self.ray_gap) * math.cos(angle * (i + 1)), self.circle_center.y + (self.circle_radius + self.ray_gap) * math.sin(angle * (i + 1)))
+                self.all_triangles.append(Triangle.Triangle(a, b, c, (0, 0, 0), "ray_big"))
+            else:
+                a = Point2D.Point2D(self.circle_center.x + self.ray_tiny_distance * math.cos(angle * i + (angle * (i + 1) - angle * i) / 2), self.circle_center.y + self.ray_tiny_distance * math.sin(angle * i + (angle * (i + 1) - angle * i) / 2))
+                b = Point2D.Point2D(self.circle_center.x + (self.circle_radius + self.ray_gap) * math.cos(angle * i), self.circle_center.y + (self.circle_radius + self.ray_gap) * math.sin(angle * i))
+                c = Point2D.Point2D(self.circle_center.x + (self.circle_radius + self.ray_gap) * math.cos(angle * (i + 1)), self.circle_center.y + (self.circle_radius + self.ray_gap) * math.sin(angle * (i + 1)))
+                self.all_triangles.append(Triangle.Triangle(a, b, c, (0, 0, 0), "ray_tiny"))
+
 
         for tri in self.all_triangles:
             self.color_for_triangle(tri)
 
     def color_for_triangle(self, triangle):
         altitude = max(triangle.b.y,triangle.c.y)
-        t = (altitude - (self.circle_radius + self.circle_center.y))/(self.circle_radius - self.circle_center.y - (self.circle_radius + self.circle_center.y))
+        y_max = self.circle_center.y - self.ray_big_distance
+        y_min = self.circle_center.y + self.ray_big_distance
+
+        t = (altitude - y_min)/(y_max - y_min)
 
         triangle.color = self.linear_interpolation_color(self.bottom_color,self.top_color, t)
 
@@ -41,11 +65,40 @@ class SunV2():
 
         return color
 
-    def update(self):
-        print("TODO")
+    def update(self, bpm):
+        if not self.max_reached:
+            self.offset += 1 * bpm/60
+            if self.offset >= 60:
+                self.offset = 60
+                self.max_reached = True
+        else:
+            self.offset -= 1 * bpm/60
+            if self.offset <= 0:
+                self.offset = 0
+                self.max_reached = False
 
-    def manage_sun(self, screen, time):
-        print("TODO")
+    def manage_sun(self, screen, bpm):
+        self.update(bpm)
+        scale = 1 + (self.offset / 60) * self.percentage
+        scale_ray_big = 1 + (self.offset/60) * self.percentage * 0.2
+        center_x = self.circle_center.x
+        center_y = self.circle_center.y
+
+        for tri in self.all_triangles:
+            if tri.tag == "none":
+                p1 = (center_x + (tri.a.x - center_x) * scale, center_y + (tri.a.y - center_y) * scale)
+                p2 = (center_x + (tri.b.x - center_x) * scale, center_y + (tri.b.y - center_y) * scale)
+                p3 = (center_x + (tri.c.x - center_x) * scale, center_y + (tri.c.y - center_y) * scale)
+            elif tri.tag == "ray_big":
+                p1 = (center_x + (tri.a.x - center_x) * scale_ray_big, center_y + (tri.a.y - center_y) * scale_ray_big)
+                p2 = (center_x + (tri.b.x - center_x) * scale, center_y + (tri.b.y - center_y) * scale)
+                p3 = (center_x + (tri.c.x - center_x) * scale, center_y + (tri.c.y - center_y) * scale)
+            else:
+                p1 = (center_x + (tri.a.x - center_x) * scale, center_y + (tri.a.y - center_y) * scale)
+                p2 = (center_x + (tri.b.x - center_x) * scale, center_y + (tri.b.y - center_y) * scale)
+                p3 = (center_x + (tri.c.x - center_x) * scale, center_y + (tri.c.y - center_y) * scale)
+            pygame.draw.polygon(screen, tri.color, [p1,p2,p3])
+
 
 if __name__ == "__main__":
     pygame.init()
@@ -53,7 +106,6 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
     test = SunV2(Point2D.Point2D(screen.get_width()/2, screen.get_height()/2))
     test.generate()
-
 
     running = True
     while running:
@@ -64,9 +116,7 @@ if __name__ == "__main__":
         current_time = pygame.time.get_ticks() / 1000.0
 
         screen.fill((255, 255, 255))
-
-        for tri in test.all_triangles:
-            pygame.draw.polygon(screen,tri.color,tri.to_pygame_point())
+        test.manage_sun(screen,60)
 
         pygame.display.flip()
         clock.tick(60)

@@ -20,13 +20,13 @@ SUN_PARTICLE_RADIUS = 5
 PARTICLE_COLOR = (255, 100, 0)
 SUN_PARTICLE_COLOR = (255, 255, 0)
 SUN_PARTICLE_COLOR_DELTA = 150
-MIN_PARTICLES = 300
-MAX_PARTICLES = 300
+#MIN_PARTICLES = 300
+#MAX_PARTICLES = 300
 GRAVITY_MAGNITUDE = 9.81
 GRAVITY_DIRECTION = math.pi / 2
-HANDLING_PARTICLES_COLLISIONS = False
-HANDLING_OBJECTS_COLLISIONS = False
-HANDLING_SUN_COLLISIONS = True
+#HANDLING_PARTICLES_COLLISIONS = False
+#HANDLING_OBJECTS_COLLISIONS = False
+#HANDLING_SUN_COLLISIONS = True
 SUN_GRAVITY_MAGNITUDE = 1
 
 
@@ -193,6 +193,11 @@ class Particle:
             Returns:
                 bool: True if inside, False otherwise.
         """
+        if env.handling_sun_collisions:
+            # Allow particles to go slightly outside the environment when sun collisions are handled
+            margin = 50
+            return (-margin <= self.form.center.x <= env.width + margin and
+                    -margin <= self.form.center.y <= env.height + margin)
         return env.is_inside(self.form.center)
 
     def touch_env_bottom(self, env):
@@ -226,7 +231,7 @@ class Particle:
             return True
         return False
 
-    def bouncing(self):
+    def bouncing(self, env):
         """
             Simulate particle bouncing when hitting the ground.
         """
@@ -334,22 +339,63 @@ class Particle:
                 tuple[bool, Triangle | None]: True and the triangle if inside,
                                               otherwise False and None.
         """
-        # Détection si le centre de la particule est à l'intérieur d'un des triangles de l'objet
-        for triangle in object.triangles:
-            def sign(p1, p2, p3):
-                return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
 
+        def is_point_in_triangle(pt, v1, v2, v3):
+            # Convertir les sommets en objets Point si nécessaire
+            if isinstance(v1, tuple):
+                v1 = Point(v1[0], v1[1])
+            if isinstance(v2, tuple):
+                v2 = Point(v2[0], v2[1])
+            if isinstance(v3, tuple):
+                v3 = Point(v3[0], v3[1])
+
+            # Vérifie si un point est dans un triangle
+            d1 = (pt.x - v1.x) * (v2.y - v1.y) - (v2.x - v1.x) * (pt.y - v1.y)
+            d2 = (pt.x - v2.x) * (v3.y - v2.y) - (v3.x - v2.x) * (pt.y - v2.y)
+            d3 = (pt.x - v3.x) * (v1.y - v3.y) - (v1.x - v3.x) * (pt.y - v3.y)
+            has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
+            has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
+            return not (has_neg and has_pos)
+
+        def circle_intersects_segment(circle, p1, p2):
+            # Vérifie si un cercle intersecte un segment
+            cx, cy, r = circle.center.x, circle.center.y, circle.radius
+            px, py = p1.x, p1.y
+            qx, qy = p2.x, p2.y
+
+            # Calcul de la distance entre le cercle et le segment
+            dx, dy = qx - px, qy - py
+            length_squared = dx * dx + dy * dy
+            t = max(0, min(1, ((cx - px) * dx + (cy - py) * dy) / length_squared))
+            nearest_x = px + t * dx
+            nearest_y = py + t * dy
+            dist_squared = (cx - nearest_x) ** 2 + (cy - nearest_y) ** 2
+            return dist_squared <= r ** 2
+
+        for triangle in object.triangles:
             pt = self.form.center
             a = triangle.get_position1()
             b = triangle.get_position2()
             c = triangle.get_position3()
-            d1 = sign(pt, a, b)
-            d2 = sign(pt, b, c)
-            d3 = sign(pt, c, a)
-            has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
-            has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
-            if not (has_neg and has_pos):
+
+            # Convertir les sommets en objets Point si nécessaire
+            if isinstance(a, tuple):
+                a = Point(a[0], a[1])
+            if isinstance(b, tuple):
+                b = Point(b[0], b[1])
+            if isinstance(c, tuple):
+                c = Point(c[0], c[1])
+
+            # Vérifie si le centre est dans le triangle
+            if is_point_in_triangle(pt, a, b, c):
                 return True, triangle
+
+            # Vérifie si le cercle intersecte un des côtés du triangle
+            if circle_intersects_segment(self.form, a, b) or \
+                    circle_intersects_segment(self.form, b, c) or \
+                    circle_intersects_segment(self.form, c, a):
+                return True, triangle
+
         return False, None
 
     def is_colliding_with_object(self, object):
@@ -371,35 +417,87 @@ class Particle:
             Args:
                 object_triangle (Triangle): The triangle the particle collides with.
         """
-        def compute_center(triangle):
-            return Point(
-                (triangle.get_position1().x + triangle.get_position2().x + triangle.get_position3().x) / 3,
-                (triangle.get_position1().y + triangle.get_position2().y + triangle.get_position3().y) / 3
-            )
 
-        # Calcul du vecteur de collision
-        triangle_center = compute_center(object_triangle)
-        dx = triangle_center.x - self.form.center.x
-        dy = triangle_center.y - self.form.center.y
-        direction = math.atan2(dy, dx)
+        def compute_closest_side_and_normal(triangle, point):
+            # Trouve le côté le plus proche et calcule sa normale
+            sides = [
+                (triangle.get_position1(), triangle.get_position2()),
+                (triangle.get_position2(), triangle.get_position3()),
+                (triangle.get_position3(), triangle.get_position1())
+            ]
+            closest_side = None
+            min_distance = float('inf')
+            normal = None
 
-        # Vitesse relative (ici, on utilise la magnitude du global_force)
-        relative_speed = abs(self.global_force.vector.magnitude - 0.2) # Pour simuler une absorption de la vitesse
-        collide_magnitude = max(relative_speed, 10)  # Valeur minimale pour éviter 0
+            for p1, p2 in sides:
+                # Convertir les sommets en objets Point si nécessaire
+                if isinstance(p1, tuple):
+                    p1 = Point(p1[0], p1[1])
+                if isinstance(p2, tuple):
+                    p2 = Point(p2[0], p2[1])
 
-        # Force de collision opposée au contact
-        collide_force = Force(Vector(collide_magnitude, direction + math.pi), "ObjectColliding")
-        self.add_force(collide_force)
+                # Projection du point sur le segment
+                dx, dy = p2.x - p1.x, p2.y - p1.y
+                length_squared = dx ** 2 + dy ** 2
+                t = max(0, min(1, ((point.x - p1.x) * dx + (point.y - p1.y) * dy) / length_squared))
+                nearest_x = p1.x + t * dx
+                nearest_y = p1.y + t * dy
 
-        if not self.is_colliding_with_objects:
-            self.is_colliding_with_objects = True
-        if self.is_colliding_with_objects:
-            force = self.find_force("ObjectColliding")
-            if force is not None:
-                self.change_force("ObjectColliding", change_magnitude=-0.5, change_direction=0)
-                if force.vector.magnitude <= 0:
-                    self.forces.remove(force)
-                    self.is_colliding_with_objects = False
+                # Distance au segment
+                dist_squared = (point.x - nearest_x) ** 2 + (point.y - nearest_y) ** 2
+                if dist_squared < min_distance:
+                    min_distance = dist_squared
+                    closest_side = (p1, p2)
+
+                    # Calcul de la normale
+                    normal_dx, normal_dy = -(p2.y - p1.y), (p2.x - p1.x)
+                    normal_length = math.sqrt(normal_dx ** 2 + normal_dy ** 2)
+                    normal = (normal_dx / normal_length, normal_dy / normal_length)
+
+            return closest_side, normal
+
+        # Trouver le côté le plus proche et sa normale
+        closest_side, normal = compute_closest_side_and_normal(object_triangle, self.form.center)
+
+        # Appliquer une force de rebond perpendiculaire au côté
+        if normal:
+            # Calcul de la direction de la normale
+            normal_direction = math.atan2(normal[1], normal[0])
+
+            # Inverser la composante perpendiculaire de la vitesse
+            # incoming_velocity = self.global_force.vector
+            # dot_product = (incoming_velocity.magnitude * math.cos(incoming_velocity.direction) * normal[0] +
+            #                incoming_velocity.magnitude * math.sin(incoming_velocity.direction) * normal[1])
+            # rebound_magnitude = max(1, abs(dot_product))
+            rebound_magnitude = 5
+            rebound_direction = normal_direction + math.pi  # Rebondir dans la direction opposée
+
+            # Appliquer la force de rebond
+            bounce_force = Force(Vector(rebound_magnitude, rebound_direction), "ObjectRebounce")
+            self.add_force(bounce_force)
+
+            if not self.is_colliding_with_objects:
+                self.is_colliding_with_objects = True
+                self.add_force(bounce_force)
+            if self.is_colliding_with_objects:
+                force = self.find_force("ObjectRebounce")
+                if force is not None:
+                    self.change_force("ObjectRebounce", change_magnitude=-0.5, change_direction=0)
+                    if force.vector.magnitude <= 0:
+                        self.forces.remove(force)
+                        self.is_colliding_with_objects = False
+
+    def decay_object_colliding_force(self):
+        """
+        Réduit progressivement et supprime la force de collision avec un objet après un certain temps.
+        """
+        force = self.find_force("ObjectRebounce")
+        if force:
+            # Réduction progressive de la magnitude
+            force.vector.magnitude -= 0.3  # Taux de décroissance
+            if force.vector.magnitude <= 0:
+                self.forces.remove(force)
+                self.is_colliding_with_objects = False
 
     def is_colliding_with_sun(self, sun):
         """
@@ -521,7 +619,7 @@ class Particle:
             env (Environment): The environment the particle is in.
         """
         self.combine_forces(self.forces)
-        # print("Global force of: ", self.global_force)
+        #print("Global force of: ", self.global_force)
 
         if not self.is_inside_env(env):
             env.remove_particle(self)
@@ -529,13 +627,14 @@ class Particle:
             self.__del__()
 
         if self.is_bouncing:
-            self.bouncing()
+            self.bouncing(env)
         elif self.touch_env_bottom(env):
             #print("Particle touched the environment border at:", self.form.center.x, self.form.center.y)
-            self.bouncing()
+            self.bouncing(env)
 
         self.form.update(self.global_force)
         self.decay_sun_colliding_force() # Fixes the problems with the sun collision force not being removed
+        self.decay_object_colliding_force() # Fixes the problems with the object collision force not being removed
         #print("Forces on particle at:", self.form.center.x, self.form.center.y, "->", [force.name for force in self.forces])
 
 class Environment:
@@ -544,6 +643,11 @@ class Environment:
         self.height = size[1]
         self.particles = []
         self.sun = sun
+        self.handling_sun_collisions = False
+        self.handling_objects_collisions = False
+        self.handling_particles_collisions = False
+        self.min_particles = 300
+        self.max_particles = 300
 
     def is_inside(self, point):
         """
@@ -569,6 +673,7 @@ class Environment:
         y = random.randint(0, self.height)
         radius = CIRCLE_RADIUS
         self.particles.append(Particle(Circle(Point(x, y), radius, NBR_TRIANGLE_IN_CIRCLE)))
+        #self.particles.append(Particle(Circle(Point(self.width // 2, 0), radius, NBR_TRIANGLE_IN_CIRCLE)))
         #print("Particle created at:", x, y)
 
     def create_particle_around_sun(self, sun):
@@ -620,14 +725,14 @@ class Environment:
             Check and handle collisions between particles and objects.
 
             Args:
-                objects (list[TestingObject]): List of objects to check collisions with.
+                objects: List of objects to check collisions with.
         """
         try:
             for i in range(len(self.particles)):
                 for object in objects:
                     info = self.particles[i].is_colliding_with_object(object)
                     if info[0]:
-                        print("HIT")
+                        #print("HIT")
                         self.particles[i].colliding_with_objects(info[1])
 
         except Exception as e:
@@ -654,7 +759,7 @@ class Environment:
         """
         for particle in self.particles:
             color = PARTICLE_COLOR
-            if HANDLING_SUN_COLLISIONS:
+            if self.handling_sun_collisions:
                 # Change color based on distance to sun
                 dx = particle.form.center.x - self.sun.centerX
                 dy = particle.form.center.y - self.sun.centerY
@@ -673,19 +778,19 @@ class Environment:
         """
             Update all particles in the environment.
         """
+        if self.handling_particles_collisions:
+            self.handle_particle_collisions()
+
+        if self.handling_objects_collisions:
+            self.handle_collisions_with_objects(objects)
+
+        if self.handling_sun_collisions:
+            self.handle_collisions_with_sun(self.sun)
+
         for particle in self.particles:
             particle.update(self)
             if self.sun is not None:
                 particle.apply_sun_gravity(self.sun)
-
-        if HANDLING_PARTICLES_COLLISIONS:
-            self.handle_particle_collisions()
-
-        if HANDLING_OBJECTS_COLLISIONS:
-            self.handle_collisions_with_objects(objects)
-
-        if HANDLING_SUN_COLLISIONS:
-            self.handle_collisions_with_sun(self.sun)
 
 
 if __name__ == "__main__":
@@ -787,46 +892,48 @@ if __name__ == "__main__":
     running = True
 
     env = Environment(WINDOW_SIZE)
-    gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))
+    gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION), "Gravity")
     #sun_gravity = Force(Vector(GRAVITY_MAGNITUDE / 2, GRAVITY_DIRECTION + math.pi / 2), "SunGravity")
     #forces = [gravity]
     #forces = []
-    # t1 = Triangle(
-    #     (0, 0, 255),
-    #     Point(WINDOW_SIZE[0] // 2 - 50, WINDOW_SIZE[1] // 2 - 50),
-    #     Point(WINDOW_SIZE[0] // 2 + 50, WINDOW_SIZE[1] // 2 - 50),
-    #     Point(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2 + 50)
-    # )
-    # o1 = TestingObject([t1])
+    t1 = Triangle(
+        (0, 0, 255),
+        Point(WINDOW_SIZE[0] // 2 - 50, WINDOW_SIZE[1] // 2 - 50),
+        Point(WINDOW_SIZE[0] // 2 + 50, WINDOW_SIZE[1] // 2 - 50),
+        Point(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2 + 50)
+    )
+    o1 = TestingObject([t1])
 
     s1 = Sun(WINDOW_SIZE[0] / 2, WINDOW_SIZE[1] / 2, 16, 100)
-    env.sun = s1
+    # env.sun = s1
+    # env.handling_sun_collisions = True
+    env.handling_objects_collisions = True
 
-    if HANDLING_SUN_COLLISIONS:
-        for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
+    if env.handling_sun_collisions:
+        for _ in range(random.randint(env.min_particles, env.max_particles)):
             env.create_particle_around_sun(s1)
     else:
-        for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
+        for _ in range(random.randint(env.min_particles, env.max_particles)):
             env.create_particle()
 
 
     for particle in env.particles:
-        #particle.add_force(gravity)
-        pass
+        particle.add_force(gravity)
+        #pass
 
 
     while running:
 
         WINDOW.fill((0, 0, 0))
 
-        #t1.draw()
-        #objects = [o1]
+        t1.draw()
+        objects = [o1]
 
-        s1.draw()
-        s1.update(60)
+        # s1.draw()
+        # s1.update(60)
 
         env.draw()
-        env.update()
+        env.update(objects)
 
         for event in pygame.event.get():
 

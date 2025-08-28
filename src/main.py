@@ -4,6 +4,8 @@ import os
 import pretty_midi
 import Generation as gn
 import Mountain_Generation as gn2
+import Sun_Generation as sg2
+import Point2D
 from win32api import GetSystemMetrics
 
 #INIT variables
@@ -64,6 +66,8 @@ if __name__ == "__main__":
 
     mountains = []
     static_mountains = []
+    sun = sg2.SunV2(Point2D.Point2D(screen.get_width()/2, screen.get_height()/ 2 - GetSystemMetrics(1)/4))
+    sun.generate()
 
     for i in range(12):
         temp = gn2.MountainV2()
@@ -131,6 +135,8 @@ if __name__ == "__main__":
 
         detectTrumpetNotes(active_flute_notes)
         detectPianoNotes(active_piano_notes)
+
+        sun.manage_sun(screen, bpm)
 
         for e in mountains:
             e.manage_mountain(screen, current_time)
