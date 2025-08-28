@@ -232,8 +232,7 @@ def freq_anal(values):
                 r.append(bunch[0][1])
 
             if len(bunch) >2:
-                for note in bunch:
-                    piano_freqs.append(note[1])
+                    piano_freqs.append(bunch)
 
 
 
@@ -363,4 +362,18 @@ test_write_midi_file(davalues)
 #printvalues(davalues)
 #plot()
 
-printvalues(piano_freqs)
+piano_analysis = []
+for i in range(33):
+    piano_analysis.append(None)
+print(piano_analysis)
+
+for bunch in piano_freqs:
+    base_amp = bunch[0][0]
+    print("Bunch:")
+    for note in bunch:
+        if note[0]< 33:
+            print(note[0],note[1])
+            piano_analysis[note[0]] = note[1]
+
+
+
