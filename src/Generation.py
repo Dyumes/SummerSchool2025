@@ -543,8 +543,8 @@ def globalGeneration(time, bpm):
     global s1
     if firstLaunch:
         # spawnMountain()
-        s1 = Sun((windowWidth) / 2, (windowHeight)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
-        suns.append(s1)
+        #s1 = Sun((windowWidth) / 2, (windowHeight)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
+        #suns.append(s1)
         #spawnMountains()
         g.groundGeneration()
         generateValidGround()
@@ -555,9 +555,9 @@ def globalGeneration(time, bpm):
         palms.append(p1)
     elif not firstLaunch:
         g.draw()
-        for sun in suns:
-            sun.draw()
-            sun.update(bpm)
+        #for sun in suns:
+        #    sun.draw()
+        #    sun.update(bpm)
 
         env_with_sun.draw()
         env_with_sun.update()
@@ -570,8 +570,8 @@ def globalGeneration(time, bpm):
             mountain.draw()
             if mountain.canMove:
                 mountain.update(time)
-        s1.draw()
-        s1.update(bpm)
+        #s1.draw()
+        #s1.update(bpm)
         # for mountain in mountains:
         #     mountain.draw()
         #     if mountain.canMove:
