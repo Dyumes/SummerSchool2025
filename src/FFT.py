@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import TextBox, Button
 import WriteMidiFile
 
-AUDIO_FILE = os.path.join("media","wav","PinkPanther_Trumpet_Only.wav")
+AUDIO_FILE = os.path.join("media","wav","PinkPanther_Both.wav")
 
 fs, data = wavfile.read(AUDIO_FILE)  #Return the sample rate (in samples/sec) and data from an LPCM WAV file
 audio = data.T[0]       # 1st channel of wav
@@ -185,11 +185,12 @@ def certainty(note):
 
     return diff/(high_freq-low_freq)
 
-piano_freqs = []
+#piano_freqs = []
 
 def freq_anal(values):
 
-    return_values = []
+    return_values_piano = []
+    return_values_trumpet = []
 
     for timeNote in values:
         base_notes = getaudiblefreqs(timeNote.notes)
@@ -223,9 +224,10 @@ def freq_anal(values):
                 if abs(fraction_excess) < freq_ana_precision:
                     bunch.append([fraction_int,note])
 
-                result.append(bunch)
+            result.append(bunch)
 
-        r = []
+        r_piano = []
+        r_trumpet = []
 
 
         piano_comparison = [0, np.float64(1.0), np.float64(0.6327285648288827), np.float64(0.2647386789612746), np.float64(0.17201458476639642), np.float64(0.13515905554207736), np.float64(0.10292263867561052), np.float64(0.11210653450368742), np.float64(0.08744076515106432)]
@@ -242,21 +244,26 @@ def freq_anal(values):
                     trumpet_indice += abs(trumpet_comparison[freq[0]]-(freq[1].amplitude/base_freq))
                     #print("pian",piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
                     #print("trum",trumpet_comparison[freq[0]]-(freq[1].amplitude/base_freq))
-
-            print("piano",piano_indice)
-            print("trumpet",trumpet_indice)
+            #print("piano",piano_indice)
+            #print("trumpet",trumpet_indice)
 
             if len(bunch) >1:
-                r.append(bunch[0][1])
+                if piano_indice <= trumpet_indice:
+                    r_piano.append(bunch[0][1])
+                else:
+                    r_trumpet.append(bunch[0][1])
 
-            if len(bunch) >2:
-                    piano_freqs.append(bunch)
+
+
+            #if len(bunch) >2:
+            #        piano_freqs.append(bunch)
 
 
 
-        return_values.append(timeNotes(timeNote.step,r))
+        return_values_piano.append(timeNotes(timeNote.step,r_piano))
+        return_values_trumpet.append(timeNotes(timeNote.step,r_trumpet))
 
-    return return_values
+    return return_values_piano, return_values_trumpet
 
 def hide_noise(values,strength):
     outvalues = []
@@ -351,17 +358,22 @@ fig, ax = plt.subplots()
 
 import WriteMidiFile
 
-def test_write_midi_file(values):
+def test_write_midi_file(piano_values,trumpet_values):
     # Test the creation of a MIDI file and adding a piano instrument
     file = WriteMidiFile.create_midi_file()
     WriteMidiFile.add_piano(file)
     WriteMidiFile.add_trumpet(file)
 
     # Add notes to the MIDI file
-    for timeNote in values:
+    for timeNote in piano_values:
         for note in timeNote.notes:
 
             WriteMidiFile.add_note(file.instruments[0], note.name(), timeNote.second, FFT_WINDOW_SECONDS)
+
+    for timeNote in trumpet_values:
+        for note in timeNote.notes:
+
+            WriteMidiFile.add_note(file.instruments[1], note.name(), timeNote.second, FFT_WINDOW_SECONDS)
 
     # Save the MIDI file
     WriteMidiFile.write_midi_file(file, "media/midi/test_output.mid")
@@ -375,9 +387,18 @@ def test_write_midi_file(values):
 
 fftvalues = dofft("gaussian")
 totalvalues = filter(fftvalues,"gaussian")
-davalues = hide_noise(freq_anal(totalvalues),1)
-test_write_midi_file(davalues)
-#printvalues(davalues)
+piano_values,trumpet_values = freq_anal(totalvalues)
+
+piano_values = hide_noise(piano_values,1)
+trumpet_values = hide_noise(trumpet_values,1)
+test_write_midi_file(piano_values,trumpet_values)
+
+"""
+print("PIANO HEREEEEEEEEE")
+printvalues(piano_values)
+print("TRUMPET HEREEEEEEEEE")
+printvalues(trumpet_values)
+"""
 #plot()
 
 
