@@ -6,7 +6,7 @@ import Generation as gn
 import Mountain_Generation as gn2
 import Sun_Generation as sg2
 import Point2D
-from win32api import GetSystemMetrics
+
 
 #INIT variables
 midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
