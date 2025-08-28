@@ -27,13 +27,13 @@ SUN_PARTICLE_RADIUS = 5
 PARTICLE_COLOR = (255, 100, 0)
 SUN_PARTICLE_COLOR = (255, 255, 0)
 SUN_PARTICLE_COLOR_DELTA = 150
-MIN_PARTICLES = 300
-MAX_PARTICLES = 300
+#MIN_PARTICLES = 10
+#MAX_PARTICLES = 10
 GRAVITY_MAGNITUDE = 9.81
 GRAVITY_DIRECTION = math.pi / 2
-HANDLING_PARTICLES_COLLISIONS = False
-HANDLING_OBJECTS_COLLISIONS = False
-HANDLING_SUN_COLLISIONS = True
+# HANDLING_PARTICLES_COLLISIONS = False
+# HANDLING_OBJECTS_COLLISIONS = False
+# HANDLING_SUN_COLLISIONS = True
 SUN_GRAVITY_MAGNITUDE = 1
 
 suns = []
@@ -559,8 +559,12 @@ def globalGeneration(time, bpm):
             sun.draw()
             sun.update(bpm)
 
+        env_with_sun.draw()
+        env_with_sun.update()
+
+        env_objects = grounds
         env.draw()
-        env.update()
+        env.update(env_objects)
 
         for mountain in mountains:
             mountain.draw()
@@ -691,23 +695,33 @@ def changeCubeAnimiationTime(newAnimiationTime, nbr):
 def changeCubeStartTime(newStartTime, nbr):
     cubes[nbr].startTime = newStartTime
 
+env_with_sun = Environment(WINDOW_SIZE)
+env_with_sun.handling_sun_collisions = True
+env_with_sun.handling_objects_collisions = False
+env_with_sun.handling_particles_collisions = False
+env_with_sun.min_particles = 100
+env_with_sun.max_particles = 100
 
 env = Environment(WINDOW_SIZE)
+env.handling_sun_collisions = False
+env.handling_objects_collisions = True
+env.handling_particles_collisions = False
+env.min_particles = 10
+env.max_particles = 10
+
 gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))
 
-env.sun = s1
+env_with_sun.sun = s1
 
-if HANDLING_SUN_COLLISIONS:
-    for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
-        env.create_particle_around_sun(s1)
-else:
-    for _ in range(random.randint(MIN_PARTICLES, MAX_PARTICLES)):
-        env.create_particle()
+for _ in range(random.randint(env_with_sun.min_particles, env_with_sun.max_particles)):
+    env_with_sun.create_particle_around_sun(s1)
 
+for _ in range(random.randint(env.min_particles, env.max_particles)):
+    env.create_particle()
 
 for particle in env.particles:
-    #particle.add_force(gravity)
-    pass
+    particle.add_force(gravity)
+
 
 if __name__ == "__main__":
 
