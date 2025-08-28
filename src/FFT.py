@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import TextBox, Button
 import WriteMidiFile
 
-AUDIO_FILE = os.path.join("media","wav","PinkPanther_Piano_Only.wav")
+AUDIO_FILE = os.path.join("media","wav","PinkPanther_Trumpet_Only.wav")
 
 fs, data = wavfile.read(AUDIO_FILE)  #Return the sample rate (in samples/sec) and data from an LPCM WAV file
 audio = data.T[0]       # 1st channel of wav
@@ -227,7 +227,23 @@ def freq_anal(values):
 
         r = []
 
+
+        piano_comparison = [0, np.float64(1.0), np.float64(0.6327285648288827), np.float64(0.2647386789612746), np.float64(0.17201458476639642), np.float64(0.13515905554207736), np.float64(0.10292263867561052), np.float64(0.11210653450368742), np.float64(0.08744076515106432)]
+        trumpet_comparison = [0, np.float64(1.0), np.float64(0.992499293761613), np.float64(0.6459633061734135), np.float64(0.31838611332848116), np.float64(0.21360601223562686), np.float64(0.11931605750938493), np.float64(0.08316339062309164), np.float64(0.0701687057473084)]
+
         for bunch in result:
+            piano_indice = 0
+            trumpet_indice = 0
+
+            base_freq = bunch[0][1].amplitude
+            for freq in bunch:
+                if freq[0]<= 8:
+                    piano_indice += abs(piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
+                    trumpet_indice += abs(trumpet_comparison[freq[0]]-(freq[1].amplitude/base_freq))
+
+            print("piano",piano_indice)
+            print("trumpet",trumpet_indice)
+
             if len(bunch) >1:
                 r.append(bunch[0][1])
 
@@ -363,7 +379,7 @@ test_write_midi_file(davalues)
 #plot()
 
 
-
+"""
 full_piano_anal = []
 for bunch in piano_freqs:
 
@@ -402,7 +418,5 @@ for i in range(1,9):
     freq_table[i]/= length_table[i]
 
 print(freq_table)
-
-
-
+"""
 
