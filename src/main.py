@@ -1,4 +1,5 @@
 import pygame
+from win32api import GetSystemMetrics
 import ReadMidiFile as rmf
 import os
 import pretty_midi
