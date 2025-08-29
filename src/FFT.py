@@ -239,7 +239,7 @@ def freq_anal(values):
 
             base_freq = bunch[0][1].amplitude
             for freq in bunch:
-                if freq[0]<= 8:
+                if freq[0]<= 3:
                     piano_indice += abs(piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
                     trumpet_indice += abs(trumpet_comparison[freq[0]]-(freq[1].amplitude/base_freq))
                     #print("pian",piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
@@ -363,17 +363,21 @@ def test_write_midi_file(piano_values,trumpet_values):
     file = WriteMidiFile.create_midi_file()
     WriteMidiFile.add_piano(file)
     WriteMidiFile.add_trumpet(file)
+    file.instruments[0].name ="flute"
+    file.instruments[1].name ="flute"
+    print(file.instruments)
+
 
     # Add notes to the MIDI file
     for timeNote in piano_values:
         for note in timeNote.notes:
 
-            WriteMidiFile.add_note(file.instruments[0], note.name(), timeNote.second, FFT_WINDOW_SECONDS)
+            WriteMidiFile.add_note(file.instruments[1], note.name(), timeNote.second, FFT_WINDOW_SECONDS)
 
     for timeNote in trumpet_values:
         for note in timeNote.notes:
 
-            WriteMidiFile.add_note(file.instruments[1], note.name(), timeNote.second, FFT_WINDOW_SECONDS)
+            WriteMidiFile.add_note(file.instruments[0], note.name(), timeNote.second, FFT_WINDOW_SECONDS)
 
     # Save the MIDI file
     WriteMidiFile.write_midi_file(file, "media/midi/test_output.mid")
@@ -389,8 +393,8 @@ fftvalues = dofft("gaussian")
 totalvalues = filter(fftvalues,"gaussian")
 piano_values,trumpet_values = freq_anal(totalvalues)
 
-piano_values = hide_noise(piano_values,1)
-trumpet_values = hide_noise(trumpet_values,1)
+piano_values = hide_noise(hide_noise(piano_values,2),1)
+trumpet_values = hide_noise(hide_noise(trumpet_values,2),1)
 test_write_midi_file(piano_values,trumpet_values)
 
 """
