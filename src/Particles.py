@@ -3,7 +3,6 @@ import math
 import random
 from win32api import GetSystemMetrics
 
-
 pygame.init()
 
 #Display pygame with a bit smaller resolution than the screen itself no matter the os
@@ -51,7 +50,7 @@ class Circle:
             Returns:
                 bool: True if inside, False otherwise.
         """
-        return (point[0] - self.center.x) ** 2 + (point[1] - self.center.y) ** 2 <= self.radius ** 2
+        return (point.x - self.center.x) ** 2 + (point.y - self.center.y) ** 2 <= self.radius ** 2
 
     def draw(self, color=PARTICLE_COLOR):
         """
@@ -194,7 +193,7 @@ class Particle:
                 bool: True if inside, False otherwise.
         """
         if env.handling_sun_collisions:
-            # Allow particles to go slightly outside the environment when sun collisions are handled
+            # Allow particles to go slightly outside the environment
             margin = 50
             return (-margin <= self.form.center.x <= env.width + margin and
                     -margin <= self.form.center.y <= env.height + margin)
@@ -249,7 +248,7 @@ class Particle:
                     self.is_bouncing = False
                     #print("Particle stopped bouncing at:", self.form.center.x, self.form.center.y)
 
-        # Limite la position pour rester dans l'environnement
+        # Limit the position to stay within the environment
         self.form.center.x = max(self.form.radius, min(self.form.center.x, env.width - self.form.radius))
         self.form.center.y = max(self.form.radius, min(self.form.center.y, env.height - self.form.radius))
 
@@ -304,16 +303,16 @@ class Particle:
             Args:
                 other (Particle): The particle collided with.
         """
-        # Calcul du vecteur de collision
+        # Compute vector of collision
         dx = other.form.center.x - self.form.center.x
         dy = other.form.center.y - self.form.center.y
         direction = math.atan2(dy, dx)
 
-        # Vitesse relative (ici, on utilise la magnitude du global_force)
+        # Relative speed
         relative_speed = abs(self.global_force.vector.magnitude - other.global_force.vector.magnitude)
-        collide_magnitude = max(relative_speed, 10)  # Valeur minimale pour éviter 0
+        collide_magnitude = max(relative_speed, 10) # Ensure a minimum collision force
 
-        # Force de collision opposée au contact
+        # Collision force in the opposite direction
         collide_force = Force(Vector(collide_magnitude, direction + math.pi), "Colliding")
         self.add_force(collide_force)
 
@@ -341,7 +340,7 @@ class Particle:
         """
 
         def is_point_in_triangle(pt, v1, v2, v3):
-            # Convertir les sommets en objets Point si nécessaire
+            # Convert tuples to Point objects if necessary
             if isinstance(v1, tuple):
                 v1 = Point(v1[0], v1[1])
             if isinstance(v2, tuple):
@@ -349,7 +348,7 @@ class Particle:
             if isinstance(v3, tuple):
                 v3 = Point(v3[0], v3[1])
 
-            # Vérifie si un point est dans un triangle
+            # Check if point is in triangle
             d1 = (pt.x - v1.x) * (v2.y - v1.y) - (v2.x - v1.x) * (pt.y - v1.y)
             d2 = (pt.x - v2.x) * (v3.y - v2.y) - (v3.x - v2.x) * (pt.y - v2.y)
             d3 = (pt.x - v3.x) * (v1.y - v3.y) - (v1.x - v3.x) * (pt.y - v3.y)
@@ -358,18 +357,18 @@ class Particle:
             return not (has_neg and has_pos)
 
         def circle_intersects_segment(circle, p1, p2):
-            # Vérifie si un cercle intersecte un segment
             cx, cy, r = circle.center.x, circle.center.y, circle.radius
             px, py = p1.x, p1.y
             qx, qy = p2.x, p2.y
 
-            # Calcul de la distance entre le cercle et le segment
+            # # Compute distance from circle center to segment
             dx, dy = qx - px, qy - py
             length_squared = dx * dx + dy * dy
             t = max(0, min(1, ((cx - px) * dx + (cy - py) * dy) / length_squared))
             nearest_x = px + t * dx
             nearest_y = py + t * dy
             dist_squared = (cx - nearest_x) ** 2 + (cy - nearest_y) ** 2
+
             return dist_squared <= r ** 2
 
         for triangle in object.triangles:
@@ -378,7 +377,7 @@ class Particle:
             b = triangle.get_position2()
             c = triangle.get_position3()
 
-            # Convertir les sommets en objets Point si nécessaire
+            # Convert tuples to Point objects if necessary
             if isinstance(a, tuple):
                 a = Point(a[0], a[1])
             if isinstance(b, tuple):
@@ -386,11 +385,9 @@ class Particle:
             if isinstance(c, tuple):
                 c = Point(c[0], c[1])
 
-            # Vérifie si le centre est dans le triangle
             if is_point_in_triangle(pt, a, b, c):
                 return True, triangle
 
-            # Vérifie si le cercle intersecte un des côtés du triangle
             if circle_intersects_segment(self.form, a, b) or \
                     circle_intersects_segment(self.form, b, c) or \
                     circle_intersects_segment(self.form, c, a):
@@ -419,7 +416,6 @@ class Particle:
         """
 
         def compute_closest_side_and_normal(triangle, point):
-            # Trouve le côté le plus proche et calcule sa normale
             sides = [
                 (triangle.get_position1(), triangle.get_position2()),
                 (triangle.get_position2(), triangle.get_position3()),
@@ -430,49 +426,44 @@ class Particle:
             normal = None
 
             for p1, p2 in sides:
-                # Convertir les sommets en objets Point si nécessaire
                 if isinstance(p1, tuple):
                     p1 = Point(p1[0], p1[1])
                 if isinstance(p2, tuple):
                     p2 = Point(p2[0], p2[1])
 
-                # Projection du point sur le segment
+                # Projection of point onto the segment
                 dx, dy = p2.x - p1.x, p2.y - p1.y
                 length_squared = dx ** 2 + dy ** 2
                 t = max(0, min(1, ((point.x - p1.x) * dx + (point.y - p1.y) * dy) / length_squared))
                 nearest_x = p1.x + t * dx
                 nearest_y = p1.y + t * dy
 
-                # Distance au segment
+                # Distance to segment
                 dist_squared = (point.x - nearest_x) ** 2 + (point.y - nearest_y) ** 2
                 if dist_squared < min_distance:
                     min_distance = dist_squared
                     closest_side = (p1, p2)
 
-                    # Calcul de la normale
+                    # Compute normal
                     normal_dx, normal_dy = -(p2.y - p1.y), (p2.x - p1.x)
                     normal_length = math.sqrt(normal_dx ** 2 + normal_dy ** 2)
                     normal = (normal_dx / normal_length, normal_dy / normal_length)
 
             return closest_side, normal
 
-        # Trouver le côté le plus proche et sa normale
         closest_side, normal = compute_closest_side_and_normal(object_triangle, self.form.center)
 
-        # Appliquer une force de rebond perpendiculaire au côté
+        # Apply a rebound force perpendicular to the side
         if normal:
-            # Calcul de la direction de la normale
             normal_direction = math.atan2(normal[1], normal[0])
 
-            # Inverser la composante perpendiculaire de la vitesse
             # incoming_velocity = self.global_force.vector
             # dot_product = (incoming_velocity.magnitude * math.cos(incoming_velocity.direction) * normal[0] +
             #                incoming_velocity.magnitude * math.sin(incoming_velocity.direction) * normal[1])
             # rebound_magnitude = max(1, abs(dot_product))
             rebound_magnitude = 5
-            rebound_direction = normal_direction + math.pi  # Rebondir dans la direction opposée
+            rebound_direction = normal_direction + math.pi  # Rebound in the opposite direction
 
-            # Appliquer la force de rebond
             bounce_force = Force(Vector(rebound_magnitude, rebound_direction), "ObjectRebounce")
             self.add_force(bounce_force)
 
@@ -489,12 +480,11 @@ class Particle:
 
     def decay_object_colliding_force(self):
         """
-        Réduit progressivement et supprime la force de collision avec un objet après un certain temps.
+            Gradually reduces and removes the collision force with an object after a certain time.
         """
         force = self.find_force("ObjectRebounce")
         if force:
-            # Réduction progressive de la magnitude
-            force.vector.magnitude -= 0.3  # Taux de décroissance
+            force.vector.magnitude -= 0.3
             if force.vector.magnitude <= 0:
                 self.forces.remove(force)
                 self.is_colliding_with_objects = False
@@ -504,41 +494,64 @@ class Particle:
             Check if the particle is colliding with the sun.
 
             Args:
-                sun (Sun): The sun object.
+                sun: The sun object.
 
             Returns:
                 bool: True if colliding, False otherwise.
         """
-        dx = self.form.center.x - sun.centerX
-        dy = self.form.center.y - sun.centerY
-        distance = math.sqrt(dx * dx + dy * dy)
+        if hasattr(sun, 'circle_radius'):
+            dx = self.form.center.x - sun.circle_center.x
+            dy = self.form.center.y - sun.circle_center.y
+            distance = math.sqrt(dx * dx + dy * dy)
+            sun_radius = sun.circle_radius + sun.offset
 
-        sun_radius = sun.radius + sun.offset
+        else:
+            dx = self.form.center.x - sun.centerX
+            dy = self.form.center.y - sun.centerY
+            distance = math.sqrt(dx * dx + dy * dy)
+            sun_radius = sun.radius + sun.offset
+
         return distance < (sun_radius + self.form.radius)
 
     def colliding_with_sun(self, sun):
         """
-        Handle collision response with the sun.
+            Handle collision response with the sun.
 
-        Args:
-            sun (Sun): The sun object.
+            Args:
+                sun: The sun object.
         """
-        dx = self.form.center.x - sun.centerX
-        dy = self.form.center.y - sun.centerY
-        distance = math.sqrt(dx * dx + dy * dy)
-        direction = math.atan2(dy, dx)
+        if hasattr(sun, 'circle_center'):
+            dx = self.form.center.x - sun.circle_center.x
+            dy = self.form.center.y - sun.circle_center.y
+            distance = math.sqrt(dx * dx + dy * dy)
+            direction = math.atan2(dy, dx)
+            sun_radius = sun.circle_radius + sun.offset
 
-        sun_radius = sun.radius + sun.offset
+        else:
+            dx = self.form.center.x - sun.centerX
+            dy = self.form.center.y - sun.centerY
+            distance = math.sqrt(dx * dx + dy * dy)
+            direction = math.atan2(dy, dx)
+            sun_radius = sun.radius + sun.offset
 
-        if sun.is_static:
-            # Put the particle outside the sun
-            if distance < sun_radius + self.form.radius:
-                overlap = (sun_radius + self.form.radius) - distance
-                self.form.center.x += overlap * math.cos(direction)
-                self.form.center.y += overlap * math.sin(direction)
-            return
+        if hasattr(sun, 'can_move'):
+            if not sun.can_move:
+                if distance < sun_radius + self.form.radius:
+                    overlap = (sun_radius + self.form.radius) - distance
+                    self.form.center.x += overlap * math.cos(direction)
+                    self.form.center.y += overlap * math.sin(direction)
+                return
 
-        # Calculer la direction d'éloignement du soleil
+        else:
+            if sun.is_static:
+                # Put the particle outside the sun
+                if distance < sun_radius + self.form.radius:
+                    overlap = (sun_radius + self.form.radius) - distance
+                    self.form.center.x += overlap * math.cos(direction)
+                    self.form.center.y += overlap * math.sin(direction)
+                return
+
+        # Compute direction away from sun center
         #dx = self.form.center.x - sun.centerX
         #dy = self.form.center.y - sun.centerY
         #distance = math.sqrt(dx * dx + dy * dy)
@@ -546,22 +559,19 @@ class Particle:
 
         # # Reduce the bounce magnitude to make the rebounce less powerful
         # bounce_magnitude = 4 * (sun.radius + sun.offset - distance + self.form.radius) / self.form.radius
-        # bounce_magnitude = max(bounce_magnitude, 1)  # Lower the minimum value to reduce power
-        # Set a fixed bounce magnitude independent of particle size
-        bounce_magnitude = 6  # Fixed value for rebounce power
+        # bounce_magnitude = max(bounce_magnitude, 1)
+        bounce_magnitude = 6
 
-        # Vérifier si on est déjà en train de rebondir
         if not self.is_colliding_w_sun:
             self.is_colliding_w_sun = True
             self.add_force(Force(Vector(bounce_magnitude, direction), "SunColliding"))
         else:
-            # Mettre à jour la force de rebond si elle existe
             force = self.find_force("SunColliding")
             if force is not None:
                 # print("Updating SunColliding force")
                 #force.vector.magnitude = max(force.vector.magnitude, bounce_magnitude)
                 #force.vector.direction = direction
-                # Diminution progressive
+
                 self.change_force("SunColliding", change_magnitude=-0.3, change_direction=0)
                 if force.vector.magnitude <= 0:
                     self.forces.remove(force)
@@ -570,24 +580,29 @@ class Particle:
 
     def apply_sun_gravity(self, sun):
         """
-        Apply gravitational attraction from the sun.
+            Apply gravitational attraction from the sun.
 
-        Args:
-            sun (Sun): The sun object.
+            Args:
+                sun: The sun object.
         """
-        # Calculer la direction vers le soleil
-        dx = sun.centerX - self.form.center.x
-        dy = sun.centerY - self.form.center.y
+        # Compute vector from particle to sun
+        if hasattr(sun, 'circle_center'):
+            dx = sun.circle_center.x - self.form.center.x
+            dy = sun.circle_center.y - self.form.center.y
+
+        else:
+            dx = sun.centerX - self.form.center.x
+            dy = sun.centerY - self.form.center.y
+
         distance = math.sqrt(dx * dx + dy * dy)
         direction = math.atan2(dy, dx)
 
-        # Force gravitationnelle inversement proportionnelle à la distance
+        # Gravity strength decreases with distance
         gravity_strength = SUN_GRAVITY_MAGNITUDE * 2000 / (distance + 50)
 
-        # Mettre à jour la force existante ou en créer une nouvelle
         force = self.find_force("SunGravity")
         if force:
-            force.vector.magnitude = min(gravity_strength, 2)  # Limiter la force maximale
+            force.vector.magnitude = min(gravity_strength, 2)
             force.vector.direction = direction
         else:
             gravity_force = Force(Vector(min(gravity_strength, 5), direction), "SunGravity")
@@ -595,12 +610,11 @@ class Particle:
 
     def decay_sun_colliding_force(self):
         """
-        Gradually decay and remove the 'SunColliding' force after a certain time.
+            Gradually decay and remove the 'SunColliding' force after a certain time.
         """
         force = self.find_force("SunColliding")
         if force:
-            # Gradually reduce the magnitude
-            force.vector.magnitude -= 0.1  # Decay rate
+            force.vector.magnitude -= 0.1
             if force.vector.magnitude <= 0:
                 self.forces.remove(force)
                 self.is_colliding_w_sun = False
@@ -613,10 +627,10 @@ class Particle:
 
     def update(self, env):
         """
-        Update the particle state each frame.
+            Update the particle state each frame.
 
-        Args:
-            env (Environment): The environment the particle is in.
+            Args:
+                env (Environment): The environment the particle is in.
         """
         self.combine_forces(self.forces)
         #print("Global force of: ", self.global_force)
@@ -678,17 +692,26 @@ class Environment:
 
     def create_particle_around_sun(self, sun):
         """
-        Create a new particle at a random position around the sun.
+            Create a new particle at a random position around the sun.
 
-        Args:
-            sun (Sun): The sun object to spawn particles around.
+            Args:
+                sun (Sun): The sun object to spawn particles around.
         """
-        angle = random.uniform(0, 2 * math.pi)
-        distance = random.uniform(sun.radius, sun.radius + 50)
-        x = sun.centerX + distance * math.cos(angle)
-        y = sun.centerY + distance * math.sin(angle)
-        radius = SUN_PARTICLE_RADIUS
-        self.particles.append(Particle(Circle(Point(x, y), radius, NBR_TRIANGLE_IN_CIRCLE)))
+        if hasattr(sun, 'circle_center'):
+            angle = random.uniform(0, 2 * math.pi)
+            distance = random.uniform(sun.circle_radius, sun.circle_radius + 50)
+            x = sun.circle_center.x + distance * math.cos(angle)
+            y = sun.circle_center.y + distance * math.sin(angle)
+            radius = SUN_PARTICLE_RADIUS
+            self.particles.append(Particle(Circle(Point(x, y), radius, NBR_TRIANGLE_IN_CIRCLE)))
+
+        else:
+            angle = random.uniform(0, 2 * math.pi)
+            distance = random.uniform(sun.radius, sun.radius + 50)
+            x = sun.centerX + distance * math.cos(angle)
+            y = sun.centerY + distance * math.sin(angle)
+            radius = SUN_PARTICLE_RADIUS
+            self.particles.append(Particle(Circle(Point(x, y), radius, NBR_TRIANGLE_IN_CIRCLE)))
 
     def remove_particle(self, particle):
         """
@@ -718,7 +741,7 @@ class Environment:
                         self.particles[j].colliding_with_particles(self.particles[i])
 
         except Exception as e:
-            print("Erreur lors de la gestion des collisions de particules :", e)
+            print("Error while handling particle collisions:", e)
 
     def handle_collisions_with_objects(self, objects):
         """
@@ -736,21 +759,21 @@ class Environment:
                         self.particles[i].colliding_with_objects(info[1])
 
         except Exception as e:
-            print("Erreur lors de la gestion des collisions avec les objets :", e)
+            print("Error while handling collisions with objects:", e)
 
     def handle_collisions_with_sun(self, sun):
         """
             Check and handle collisions between particles and the sun.
 
             Args:
-                sun (Sun): The sun object.
+                sun: The sun object.
         """
         try:
             for particle in self.particles:
                 if particle.is_colliding_with_sun(sun):
                     particle.colliding_with_sun(sun)
         except Exception as e:
-            print("Erreur lors de la gestion des collisions avec le soleil :", e)
+            print("Error while handling collisions with the sun:", e)
 
 
     def draw(self):
@@ -760,18 +783,41 @@ class Environment:
         for particle in self.particles:
             color = PARTICLE_COLOR
             if self.handling_sun_collisions:
-                # Change color based on distance to sun
-                dx = particle.form.center.x - self.sun.centerX
-                dy = particle.form.center.y - self.sun.centerY
-                distance = math.sqrt(dx * dx + dy * dy)
-                max_distance = (WINDOW_SIZE[0] + WINDOW_SIZE[1]) / 4
-                intensity = max(0, 255 - int((distance / max_distance) * 255))
-                color = (
-                    max(0, min(255, SUN_PARTICLE_COLOR[0] + intensity * SUN_PARTICLE_COLOR_DELTA // 255)),
-                    max(0, min(255, SUN_PARTICLE_COLOR[1] - intensity * SUN_PARTICLE_COLOR_DELTA // 255)),
-                    max(0, min(255, SUN_PARTICLE_COLOR[2]))
-                )
-                #print("Color based on distance:", color)
+
+                if hasattr(self.sun, 'top_color'):
+                    print("The sun is a SunV2 instance, adjusting color based on position.")
+
+                    top_color = self.sun.top_color
+                    bottom_color = self.sun.bottom_color
+
+                    y_top = self.sun.circle_center.y - self.sun.ray_big_distance
+                    y_bottom = self.sun.circle_center.y + self.sun.ray_big_distance
+
+                    # Interpolation factor based on vertical position
+                    t = (particle.form.center.y - y_bottom) / (y_top - y_bottom)
+                    t = max(0, min(t, 1))
+
+                    # Linear interpolation
+                    color = (
+                        int(bottom_color[0] + (top_color[0] - bottom_color[0]) * t),
+                        int(bottom_color[1] + (top_color[1] - bottom_color[1]) * t),
+                        int(bottom_color[2] + (top_color[2] - bottom_color[2]) * t)
+                    )
+
+                else:
+                    # Change color based on distance to sun
+                    dx = particle.form.center.x - self.sun.centerX
+                    dy = particle.form.center.y - self.sun.centerY
+                    distance = math.sqrt(dx * dx + dy * dy)
+                    max_distance = (WINDOW_SIZE[0] + WINDOW_SIZE[1]) / 8
+                    intensity = max(0, 255 - int((distance / max_distance) * 255))
+                    color = (
+                        max(0, min(255, SUN_PARTICLE_COLOR[0] + intensity * SUN_PARTICLE_COLOR_DELTA // 255)),
+                        max(0, min(255, SUN_PARTICLE_COLOR[1] - intensity * SUN_PARTICLE_COLOR_DELTA // 255)),
+                        max(0, min(255, SUN_PARTICLE_COLOR[2]))
+                    )
+                    #print("Color based on distance:", color)
+
             particle.draw(color)
 
     def update(self, objects=[]):
