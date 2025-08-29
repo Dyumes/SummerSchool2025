@@ -51,7 +51,7 @@ class Circle:
             Returns:
                 bool: True if inside, False otherwise.
         """
-        return (point[0] - self.center.x) ** 2 + (point[1] - self.center.y) ** 2 <= self.radius ** 2
+        return (point.x - self.center.x) ** 2 + (point.y - self.center.y) ** 2 <= self.radius ** 2
 
     def draw(self, color=PARTICLE_COLOR):
         """
@@ -509,11 +509,18 @@ class Particle:
             Returns:
                 bool: True if colliding, False otherwise.
         """
-        dx = self.form.center.x - sun.centerX
-        dy = self.form.center.y - sun.centerY
-        distance = math.sqrt(dx * dx + dy * dy)
+        if hasattr(sun, 'circle_radius'):
+            dx = self.form.center.x - sun.circle_center.x
+            dy = self.form.center.y - sun.circle_center.y
+            distance = math.sqrt(dx * dx + dy * dy)
+            sun_radius = sun.circle_radius + sun.offset
 
-        sun_radius = sun.radius + sun.offset
+        else:
+            dx = self.form.center.x - sun.centerX
+            dy = self.form.center.y - sun.centerY
+            distance = math.sqrt(dx * dx + dy * dy)
+            sun_radius = sun.radius + sun.offset
+
         return distance < (sun_radius + self.form.radius)
 
     def colliding_with_sun(self, sun):
@@ -523,20 +530,36 @@ class Particle:
         Args:
             sun (Sun): The sun object.
         """
-        dx = self.form.center.x - sun.centerX
-        dy = self.form.center.y - sun.centerY
-        distance = math.sqrt(dx * dx + dy * dy)
-        direction = math.atan2(dy, dx)
+        if hasattr(sun, 'circle_center'):
+            dx = self.form.center.x - sun.circle_center.x
+            dy = self.form.center.y - sun.circle_center.y
+            distance = math.sqrt(dx * dx + dy * dy)
+            direction = math.atan2(dy, dx)
+            sun_radius = sun.circle_radius + sun.offset
 
-        sun_radius = sun.radius + sun.offset
+        else:
+            dx = self.form.center.x - sun.centerX
+            dy = self.form.center.y - sun.centerY
+            distance = math.sqrt(dx * dx + dy * dy)
+            direction = math.atan2(dy, dx)
+            sun_radius = sun.radius + sun.offset
 
-        if sun.is_static:
-            # Put the particle outside the sun
-            if distance < sun_radius + self.form.radius:
-                overlap = (sun_radius + self.form.radius) - distance
-                self.form.center.x += overlap * math.cos(direction)
-                self.form.center.y += overlap * math.sin(direction)
-            return
+        if hasattr(sun, 'can_move'):
+            if not sun.can_move:
+                if distance < sun_radius + self.form.radius:
+                    overlap = (sun_radius + self.form.radius) - distance
+                    self.form.center.x += overlap * math.cos(direction)
+                    self.form.center.y += overlap * math.sin(direction)
+                return
+
+        else:
+            if sun.is_static:
+                # Put the particle outside the sun
+                if distance < sun_radius + self.form.radius:
+                    overlap = (sun_radius + self.form.radius) - distance
+                    self.form.center.x += overlap * math.cos(direction)
+                    self.form.center.y += overlap * math.sin(direction)
+                return
 
         # Calculer la direction d'éloignement du soleil
         #dx = self.form.center.x - sun.centerX
@@ -576,8 +599,14 @@ class Particle:
             sun (Sun): The sun object.
         """
         # Calculer la direction vers le soleil
-        dx = sun.centerX - self.form.center.x
-        dy = sun.centerY - self.form.center.y
+        if hasattr(sun, 'circle_center'):
+            dx = sun.circle_center.x - self.form.center.x
+            dy = sun.circle_center.y - self.form.center.y
+
+        else:
+            dx = sun.centerX - self.form.center.x
+            dy = sun.centerY - self.form.center.y
+
         distance = math.sqrt(dx * dx + dy * dy)
         direction = math.atan2(dy, dx)
 
@@ -683,12 +712,21 @@ class Environment:
         Args:
             sun (Sun): The sun object to spawn particles around.
         """
-        angle = random.uniform(0, 2 * math.pi)
-        distance = random.uniform(sun.radius, sun.radius + 50)
-        x = sun.centerX + distance * math.cos(angle)
-        y = sun.centerY + distance * math.sin(angle)
-        radius = SUN_PARTICLE_RADIUS
-        self.particles.append(Particle(Circle(Point(x, y), radius, NBR_TRIANGLE_IN_CIRCLE)))
+        if hasattr(sun, 'circle_center'):
+            angle = random.uniform(0, 2 * math.pi)
+            distance = random.uniform(sun.circle_radius, sun.circle_radius + 50)
+            x = sun.circle_center.x + distance * math.cos(angle)
+            y = sun.circle_center.y + distance * math.sin(angle)
+            radius = SUN_PARTICLE_RADIUS
+            self.particles.append(Particle(Circle(Point(x, y), radius, NBR_TRIANGLE_IN_CIRCLE)))
+
+        else:
+            angle = random.uniform(0, 2 * math.pi)
+            distance = random.uniform(sun.radius, sun.radius + 50)
+            x = sun.centerX + distance * math.cos(angle)
+            y = sun.centerY + distance * math.sin(angle)
+            radius = SUN_PARTICLE_RADIUS
+            self.particles.append(Particle(Circle(Point(x, y), radius, NBR_TRIANGLE_IN_CIRCLE)))
 
     def remove_particle(self, particle):
         """
@@ -761,7 +799,7 @@ class Environment:
             color = PARTICLE_COLOR
             if self.handling_sun_collisions:
 
-                if isinstance(self.sun, SunV2):
+                if hasattr(self.sun, 'top_color'):
                     print("The sun is a SunV2 instance, adjusting color based on position.")
 
                     top_color = self.sun.top_color
