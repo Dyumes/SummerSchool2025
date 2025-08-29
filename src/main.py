@@ -6,12 +6,11 @@ import Generation as gn
 import Mountain_Generation as gn2
 import Sun_Generation as sg2
 import Point2D
-
+from win32api import GetSystemMetrics
 
 #INIT variables
 midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
 tempo_times, tempi = midi_data.get_tempo_changes()
-
 piano_notes = []
 flute_notes = []
 active_piano_notes = []
@@ -66,7 +65,9 @@ if __name__ == "__main__":
 
     mountains = []
     static_mountains = []
+
     sun = sg2.SunV2(Point2D.Point2D(screen.get_width()/2, screen.get_height()/ 2 - GetSystemMetrics(1)/4))
+    sun.music_duration = midi_data.get_end_time()
     sun.generate()
 
     for i in range(12):
@@ -101,6 +102,7 @@ if __name__ == "__main__":
                             startSong = True
                             pygame.mixer.music.play()
                             start_ticks = pygame.time.get_ticks()
+                            sun.can_move = False # A changer pour faire déplacer le soleil
 
                     case pygame.K_ESCAPE:
                         running = False
@@ -128,6 +130,7 @@ if __name__ == "__main__":
 
         if not startSong or current_time >= midi_data.get_end_time():
             bpm = 0
+            sun.can_move = False
 
         # Drawing things
 
@@ -136,7 +139,7 @@ if __name__ == "__main__":
         detectTrumpetNotes(active_flute_notes)
         detectPianoNotes(active_piano_notes)
 
-        sun.manage_sun(screen, bpm)
+        sun.manage_sun(screen, bpm, current_time)
 
         for e in mountains:
             e.manage_mountain(screen, current_time)
