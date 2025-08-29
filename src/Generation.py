@@ -625,9 +625,10 @@ def globalGeneration(time, bpm):
         env_with_sun.draw()
         env_with_sun.update()
 
-        env_objects = grounds
-        env.draw()
-        env.update(env_objects)
+        # Commented out for the presentation because of bugs
+        # env_objects = grounds
+        # env.draw()
+        # env.update(env_objects)
 
         for mountain in mountains:
             mountain.draw()
@@ -787,11 +788,12 @@ env_with_sun.sun = s1
 for _ in range(random.randint(env_with_sun.min_particles, env_with_sun.max_particles)):
     env_with_sun.create_particle_around_sun(s1)
 
-for _ in range(random.randint(env.min_particles, env.max_particles)):
-    env.create_particle()
-
-for particle in env.particles:
-    particle.add_force(gravity)
+# Commented out for the presentation because of bugs
+# for _ in range(random.randint(env.min_particles, env.max_particles)):
+#     env.create_particle()
+#
+# for particle in env.particles:
+#     particle.add_force(gravity)
 
 
 if __name__ == "__main__":
