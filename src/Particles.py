@@ -2,7 +2,7 @@ import pygame
 import math
 import random
 from win32api import GetSystemMetrics
-
+from src.Sun_Generation import SunV2
 
 pygame.init()
 
@@ -760,18 +760,41 @@ class Environment:
         for particle in self.particles:
             color = PARTICLE_COLOR
             if self.handling_sun_collisions:
-                # Change color based on distance to sun
-                dx = particle.form.center.x - self.sun.centerX
-                dy = particle.form.center.y - self.sun.centerY
-                distance = math.sqrt(dx * dx + dy * dy)
-                max_distance = (WINDOW_SIZE[0] + WINDOW_SIZE[1]) / 4
-                intensity = max(0, 255 - int((distance / max_distance) * 255))
-                color = (
-                    max(0, min(255, SUN_PARTICLE_COLOR[0] + intensity * SUN_PARTICLE_COLOR_DELTA // 255)),
-                    max(0, min(255, SUN_PARTICLE_COLOR[1] - intensity * SUN_PARTICLE_COLOR_DELTA // 255)),
-                    max(0, min(255, SUN_PARTICLE_COLOR[2]))
-                )
-                #print("Color based on distance:", color)
+
+                if isinstance(self.sun, SunV2):
+                    print("The sun is a SunV2 instance, adjusting color based on position.")
+
+                    top_color = self.sun.top_color
+                    bottom_color = self.sun.bottom_color
+
+                    y_top = self.sun.circle_center.y - self.sun.ray_big_distance
+                    y_bottom = self.sun.circle_center.y + self.sun.ray_big_distance
+
+                    # Interpolation factor based on vertical position
+                    t = (particle.form.center.y - y_bottom) / (y_top - y_bottom)
+                    t = max(0, min(t, 1))
+
+                    # Linear interpolation
+                    color = (
+                        int(bottom_color[0] + (top_color[0] - bottom_color[0]) * t),
+                        int(bottom_color[1] + (top_color[1] - bottom_color[1]) * t),
+                        int(bottom_color[2] + (top_color[2] - bottom_color[2]) * t)
+                    )
+
+                else:
+                    # Change color based on distance to sun
+                    dx = particle.form.center.x - self.sun.centerX
+                    dy = particle.form.center.y - self.sun.centerY
+                    distance = math.sqrt(dx * dx + dy * dy)
+                    max_distance = (WINDOW_SIZE[0] + WINDOW_SIZE[1]) / 8
+                    intensity = max(0, 255 - int((distance / max_distance) * 255))
+                    color = (
+                        max(0, min(255, SUN_PARTICLE_COLOR[0] + intensity * SUN_PARTICLE_COLOR_DELTA // 255)),
+                        max(0, min(255, SUN_PARTICLE_COLOR[1] - intensity * SUN_PARTICLE_COLOR_DELTA // 255)),
+                        max(0, min(255, SUN_PARTICLE_COLOR[2]))
+                    )
+                    #print("Color based on distance:", color)
+
             particle.draw(color)
 
     def update(self, objects=[]):
