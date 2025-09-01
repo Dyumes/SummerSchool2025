@@ -24,7 +24,7 @@ def drawNotes(notes, color, pos_y):
 
 if __name__ == "__main__":
     # INIT variables
-    midi_data = pretty_midi.PrettyMIDI(os.path.join("media", "midi", "Ecossaise_Beethoven.midi"))
+    midi_data = pretty_midi.PrettyMIDI(os.path.join("media", "midi", "test_output_clean.mid"))
     # print(midi_data.estimate_tempo()) #Print estimate bpm (For the sun)
 
     tempo = 60 / midi_data.estimate_tempo()

@@ -5,6 +5,7 @@ from pygame import gfxdraw
 import pyautogui
 import math
 import numpy as np
+from sympy.logic.inference import valid
 from win32api import GetSystemMetrics
 from Particles import Environment, Force, Vector
 
@@ -230,6 +231,19 @@ class Mountain:
             #pygame.draw.circle(window, (0, 255, 255), (tri.p3[0], tri.p3[1] - self.height), 5)
 
 """
+
+def violet_gradient_color(depth, min_depth=600, max_depth=1100):
+    t = (depth - min_depth) / (max_depth - min_depth)
+    t = np.clip(t, 0, 1)
+    dark_violet = np.array([90, 40, 120])
+    mid_violet  = np.array([170, 40, 165])
+    light_violet = np.array([220, 180, 255])
+    if t < 0.5:
+        color = dark_violet * (1 - t*2) + mid_violet * (t*2)
+    else:
+        color = mid_violet * (1 - (t-0.5)*2) + light_violet * ((t-0.5)*2)
+    return tuple(int(c) for c in color)
+
 class Cube:
     def __init__(self, triangle1:Triangle, triangle2:Triangle):
         self.triangle1 = triangle1
@@ -238,7 +252,7 @@ class Cube:
         self.p2 = triangle1.get_position2()
         self.p3 = triangle1.get_position3()
         self.p4 = triangle2.get_position3()
-        self.baseColor = [120, 0, 120]
+        self.baseColor = self.getBaseColor()
         self.speed = 10
         self.height = 0
         self.maxHeight = 50
@@ -265,7 +279,10 @@ class Cube:
                 neighbor.trigger_wave(time, delay + 0.1)
 
     def getBaseColor(self):
-        return self.baseColor.copy()
+        depth = self.get_depth()
+        return violet_gradient_color(depth)
+
+        #return [int(c) for c in color]
 
     def changeColor(self, color):
         self.baseColor = list(color)
@@ -278,7 +295,7 @@ class Cube:
             if elapsed >= 0:
                 self.height = 2 * self.maxHeight * math.sin(elapsed * 5) * math.exp(-elapsed * 2)
 
-                if elapsed > 2:  # 2 secondes
+                if elapsed > 2:
                     self.wave_active = False
                     self.canMove = False
                     self.height = 0
@@ -298,6 +315,8 @@ class Cube:
         p3 = self.p3
         p4 = self.p4
 
+
+
         if p1[1] <= pyautogui.size()[1]/2  or p2[0] > pyautogui.size()[0] or p1[0] < 0:
             self.isValid = False
         else:
@@ -309,21 +328,25 @@ class Cube:
 
 
             if p1[1] > pyautogui.size()[1]/2:
-
                 # right
-                pygame.draw.polygon(window,
-                                    (self.baseColor[0], self.baseColor[1], self.baseColor[2]),
-                                    [p2, p3, p3h])
-                pygame.draw.polygon(window, (self.baseColor[0], self.baseColor[1], self.baseColor[2]), [p2, p3h, p2h])
-
+                pygame.draw.polygon(window, self.baseColor, [p2, p3, p3h])
+                pygame.draw.polygon(window, self.baseColor, [p2, p3h, p2h])
+                
                 # left
-                pygame.draw.polygon(window, (self.baseColor[0] + 50, self.baseColor[1], self.baseColor[2] + 50), [p4, p1, p1h])
-                pygame.draw.polygon(window, (self.baseColor[0] + 50, self.baseColor[1], self.baseColor[2] + 50), [p4, p1h, p4h])
-
+                left_color = [min(c+40,255) for c in self.baseColor]
+                pygame.draw.polygon(window, left_color, [p4, p1, p1h])
+                pygame.draw.polygon(window, left_color, [p4, p1h, p4h])
+                
                 # front
-                pygame.draw.polygon(window, (self.baseColor[0] + 30, self.baseColor[1], self.baseColor[2] + 30), [p1, p2, p2h])
-                pygame.draw.polygon(window, (self.baseColor[0] + 30, self.baseColor[1], self.baseColor[2] + 30), [p1, p2h, p1h])
-
+                front_color = [min(c+20,255) for c in self.baseColor]
+                pygame.draw.polygon(window, front_color, [p1, p2, p2h])
+                pygame.draw.polygon(window, front_color, [p1, p2h, p1h])
+                
+                # top
+                top_color = [min(c+80,255) for c in self.baseColor]
+                pygame.draw.polygon(window, top_color, [p1h, p2h, p3h])
+                pygame.draw.polygon(window, top_color, [p1h, p3h, p4h])
+                """
             else:
                 # right
                 pygame.draw.polygon(window, (self.baseColor[0], self.baseColor[1], self.baseColor[2]), [p2, p3, p3h])
@@ -332,7 +355,7 @@ class Cube:
             # top
             pygame.draw.polygon(window, (self.baseColor[0] + 80, self.baseColor[1], self.baseColor[2] + 80), [p1h, p2h, p3h])
             pygame.draw.polygon(window, (self.baseColor[0] + 80, self.baseColor[1], self.baseColor[2] + 80), [p1h, p3h, p4h])
-
+            """""
 
     def linear_interpolation_color(self,color1, color2, factor):
         color = (int(color1[0] + (color2[0] - color1[0])*factor),
@@ -362,15 +385,30 @@ def find_neighbors():
         else:
             cube.neighbors.append(validGround[right])
 
-        """
+
+    """
+    for cube in validGround:
+        cube.neighbors = []
+
+        left = validGround.index(cube) - 1
+        if left >= 72 or left % 12 < 1:
+            pass
+        else:
+            cube.neighbors.append(validGround[left])
+        right = validGround.index(cube) + 1
+        if right >= 72 or right%12 < 1:
+            pass
+        else:
+            cube.neighbors.append(validGround[right])
+
+        
         bottom = validGround.index(cube) - 12
         if bottom >= 72 or bottom % 12  < 1:
             pass
         else:
             cube.neighbors.append(validGround[bottom])
 
-        """
-    """ Changement algo 
+     Changement algo 
     for i, cube in enumerate(validGround):
         x_mean = cube.get_xmean()
         y_mean = cube.get_depth()
@@ -451,11 +489,34 @@ class Ground():
 
 
     def draw(self):
+        #TODO : VOIR POUR LES COULEURS ET EFFET DE PROFONDEUR
         for tri in reversed(self.triangles):
             color = tri.get_color()
             pygame.gfxdraw.trigon(window, tri.p1[0], tri.p1[1],tri.p2[0], tri.p2[1], tri.p3[0], tri.p3[1],color)
 
-        #draw a rectangle for hiding extended triangles going beyond mountains
+        pygame.draw.polygon(window, (170, 40, 165),
+                            [(0,int(pyautogui.size()[1]/2)),
+                             (0, int(pyautogui.size()[1])),
+                             (int(pyautogui.size()[0]), int(pyautogui.size()[1]/2))])
+        pygame.draw.polygon(window, (170, 40, 165),
+                        [(int(pyautogui.size()[0]),int(pyautogui.size()[1])),
+                         (0, int(pyautogui.size()[1])),
+                         (int(pyautogui.size()[0]), int(pyautogui.size()[1]/2))])
+        for cube in validGround:
+            if validGround.index(cube) % 12 == 0:
+                depth = cube.get_depth()
+                color = violet_gradient_color(depth)
+                p1 = cube.p1
+                p2 = cube.p2
+                p3 = cube.p3
+                p4 = cube.p4
+                print("p1:", p1, "p2:", p2, "p3:", p3, "p4:", p4)
+                pygame.draw.polygon(window, color, [(0, p1[1]), (0, p3[1]),(windowWidth, p4[1])])
+                pygame.draw.polygon(window, color, [(0, p1[1]), (windowWidth, p3[1]),(windowWidth, p2[1])])
+
+    #draw a rectangle for hiding extended triangles going beyond mountains
+    def gradientHiding(self):
+
         """
         pygame.draw.polygon(window,
                             (0, 0, 0),
@@ -649,11 +710,14 @@ def globalGeneration(time, bpm):
         cubes_sorted = sorted(validGround, key=getSortKey)
         timeAnimation = 0
         for cube in cubes_sorted:
-
             cube.update(pygame.time.get_ticks())
             cube.draw()
-           # text = font.render('GeeksForGeeks', True, (125, 125, 125), (125, 0, 125))
-           # window.blit(text, (cube.get_xmean, cube.get_depth))
+        pygame.draw.polygon(window, (255, 255, 255),
+                                [(0, windowHeight), (0, validGround[0].p1[1]), (windowWidth, validGround[0].p2[1])])
+        pygame.draw.polygon(window, (255, 255, 255),
+                        [(0, windowHeight), (windowWidth, windowHeight), (windowWidth, validGround[0].p1[1])])
+        # text = font.render('GeeksForGeeks', True, (125, 125, 125), (125, 0, 125))
+        # window.blit(text, (cube.get_xmean, cube.get_depth))
 
         for palm in palms:
             palm.draw()
@@ -691,7 +755,7 @@ for i in range(12):
 
 def generateValidGround():
     for cube in cubes:
-        if 7 < cubes.index(cube) < 20 or 21 < cubes.index(cube) < 34 or 39 < cubes.index(cube) < 52 or 60 < cubes.index(cube) < 73 or 84 < cubes.index(cube) < 97 or 112 < cubes.index(cube) < 125:
+        if 7 < cubes.index(cube) < 20 or 21 < cubes.index(cube) < 34 or 39 < cubes.index(cube) < 52 or 61 < cubes.index(cube) < 74 or 87 < cubes.index(cube) < 100 or 117 < cubes.index(cube) < 130:
             validGround.append(cube)
         else:
             pass
@@ -702,11 +766,23 @@ cubes_by_column = [[] for _ in range(12)]
 def assignCubesToColumns():
     global cubes_by_column
     cubes_by_column = [[] for _ in range(12)]
-    col_width = windowWidth / 12
-    for cube in validGround:
-        col = int(cube.get_xmean() // col_width)
-        col = max(0, min(11, col))
+
+    for i, cube in enumerate(validGround):
+        col = i // 6
+        col = min(col, 11)
         cubes_by_column[col].append(cube)
+
+def trigger_all_cubes_wave():
+    current_time = pygame.time.get_ticks()
+    delay_between = 500
+    for i, cube in enumerate(validGround):
+        if cube.isValid:
+            cube.trigger_wave(current_time, delay=i*delay_between/1000)
+
+
+
+
+
 
 def printCubesPerColumn():
     counter = 0
@@ -732,7 +808,6 @@ def playPiano(note):
     cube = random.choice(available_cubes)
     cube.changeColor(notes[note][1])
 
-    # Déclencher l'effet de vague au lieu d'activer simplement le cube
     current_time = pygame.time.get_ticks()
     cube.trigger_wave(current_time)
 
@@ -835,6 +910,9 @@ if __name__ == "__main__":
 
                     case pygame.K_2:
                         playPianoAll()
+                    #test, make every cube waving in the right order
+                    case pygame.K_4:
+                        trigger_all_cubes_wave()
 
 
 

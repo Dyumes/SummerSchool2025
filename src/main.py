@@ -1,5 +1,4 @@
 import pygame
-from win32api import GetSystemMetrics
 import ReadMidiFile as rmf
 import os
 import pretty_midi
@@ -14,11 +13,15 @@ import random
 
 # Variables pour suivre la position du soleil
 sun_teleport_done = False  # Variable pour suivre si le téléport a déjà été effectué
+import pyautogui
+
 
 #INIT variables
 #midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
 midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","test_output_clean.mid"))
+midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","test_output_clean.mid"))
 tempo_times, tempi = midi_data.get_tempo_changes()
+
 piano_notes = []
 flute_notes = []
 active_piano_notes = []
@@ -33,7 +36,7 @@ startSong = False
 fps = 60
 
 # SETTINGS
-(width, height) = (GetSystemMetrics(0) - 100, GetSystemMetrics(1) - 100)
+(width, height) = (pyautogui.size()[0] - 100, pyautogui.size()[1] - 100)
 background_colour = (15, 0, 35)
 screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
@@ -91,7 +94,7 @@ if __name__ == "__main__":
     mountains = []
     static_mountains = []
 
-    sun = sg2.SunV2(Point2D.Point2D(screen.get_width()/2, screen.get_height()/ 2 - GetSystemMetrics(1)/4))
+    sun = sg2.SunV2(Point2D.Point2D(screen.get_width()/2, screen.get_height()/ 2 - pyautogui.size()[1]/4))
     sun.music_duration = midi_data.get_end_time()
     sun.generate()
 
@@ -239,3 +242,4 @@ if __name__ == "__main__":
 
     # END
     pygame.display.quit()
+

@@ -169,6 +169,9 @@ def merge_notes(filename, new_filename):
     file.instruments[0].name = "Piano"
     file.instruments[1].name = "Flute"
 
+    file.instruments[0].name = "Piano"
+    file.instruments[1].name = "Flute"
+
     # Add notes to the MIDI file
     if piano_notes_concat:
         print("Traitement des notes de piano")

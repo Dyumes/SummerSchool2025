@@ -365,15 +365,13 @@ def plot():
 fig, ax = plt.subplots()
 
 
+import WriteMidiFile
+
 def test_write_midi_file(piano_values,trumpet_values):
     # Test the creation of a MIDI file and adding a piano instrument
     file = WriteMidiFile.create_midi_file()
     WriteMidiFile.add_piano(file)
     WriteMidiFile.add_trumpet(file)
-    file.instruments[0].name = "Piano"
-    file.instruments[1].name = "Flute"
-    print(file.instruments)
-
 
     # Add notes to the MIDI file
     for timeNote in piano_values:
@@ -398,12 +396,10 @@ def test_write_midi_file(piano_values,trumpet_values):
 
 fftvalues = dofft("gaussian")
 totalvalues = filter(fftvalues,"gaussian")
-piano_values,trumpet_values,allvalues = freq_anal(totalvalues)
+piano_values,trumpet_values = freq_anal(totalvalues)
 
-piano_values = hide_noise(piano_values,2)
-trumpet_values = hide_noise(trumpet_values,2)
-totalvalues = hide_noise(totalvalues,2)
-
+piano_values = hide_noise(piano_values,1)
+trumpet_values = hide_noise(trumpet_values,1)
 test_write_midi_file(piano_values,trumpet_values)
 
 """
