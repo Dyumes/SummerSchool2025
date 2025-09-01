@@ -8,7 +8,7 @@ from matplotlib.widgets import TextBox, Button
 import WriteMidiFile
 import MidiComparison
 
-AUDIO_FILE = os.path.join("media","wav","PinkPanther_Both.wav")
+AUDIO_FILE = os.path.join("media","wav","PinkPanther_Piano_Only.wav")
 
 fs, data = wavfile.read(AUDIO_FILE)  #Return the sample rate (in samples/sec) and data from an LPCM WAV file
 audio = data.T[0]       # 1st channel of wav
@@ -188,11 +188,13 @@ def certainty(note):
 
 #piano_freqs = []
 
+
 def freq_anal(values):
 
     return_values_piano = []
     return_values_trumpet = []
     return_values_all = []
+    return_values_raw = []
 
     for timeNote in values:
         base_notes = getaudiblefreqs(timeNote.notes)
@@ -231,10 +233,12 @@ def freq_anal(values):
         r_piano = []
         r_trumpet = []
         r_all = []
-
+        r_raw = []
 
         piano_comparison = [0, np.float64(1.0), np.float64(0.6327285648288827), np.float64(0.2647386789612746), np.float64(0.17201458476639642), np.float64(0.13515905554207736), np.float64(0.10292263867561052), np.float64(0.11210653450368742), np.float64(0.08744076515106432)]
         trumpet_comparison = [0, np.float64(1.0), np.float64(0.992499293761613), np.float64(0.6459633061734135), np.float64(0.31838611332848116), np.float64(0.21360601223562686), np.float64(0.11931605750938493), np.float64(0.08316339062309164), np.float64(0.0701687057473084)]
+
+
 
         for bunch in result:
             piano_indice = 0
@@ -256,6 +260,7 @@ def freq_anal(values):
                 else:
                     r_trumpet.append(bunch[0][1])
                 r_all.append(bunch[0][1])
+                r_raw.append(bunch)
 
 
 
@@ -267,8 +272,9 @@ def freq_anal(values):
         return_values_piano.append(timeNotes(timeNote.step,r_piano))
         return_values_trumpet.append(timeNotes(timeNote.step,r_trumpet))
         return_values_all.append(timeNotes(timeNote.step,r_all))
+        return_values_raw.append(r_raw)
 
-    return return_values_piano, return_values_trumpet, return_values_all
+    return return_values_piano, return_values_trumpet, return_values_all, return_values_raw
 
 def hide_noise(values,strength):
     outvalues = []
@@ -288,7 +294,33 @@ def hide_noise(values,strength):
         outvalues.append(timeNotes(values[i].step,outnotes))
 
     if strength != 1:
-            outvalues = hide_noise(outvalues,strength-1)
+        outvalues = hide_noise(outvalues,strength-1)
+
+    return outvalues
+
+def fill_gaps(values,strength):
+    outvalues = []
+    for i in range(1,len(values)-strength):
+        before_notes = []
+        after_names = []
+        for note in values[i-1].notes:
+            before_notes.append(note)
+        for note in values[i+strength].notes:
+            after_names.append(note.name())
+
+        outnotes = []
+
+        for before_note in before_notes:
+            if before_note.name() in after_names:
+                outnotes.append(before_note)
+        for note in values[i].notes:
+            if not note in outnotes:
+                outnotes.append(note)
+
+        outvalues.append(timeNotes(values[i].step,outnotes))
+
+    if strength != 1:
+        outvalues = fill_gaps(outvalues,strength-1)
 
     return outvalues
 
@@ -400,6 +432,7 @@ fftvalues = dofft("gaussian")
 totalvalues = filter(fftvalues,"gaussian")
 piano_values,trumpet_values,allvalues = freq_anal(totalvalues)
 
+
 piano_values = hide_noise(piano_values,2)
 trumpet_values = hide_noise(trumpet_values,2)
 totalvalues = hide_noise(totalvalues,2)
@@ -415,46 +448,6 @@ printvalues(trumpet_values)
 #plot()
 
 
-"""
-full_piano_anal = []
-for bunch in piano_freqs:
-
-    print("Bunch:")
-
-    piano_analysis = []
-    for i in range(9):
-        piano_analysis.append(None)
-    base_amp = bunch[0][1].amplitude
-
-    single_note = True
-
-    for i in range (1,len(bunch)):
-        if bunch[i][0] == 1:
-            single_note = False
-
-    if single_note:     # if there is only one base note to get good freqs
-        for note in bunch:
-            if note[0]< 9:
-                print(note[0],note[1].amplitude/base_amp)
-                piano_analysis[note[0]] = note[1].amplitude/base_amp
-        full_piano_anal.append(piano_analysis)
-
-#print(full_piano_anal)
-freq_table =[]
-for i in range(9):
-    freq_table.append(0)
-length_table = freq_table.copy()
-for note in full_piano_anal:
-    for i in range(1,9):
-        if note[i]:
-            length_table[i] += 1
-            freq_table[i] += note[i]
-
-for i in range(1,9):
-    freq_table[i]/= length_table[i]
-
-print(freq_table)
-"""
 
 midi_a = os.path.join("media", "midi", "test_output_clean.mid")
 midi_b = os.path.join("media", "midi", "PinkPanther.midi")

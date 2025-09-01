@@ -1,5 +1,4 @@
 import pygame
-from win32api import GetSystemMetrics
 import ReadMidiFile as rmf
 import os
 import pretty_midi
@@ -7,7 +6,8 @@ import Generation as gn
 import Mountain_Generation as gn2
 import Sun_Generation as sg2
 import Point2D
-from win32api import GetSystemMetrics
+
+
 import math
 from Particles import Environment, Force, Vector, Point
 import random
