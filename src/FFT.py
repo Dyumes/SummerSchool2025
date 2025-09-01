@@ -8,7 +8,7 @@ from matplotlib.widgets import TextBox, Button
 import WriteMidiFile
 import MidiComparison
 
-AUDIO_FILE = os.path.join("media","wav","PinkPanther_Piano_Only.wav")
+AUDIO_FILE = os.path.join("media","wav","PinkPanther_Both.wav")
 
 fs, data = wavfile.read(AUDIO_FILE)  #Return the sample rate (in samples/sec) and data from an LPCM WAV file
 audio = data.T[0]       # 1st channel of wav
@@ -189,20 +189,20 @@ def certainty(note):
 #piano_freqs = []
 
 def get_median_harmonics(piano_freqs):
-    print(piano_freqs)
+    #print(piano_freqs)
     full_piano_anal = []
-    print(piano_freqs)
+    for i in range(9):
+        full_piano_anal.append([])
+
     for bunch in piano_freqs:
+        bunch = bunch[0]
 
-        print("Bunch:")
+        #print("Bunch:")
 
-        piano_analysis = []
-        for i in range(9):
-            piano_analysis.append(None)
+        #print(bunch)
         base_amp = bunch[0][1].amplitude
 
         single_note = True
-
         for i in range (1,len(bunch)):
             if bunch[i][0] == 1:
                 single_note = False
@@ -210,19 +210,12 @@ def get_median_harmonics(piano_freqs):
         if single_note:     # if there is only one base note to get good freqs
             for note in bunch:
                 if note[0]< 9:
-                    print(note[0],note[1].amplitude/base_amp)
-                    piano_analysis[note[0]] = note[1].amplitude/base_amp
-            full_piano_anal.append(piano_analysis)
-
+                    #print(note[0],note[1].amplitude/base_amp)
+                    full_piano_anal[note[0]].append(note[1].amplitude/base_amp)
     #print(full_piano_anal)
-    freq_table =[]
-    for i in range(9):
-        freq_table.append([])
-    for note in full_piano_anal:
-        for i in range(1,9):
-            if note[i]:
-                freq_table[i].append(note[i])
-    print("freq table",freq_table)
+    for i in range(1,len(full_piano_anal)):
+        full_piano_anal[i] = np.median(full_piano_anal[i])
+    print(full_piano_anal)
 
 
 def freq_anal(values):
@@ -271,10 +264,11 @@ def freq_anal(values):
         r_all = []
         r_raw = []
 
-        piano_comparison = [0, np.float64(1.0), np.float64(0.6327285648288827), np.float64(0.2647386789612746), np.float64(0.17201458476639642), np.float64(0.13515905554207736), np.float64(0.10292263867561052), np.float64(0.11210653450368742), np.float64(0.08744076515106432)]
-        trumpet_comparison = [0, np.float64(1.0), np.float64(0.992499293761613), np.float64(0.6459633061734135), np.float64(0.31838611332848116), np.float64(0.21360601223562686), np.float64(0.11931605750938493), np.float64(0.08316339062309164), np.float64(0.0701687057473084)]
+        piano_comparison_mean = [0, np.float64(1.0), np.float64(0.6327285648288827), np.float64(0.2647386789612746), np.float64(0.17201458476639642), np.float64(0.13515905554207736), np.float64(0.10292263867561052), np.float64(0.11210653450368742), np.float64(0.08744076515106432)]
+        trumpet_comparison_mean = [0, np.float64(1.0), np.float64(0.992499293761613), np.float64(0.6459633061734135), np.float64(0.31838611332848116), np.float64(0.21360601223562686), np.float64(0.11931605750938493), np.float64(0.08316339062309164), np.float64(0.0701687057473084)]
 
-
+        piano_comparison = [[], np.float64(1.0), np.float64(0.4814294293182334), np.float64(0.10392308167988006), np.float64(0.10060534116654808), np.float64(0.08918406948375554), np.float64(0.044676543080990186), np.float64(0.07514166966407616), np.float64(0.034217232045258665)]
+        trumpet_comparison = [[], np.float64(1.0), np.float64(1.0562095347338256), np.float64(0.7313740805027068), np.float64(0.2588301447131931), np.float64(0.15505121616392709), np.float64(0.07352018582192671), np.float64(0.0465575078627254), np.float64(0.030314936431951517)]
 
         for bunch in result:
             piano_indice = 0
@@ -308,7 +302,8 @@ def freq_anal(values):
         return_values_piano.append(timeNotes(timeNote.step,r_piano))
         return_values_trumpet.append(timeNotes(timeNote.step,r_trumpet))
         return_values_all.append(timeNotes(timeNote.step,r_all))
-        return_values_raw.append(r_raw)
+        if r_raw != []:
+            return_values_raw.append(r_raw)
 
     return return_values_piano, return_values_trumpet, return_values_all, return_values_raw
 
