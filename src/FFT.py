@@ -267,8 +267,8 @@ def freq_anal(values):
         piano_comparison_mean = [0, np.float64(1.0), np.float64(0.6327285648288827), np.float64(0.2647386789612746), np.float64(0.17201458476639642), np.float64(0.13515905554207736), np.float64(0.10292263867561052), np.float64(0.11210653450368742), np.float64(0.08744076515106432)]
         trumpet_comparison_mean = [0, np.float64(1.0), np.float64(0.992499293761613), np.float64(0.6459633061734135), np.float64(0.31838611332848116), np.float64(0.21360601223562686), np.float64(0.11931605750938493), np.float64(0.08316339062309164), np.float64(0.0701687057473084)]
 
-        piano_comparison_median = [[], np.float64(1.0), np.float64(0.4814294293182334), np.float64(0.10392308167988006), np.float64(0.10060534116654808), np.float64(0.08918406948375554), np.float64(0.044676543080990186), np.float64(0.07514166966407616), np.float64(0.034217232045258665)]
-        trumpet_comparison_median = [[], np.float64(1.0), np.float64(1.0562095347338256), np.float64(0.7313740805027068), np.float64(0.2588301447131931), np.float64(0.15505121616392709), np.float64(0.07352018582192671), np.float64(0.0465575078627254), np.float64(0.030314936431951517)]
+        piano_comparison_median = [[], np.float64(1.0), np.float64(0.576120674736659), np.float64(0.10074317238955084), np.float64(0.11219071349636119), np.float64(0.0853362696597552), np.float64(0.03575826258866487), np.float64(0.07043107487453776), np.float64(0.03263324801872214)]
+        trumpet_comparison_median = [[], np.float64(1.0), np.float64(1.0726842056009844), np.float64(0.7497942625153731), np.float64(0.25999416080290527), np.float64(0.1577889028211673), np.float64(0.07449396143438389), np.float64(0.04515088268557719), np.float64(0.02829986111368342)]
 
         piano_comparison_ecossaise = [[], np.float64(1.0), np.float64(0.9060887757894084), np.float64(0.3078628526315612), np.float64(0.42474040144621245), np.float64(0.24427959645602856), np.float64(0.19084171644421477), np.float64(0.19751781954808278), np.float64(0.1288031149753406)]
         trumpet_comparison_ecossaise = [[], np.float64(1.0), np.float64(0.7812244987387269), np.float64(0.5776206600479266), np.float64(0.33850899652676075), np.float64(0.25509798335514233), np.float64(0.23989290168227487), np.float64(0.15063101735291518), np.float64(0.08265174010236381)]
@@ -299,8 +299,8 @@ def freq_anal(values):
 
                     #print("pian",piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
                     #print("trum",trumpet_comparison[freq[0]]-(freq[1].amplitude/base_freq))
-            print("piano",piano_indice)
-            print("trumpet", trumpet_indice)
+            #print("piano",piano_indice)
+            #print("trumpet", trumpet_indice)
             #print("trumpet",trumpet_indice)
 
             if len(bunch) >1:
@@ -483,9 +483,9 @@ totalvalues = filter(fftvalues,"gaussian")
 piano_values,trumpet_values,allvalues,rawvalues = freq_anal(totalvalues)
 get_median_harmonics(rawvalues)
 
-piano_values = hide_noise(piano_values,2)
-trumpet_values = hide_noise(trumpet_values,2)
-totalvalues = hide_noise(totalvalues,2)
+piano_values = hide_noise(piano_values,1)
+trumpet_values = hide_noise(trumpet_values,1)
+totalvalues = hide_noise(totalvalues,1)
 
 test_write_midi_file(piano_values,trumpet_values)
 

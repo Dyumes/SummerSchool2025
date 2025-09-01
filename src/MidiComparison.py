@@ -272,7 +272,7 @@ def compare_midis_instruments(midi1, midi2):
 
 if __name__ == "__main__":
     midi_a = os.path.join("media", "midi", "test_output_clean.mid")
-    midi_b = os.path.join("media", "midi", "Gamme.mid")
+    midi_b = os.path.join("media", "midi", "PinkPanther.midi")
 
     similarity, lcs_len, len1, len2 = compare_midis(midi_a, midi_b)
     print("--- Without Instruments ---")
