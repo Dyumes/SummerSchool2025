@@ -8,7 +8,7 @@ from matplotlib.widgets import TextBox, Button
 import WriteMidiFile
 import MidiComparison
 
-AUDIO_FILE = os.path.join("media","wav","Gamme.wav")
+AUDIO_FILE = os.path.join("media","wav","PinkPanther_Both.wav")
 
 fs, data = wavfile.read(AUDIO_FILE)  #Return the sample rate (in samples/sec) and data from an LPCM WAV file
 audio = data.T[0]       # 1st channel of wav
@@ -26,7 +26,7 @@ NOTE_NAMES = ["do", "do#", "ré", "ré#", "mi", "fa", "fa#", "sol", "sol#", "la"
 
 STEP_NUMBER = int(len(audio)/FFT_WINDOW_SIZE)
 
-BASE_TRESH = 150000
+BASE_TRESH = 100000
 ANY_TRESH = 3000
 
 def extract_sample(audio, step):    #exctrats window size sample from audio with zero-padding
@@ -292,14 +292,15 @@ def freq_anal(values):
                     piano_indice += np.log(abs(1+piano_comparison[freq[0]]*base_freq-freq[1].amplitude))/freq[0]
                     trumpet_indice += np.log(abs(1+trumpet_comparison[freq[0]]*base_freq-freq[1].amplitude))/freq[0]
                     """
-                    piano_indice += np.log(piano_comparison[freq[0]]*base_freq / freq[1].amplitude)
-                    trumpet_indice += np.log(trumpet_comparison[freq[0]]*base_freq / freq[1].amplitude)
+                    piano_indice += abs(np.log(piano_comparison[freq[0]]*base_freq / freq[1].amplitude))
+                    trumpet_indice += abs(np.log(trumpet_comparison[freq[0]]*base_freq / freq[1].amplitude))
 
                     #print("piano_indice:",piano_indice)
 
                     #print("pian",piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
                     #print("trum",trumpet_comparison[freq[0]]-(freq[1].amplitude/base_freq))
-            #print("piano",piano_indice)
+            print("piano",piano_indice)
+            print("trumpet", trumpet_indice)
             #print("trumpet",trumpet_indice)
 
             if len(bunch) >1:
@@ -488,18 +489,19 @@ totalvalues = hide_noise(totalvalues,2)
 
 test_write_midi_file(piano_values,trumpet_values)
 
-"""
+
 print("PIANO HEREEEEEEEEE")
 printvalues(piano_values)
 print("TRUMPET HEREEEEEEEEE")
+
 printvalues(trumpet_values)
-"""
-#plot()
+
+plot()
 
 
 
 midi_a = os.path.join("media", "midi", "test_output_clean.mid")
-midi_b = os.path.join("media", "midi", "Gamme.mid")
+midi_b = os.path.join("media", "midi", "PinkPanther.midi")
 similarity, lcs_len, len1, len2 = MidiComparison.compare_midis(midi_a, midi_b)
 print(f"Similarity: {similarity:.2f}%")
 
