@@ -2,7 +2,7 @@ import pretty_midi
 import os
 import matplotlib.pyplot as plt
 
-
+""" Module for comparing two MIDI files using Longest Common Subsequence (LCS) algorithm without considering instruments."""
 def extract_sequence(midi_path):
     pm = pretty_midi.PrettyMIDI(midi_path)
     notes = []
@@ -104,47 +104,57 @@ def get_lcs_indices(seq1, seq2):
     return list(reversed(indices1)), list(reversed(indices2))
 
 def detailed_comparison_visualizer(midi1, midi2, title="Detailed MIDI Comparison", method="lcs"):
-    pitch_seq1, time_seq1, duration_seq1, velocity_seq1 = extract_sequence_with_details(midi1)
-    pitch_seq2, time_seq2, duration_seq2, velocity_seq2 = extract_sequence_with_details(midi2)
+        pitch_seq1, time_seq1, duration_seq1, velocity_seq1 = extract_sequence_with_details(midi1)
+        pitch_seq2, time_seq2, duration_seq2, velocity_seq2 = extract_sequence_with_details(midi2)
 
-    percentage, metric_value, _, _ = compare_midis(midi1, midi2)
-    metric_name = "LCS"
-    indices1, indices2 = get_lcs_indices(pitch_seq1, pitch_seq2)
+        percentage, metric_value, _, _ = compare_midis(midi1, midi2)
+        metric_name = "LCS"
+        indices1, indices2 = get_lcs_indices(pitch_seq1, pitch_seq2)
 
-    plt.figure(figsize=(12, 6))
+        # Création d'un seul graphique
+        plt.figure(figsize=(12, 8))
 
-    file_names = [os.path.basename(midi1), os.path.basename(midi2)]
-    note_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        file_names = [os.path.basename(midi1), os.path.basename(midi2)]
+        note_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
-    plt.subplot(211)
-    plt.scatter(time_seq1, pitch_seq1, s=30, c='blue', alpha=0.6, label=file_names[0])
-    if indices1:
-        plt.scatter([time_seq1[i] for i in indices1], [pitch_seq1[i] for i in indices1],
-                    s=40, c='red', marker='*', label='Common notes')
-    plt.yticks(range(12), note_names)
-    plt.ylabel('Note')
-    plt.title(f'Note progression in {file_names[0]}')
-    plt.legend()
+        # Créer des ensembles pour les indices communs
+        common_indices1 = set(indices1)
+        common_indices2 = set(indices2)
 
-    plt.subplot(212)
-    plt.scatter(time_seq2, pitch_seq2, s=30, c='green', alpha=0.6, label=file_names[1])
-    if indices2:
-        plt.scatter([time_seq2[i] for i in indices2], [pitch_seq2[i] for i in indices2],
-                    s=40, c='red', marker='*', label='Common notes')
-    plt.yticks(range(12), note_names)
-    plt.ylabel('Note')
-    plt.xlabel('Time (seconds)')
-    plt.title(f'Note progression in {file_names[1]}')
-    plt.legend()
+        # Notes non communes du premier fichier (bleues)
+        non_common_times1 = [time for idx, time in enumerate(time_seq1) if idx not in common_indices1]
+        non_common_pitches1 = [pitch for idx, pitch in enumerate(pitch_seq1) if idx not in common_indices1]
+        plt.scatter(non_common_times1, non_common_pitches1, s=70, c='royalblue', alpha=0.7,
+                    label=f"{file_names[0]} uniquement", marker='o', edgecolors='navy')
 
-    plt.suptitle(f"{title}\nSimilarity: {percentage:.1f}% ({metric_name}: {metric_value})", fontsize=16)
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
+        # Notes non communes du deuxième fichier (vertes)
+        non_common_times2 = [time for idx, time in enumerate(time_seq2) if idx not in common_indices2]
+        non_common_pitches2 = [pitch for idx, pitch in enumerate(pitch_seq2) if idx not in common_indices2]
+        plt.scatter(non_common_times2, non_common_pitches2, s=70, c='forestgreen', alpha=0.7,
+                    label=f"{file_names[1]} uniquement", marker='s', edgecolors='darkgreen')
 
-    file_name = os.path.join("media", f"comparison_{method}_{os.path.basename(midi1)}_{os.path.basename(midi2)}.png")
-    plt.savefig(file_name)
-    print(f"Visualization saved as {file_name}")
+        # Notes communes (rouges)
+        common_times1 = [time_seq1[i] for i in indices1]
+        common_pitches1 = [pitch_seq1[i] for i in indices1]
+        plt.scatter(common_times1, common_pitches1, s=100, c='red', alpha=0.8,
+                    label='Notes communes', marker='*', edgecolors='darkred')
 
-    plt.show()
+        # Configuration du graphique
+        plt.title(f"{title}\nSimilarité: {percentage:.1f}% ({metric_name}: {metric_value})", fontsize=16)
+        plt.yticks(range(12), note_names)
+        plt.ylabel('Note')
+        plt.xlabel('Temps (secondes)')
+        plt.grid(True, linestyle='--', alpha=0.7)
+        plt.legend(loc='upper right')
+
+        plt.tight_layout()
+
+        # Enregistrement de l'image
+        file_name = os.path.join("media", f"comparison_merged_{method}_{os.path.basename(midi1)}_{os.path.basename(midi2)}.png")
+        plt.savefig(file_name)
+        print(f"Visualisation sauvegardée sous {file_name}")
+
+        plt.show()
 
 if __name__ == "__main__":
     midi_a = os.path.join("media", "midi", "test_output_clean.mid")
