@@ -10,7 +10,7 @@ import Point2D
 from win32api import GetSystemMetrics
 
 #INIT variables
-midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
+midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","test_output.mid"))
 tempo_times, tempi = midi_data.get_tempo_changes()
 piano_notes = []
 flute_notes = []
