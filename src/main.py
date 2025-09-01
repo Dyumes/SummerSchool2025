@@ -14,7 +14,7 @@ import pyautogui
 
 #INIT variables
 #midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
-midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","test_output_clean.mid"))
+midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","SSB.mid"))
 tempo_times, tempi = midi_data.get_tempo_changes()
 
 piano_notes = []
@@ -43,7 +43,7 @@ pygame.display.flip()
 start_ticks = pygame.time.get_ticks()
 
 pygame.mixer.init()
-pygame.mixer.music.load(os.path.join("media", "mp3", "PinkPanther_Both.mp3"))
+pygame.mixer.music.load(os.path.join("media", "mp3", "SSB.mp3"))
 
 # Reorder Note by the starting time
 piano_notes = sorted(piano_notes, key=lambda note: note.start)
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         factor = 50
         temp = gn2.MountainV2()
         temp.width = screen.get_width() / 12 + factor
-        temp.max_height = 500
+        temp.max_height = mountains[0].max_height/2
         temp.pos_x = (temp.width - factor) * (i-1) + mountains[0].width/2
         temp.floor_position = height/2 + 50
         temp.generate()
