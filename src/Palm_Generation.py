@@ -22,13 +22,13 @@ class PalmV2():
         self.last_c = Point2D.Point2D(0,0)
         self.last_d = Point2D.Point2D(0,0)
 
-        self.nb_leaves = 2
-        self.leaves_base_angle = 180
+        self.nb_leaves = 10
+        self.leaves_base_angle = 120
         self.leaves_start_angle = math.radians(180 + (180-self.leaves_base_angle)/2) # from right
         self.leaves_triangles_size = 25
         self.last_leaves_point = Point2D.Point2D(0,0)
-        self.nb_triangles_by_leaves = 1
-        self.triangle_leaves_rotation = math.radians(45/self.nb_triangles_by_leaves)
+        self.nb_triangles_by_leaves = 15
+        self.triangle_leaves_rotation = math.radians(90/(self.nb_triangles_by_leaves - 1))
 
     def generate(self):
         random.seed(self.seed)
@@ -72,27 +72,40 @@ class PalmV2():
             pos_x = self.last_c.x + ((self.last_d.x - self.last_c.x) / (self.nb_leaves - 1)) * i
             p = Point2D.Point2D(pos_x, self.last_c.y)
 
-            angle_increment = self.leaves_base_angle / self.nb_leaves
+            angle_increment = self.leaves_base_angle / (self.nb_leaves-1)
             angle = math.radians(angle_increment) * i + self.leaves_start_angle
 
             tri = Triangle.get_triangle_from_center(p, angle, self.leaves_triangles_size)
-
+            self.color_for_leaves(tri, 0)
             self.last_leaves_point = tri.a
 
             self.all_triangles.append(tri)
 
             if self.nb_triangles_by_leaves > 1:
-                for j in range(self.nb_triangles_by_leaves):
-                    p = self.last_leaves_point
+                if pos_x < self.last_c.x + (self.last_d.x - self.last_c.x)/2:
+                    for j in range(self.nb_triangles_by_leaves - 1):
+                        p = self.last_leaves_point
 
-                    angle_increment = self.leaves_base_angle / self.nb_leaves
-                    angle = math.radians(angle_increment) * i + self.leaves_start_angle + self.triangle_leaves_rotation * j
+                        angle = math.radians(angle_increment) * i + self.leaves_start_angle - self.triangle_leaves_rotation * j
 
-                    tri = Triangle.get_triangle_from_center(p, angle, self.leaves_triangles_size)
+                        tri = Triangle.get_triangle_from_center(p, angle, self.leaves_triangles_size)
+                        self.color_for_leaves(tri, j + 1)
 
-                    self.last_leaves_point = tri.a
+                        self.last_leaves_point = tri.a
 
-                    self.all_triangles.append(tri)
+                        self.all_triangles.append(tri)
+                else:
+                    for j in range(self.nb_triangles_by_leaves - 1):
+                        p = self.last_leaves_point
+
+                        angle = math.radians(angle_increment) * i + self.leaves_start_angle + self.triangle_leaves_rotation * j
+
+                        tri = Triangle.get_triangle_from_center(p, angle, self.leaves_triangles_size)
+                        self.color_for_leaves(tri, j + 1)
+
+                        self.last_leaves_point = tri.a
+
+                        self.all_triangles.append(tri)
 
     def color_for_trunk(self, triangle):
         altitude = triangle.a.y
@@ -104,11 +117,11 @@ class PalmV2():
 
         triangle.color = self.linear_interpolation_color(self.bottom_trunk_color,self.top_trunk_color, t)
 
-    def color_for_leaves(self, triangle):
-        altitude = triangle.a.y
+    def color_for_leaves(self, triangle, i):
+        altitude = i
 
-        y_max = self.position.y
-        y_min = self.max_height
+        y_max = self.nb_triangles_by_leaves
+        y_min = 0
 
         t = (altitude - y_min)/(y_max - y_min)
 
