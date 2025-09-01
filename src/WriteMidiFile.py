@@ -116,6 +116,7 @@ def get_all_notes(filename):
                 "instrument": instrument.program,
                 "octave": (note.pitch // 12) - 1
             })
+            #print(f"Note: pitch={note.pitch}, start={note.start}, end={note.end}, velocity={note.velocity}, instrument={instrument.program}")
     return notes
 
 def separate_instruments(notes):
@@ -165,6 +166,8 @@ def merge_notes(filename, new_filename):
     file = create_midi_file()
     add_piano(file)
     add_trumpet(file)
+    file.instruments[0].name = "Piano"
+    file.instruments[1].name = "Flute"
 
     # Add notes to the MIDI file
     if piano_notes_concat:

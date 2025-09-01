@@ -356,15 +356,13 @@ def plot():
 fig, ax = plt.subplots()
 
 
-import WriteMidiFile
-
 def test_write_midi_file(piano_values,trumpet_values):
     # Test the creation of a MIDI file and adding a piano instrument
     file = WriteMidiFile.create_midi_file()
     WriteMidiFile.add_piano(file)
     WriteMidiFile.add_trumpet(file)
-    file.instruments[0].name ="flute"
-    file.instruments[1].name ="flute"
+    file.instruments[0].name = "Piano"
+    file.instruments[1].name = "Flute"
     print(file.instruments)
 
 
@@ -372,12 +370,12 @@ def test_write_midi_file(piano_values,trumpet_values):
     for timeNote in piano_values:
         for note in timeNote.notes:
 
-            WriteMidiFile.add_note(file.instruments[1], note.name(), timeNote.second, FFT_WINDOW_SECONDS)
+            WriteMidiFile.add_note(file.instruments[0], note.name(), timeNote.second, FFT_WINDOW_SECONDS)
 
     for timeNote in trumpet_values:
         for note in timeNote.notes:
 
-            WriteMidiFile.add_note(file.instruments[0], note.name(), timeNote.second, FFT_WINDOW_SECONDS)
+            WriteMidiFile.add_note(file.instruments[1], note.name(), timeNote.second, FFT_WINDOW_SECONDS)
 
     # Save the MIDI file
     WriteMidiFile.write_midi_file(file, "media/midi/test_output.mid")

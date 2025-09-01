@@ -13,7 +13,8 @@ from Particles import Environment, Force, Vector
 import random
 
 #INIT variables
-midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
+#midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
+midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","test_output_clean.mid"))
 tempo_times, tempi = midi_data.get_tempo_changes()
 piano_notes = []
 flute_notes = []
@@ -57,7 +58,7 @@ pygame.display.flip()
 start_ticks = pygame.time.get_ticks()
 
 pygame.mixer.init()
-pygame.mixer.music.load(os.path.join("media", "mp3", "Ecossaise_Both.mp3"))
+pygame.mixer.music.load(os.path.join("media", "mp3", "PinkPanther_Both.mp3"))
 
 # Reorder Note by the starting time
 piano_notes = sorted(piano_notes, key=lambda note: note.start)
