@@ -8,7 +8,7 @@ from matplotlib.widgets import TextBox, Button
 import WriteMidiFile
 import MidiComparison
 
-AUDIO_FILE = os.path.join("media","wav","PinkPanther_Both.wav")
+AUDIO_FILE = os.path.join("media","wav","Gamme.wav")
 
 fs, data = wavfile.read(AUDIO_FILE)  #Return the sample rate (in samples/sec) and data from an LPCM WAV file
 audio = data.T[0]       # 1st channel of wav
@@ -27,7 +27,7 @@ NOTE_NAMES = ["do", "do#", "ré", "ré#", "mi", "fa", "fa#", "sol", "sol#", "la"
 STEP_NUMBER = int(len(audio)/FFT_WINDOW_SIZE)
 
 BASE_TRESH = 150000
-ANY_TRESH = 7000
+ANY_TRESH = 3000
 
 def extract_sample(audio, step):    #exctrats window size sample from audio with zero-padding
     end = step*FFT_WINDOW_SIZE
@@ -188,10 +188,42 @@ def certainty(note):
 
 #piano_freqs = []
 
+def get_median_harmonics(piano_freqs):
+    #print(piano_freqs)
+    full_piano_anal = []
+    for i in range(9):
+        full_piano_anal.append([])
+
+    for bunch in piano_freqs:
+        bunch = bunch[0]
+
+        #print("Bunch:")
+
+        #print(bunch)
+        base_amp = bunch[0][1].amplitude
+
+        single_note = True
+        for i in range (1,len(bunch)):
+            if bunch[i][0] == 1:
+                single_note = False
+
+        if single_note:     # if there is only one base note to get good freqs
+            for note in bunch:
+                if note[0]< 9:
+                    #print(note[0],note[1].amplitude/base_amp)
+                    full_piano_anal[note[0]].append(note[1].amplitude/base_amp)
+    #print(full_piano_anal)
+    for i in range(1,len(full_piano_anal)):
+        full_piano_anal[i] = np.median(full_piano_anal[i])
+    print(full_piano_anal)
+
+
 def freq_anal(values):
 
     return_values_piano = []
     return_values_trumpet = []
+    return_values_all = []
+    return_values_raw = []
 
     for timeNote in values:
         base_notes = getaudiblefreqs(timeNote.notes)
@@ -217,7 +249,7 @@ def freq_anal(values):
 
                 fraction =  note.frequency/base_note.frequency
                 fraction_excess = (fraction+0.5) %1 -0.5
-                fraction_int = int(fraction-fraction_excess)
+                fraction_int = round(fraction)
 
                 #if timeNote.step == 170:
                 #    print(fraction_int,base_note.frequency,note,fraction_excess)
@@ -229,20 +261,42 @@ def freq_anal(values):
 
         r_piano = []
         r_trumpet = []
+        r_all = []
+        r_raw = []
 
+        piano_comparison_mean = [0, np.float64(1.0), np.float64(0.6327285648288827), np.float64(0.2647386789612746), np.float64(0.17201458476639642), np.float64(0.13515905554207736), np.float64(0.10292263867561052), np.float64(0.11210653450368742), np.float64(0.08744076515106432)]
+        trumpet_comparison_mean = [0, np.float64(1.0), np.float64(0.992499293761613), np.float64(0.6459633061734135), np.float64(0.31838611332848116), np.float64(0.21360601223562686), np.float64(0.11931605750938493), np.float64(0.08316339062309164), np.float64(0.0701687057473084)]
 
-        piano_comparison = [0, np.float64(1.0), np.float64(0.6327285648288827), np.float64(0.2647386789612746), np.float64(0.17201458476639642), np.float64(0.13515905554207736), np.float64(0.10292263867561052), np.float64(0.11210653450368742), np.float64(0.08744076515106432)]
-        trumpet_comparison = [0, np.float64(1.0), np.float64(0.992499293761613), np.float64(0.6459633061734135), np.float64(0.31838611332848116), np.float64(0.21360601223562686), np.float64(0.11931605750938493), np.float64(0.08316339062309164), np.float64(0.0701687057473084)]
+        piano_comparison_median = [[], np.float64(1.0), np.float64(0.4814294293182334), np.float64(0.10392308167988006), np.float64(0.10060534116654808), np.float64(0.08918406948375554), np.float64(0.044676543080990186), np.float64(0.07514166966407616), np.float64(0.034217232045258665)]
+        trumpet_comparison_median = [[], np.float64(1.0), np.float64(1.0562095347338256), np.float64(0.7313740805027068), np.float64(0.2588301447131931), np.float64(0.15505121616392709), np.float64(0.07352018582192671), np.float64(0.0465575078627254), np.float64(0.030314936431951517)]
+
+        piano_comparison_ecossaise = [[], np.float64(1.0), np.float64(0.9060887757894084), np.float64(0.3078628526315612), np.float64(0.42474040144621245), np.float64(0.24427959645602856), np.float64(0.19084171644421477), np.float64(0.19751781954808278), np.float64(0.1288031149753406)]
+        trumpet_comparison_ecossaise = [[], np.float64(1.0), np.float64(0.7812244987387269), np.float64(0.5776206600479266), np.float64(0.33850899652676075), np.float64(0.25509798335514233), np.float64(0.23989290168227487), np.float64(0.15063101735291518), np.float64(0.08265174010236381)]
+
+        piano_comparison = piano_comparison_median
+        trumpet_comparison = trumpet_comparison_median
 
         for bunch in result:
-            piano_indice = 0
-            trumpet_indice = 0
+            piano_indice:float = 0
+            trumpet_indice:float = 0
 
             base_freq = bunch[0][1].amplitude
             for freq in bunch:
-                if freq[0]<= 3:
+                if 0<freq[0]<= 3:
+
+                    """
                     piano_indice += abs(piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
                     trumpet_indice += abs(trumpet_comparison[freq[0]]-(freq[1].amplitude/base_freq))
+                    """
+                    """
+                    piano_indice += np.log(abs(1+piano_comparison[freq[0]]*base_freq-freq[1].amplitude))/freq[0]
+                    trumpet_indice += np.log(abs(1+trumpet_comparison[freq[0]]*base_freq-freq[1].amplitude))/freq[0]
+                    """
+                    piano_indice += np.log(piano_comparison[freq[0]]*base_freq / freq[1].amplitude)
+                    trumpet_indice += np.log(trumpet_comparison[freq[0]]*base_freq / freq[1].amplitude)
+
+                    #print("piano_indice:",piano_indice)
+
                     #print("pian",piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
                     #print("trum",trumpet_comparison[freq[0]]-(freq[1].amplitude/base_freq))
             #print("piano",piano_indice)
@@ -253,6 +307,8 @@ def freq_anal(values):
                     r_piano.append(bunch[0][1])
                 else:
                     r_trumpet.append(bunch[0][1])
+                r_all.append(bunch[0][1])
+                r_raw.append(bunch)
 
 
 
@@ -263,8 +319,11 @@ def freq_anal(values):
 
         return_values_piano.append(timeNotes(timeNote.step,r_piano))
         return_values_trumpet.append(timeNotes(timeNote.step,r_trumpet))
+        return_values_all.append(timeNotes(timeNote.step,r_all))
+        if r_raw != []:
+            return_values_raw.append(r_raw)
 
-    return return_values_piano, return_values_trumpet
+    return return_values_piano, return_values_trumpet, return_values_all, return_values_raw
 
 def hide_noise(values,strength):
     outvalues = []
@@ -284,7 +343,33 @@ def hide_noise(values,strength):
         outvalues.append(timeNotes(values[i].step,outnotes))
 
     if strength != 1:
-            outvalues = hide_noise(outvalues,strength-1)
+        outvalues = hide_noise(outvalues,strength-1)
+
+    return outvalues
+
+def fill_gaps(values,strength):
+    outvalues = []
+    for i in range(1,len(values)-strength):
+        before_notes = []
+        after_names = []
+        for note in values[i-1].notes:
+            before_notes.append(note)
+        for note in values[i+strength].notes:
+            after_names.append(note.name())
+
+        outnotes = []
+
+        for before_note in before_notes:
+            if before_note.name() in after_names:
+                outnotes.append(before_note)
+        for note in values[i].notes:
+            if not note in outnotes:
+                outnotes.append(note)
+
+        outvalues.append(timeNotes(values[i].step,outnotes))
+
+    if strength != 1:
+        outvalues = fill_gaps(outvalues,strength-1)
 
     return outvalues
 
@@ -394,10 +479,13 @@ def test_write_midi_file(piano_values,trumpet_values):
 
 fftvalues = dofft("gaussian")
 totalvalues = filter(fftvalues,"gaussian")
-piano_values,trumpet_values = freq_anal(totalvalues)
+piano_values,trumpet_values,allvalues,rawvalues = freq_anal(totalvalues)
+get_median_harmonics(rawvalues)
 
 piano_values = hide_noise(piano_values,2)
 trumpet_values = hide_noise(trumpet_values,2)
+totalvalues = hide_noise(totalvalues,2)
+
 test_write_midi_file(piano_values,trumpet_values)
 
 """
@@ -409,49 +497,9 @@ printvalues(trumpet_values)
 #plot()
 
 
-"""
-full_piano_anal = []
-for bunch in piano_freqs:
-
-    print("Bunch:")
-
-    piano_analysis = []
-    for i in range(9):
-        piano_analysis.append(None)
-    base_amp = bunch[0][1].amplitude
-
-    single_note = True
-
-    for i in range (1,len(bunch)):
-        if bunch[i][0] == 1:
-            single_note = False
-
-    if single_note:     # if there is only one base note to get good freqs
-        for note in bunch:
-            if note[0]< 9:
-                print(note[0],note[1].amplitude/base_amp)
-                piano_analysis[note[0]] = note[1].amplitude/base_amp
-        full_piano_anal.append(piano_analysis)
-
-#print(full_piano_anal)
-freq_table =[]
-for i in range(9):
-    freq_table.append(0)
-length_table = freq_table.copy()
-for note in full_piano_anal:
-    for i in range(1,9):
-        if note[i]:
-            length_table[i] += 1
-            freq_table[i] += note[i]
-
-for i in range(1,9):
-    freq_table[i]/= length_table[i]
-
-print(freq_table)
-"""
 
 midi_a = os.path.join("media", "midi", "test_output_clean.mid")
-midi_b = os.path.join("media", "midi", "PinkPanther.midi")
+midi_b = os.path.join("media", "midi", "Gamme.mid")
 similarity, lcs_len, len1, len2 = MidiComparison.compare_midis(midi_a, midi_b)
 print(f"Similarity: {similarity:.2f}%")
 
