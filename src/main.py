@@ -6,19 +6,14 @@ import Generation as gn
 import Mountain_Generation as gn2
 import Sun_Generation as sg2
 import Point2D
-from win32api import GetSystemMetrics
-import math
 from Particles import Environment, Force, Vector, Point
 import random
-
-# Variables pour suivre la position du soleil
-sun_teleport_done = False  # Variable pour suivre si le téléport a déjà été effectué
+from Constants import *
 import pyautogui
 
 
 #INIT variables
 #midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
-midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","test_output_clean.mid"))
 midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","test_output_clean.mid"))
 tempo_times, tempi = midi_data.get_tempo_changes()
 
@@ -40,22 +35,6 @@ fps = 60
 background_colour = (15, 0, 35)
 screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
-
-# ENVIRONMENT SETTINGS
-NBR_TRIANGLE_IN_CIRCLE = 8
-CIRCLE_RADIUS = 10
-SUN_PARTICLE_RADIUS = 5
-PARTICLE_COLOR = (255, 100, 0)
-SUN_PARTICLE_COLOR = (255, 255, 0)
-SUN_PARTICLE_COLOR_DELTA = 150
-#MIN_PARTICLES = 10
-#MAX_PARTICLES = 10
-GRAVITY_MAGNITUDE = 9.81
-GRAVITY_DIRECTION = math.pi / 2
-# HANDLING_PARTICLES_COLLISIONS = False
-# HANDLING_OBJECTS_COLLISIONS = False
-# HANDLING_SUN_COLLISIONS = True
-SUN_GRAVITY_MAGNITUDE = 1
 
 
 # INIT
@@ -120,19 +99,20 @@ if __name__ == "__main__":
     env_with_sun.handling_sun_collisions = True
     env_with_sun.handling_objects_collisions = False
     env_with_sun.handling_particles_collisions = False
-    env_with_sun.min_particles = 300
-    env_with_sun.max_particles = 300
+    env_with_sun.min_particles = MIN_SUN_PARTICLES
+    env_with_sun.max_particles = MAX_SUN_PARTICLES
 
     env = Environment((width, height))
     env.handling_sun_collisions = False
     env.handling_objects_collisions = True
     env.handling_particles_collisions = False
-    env.min_particles = 10
-    env.max_particles = 10
+    env.min_particles = MIN_PARTICLES
+    env.max_particles = MAX_PARTICLES
 
     gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))
 
     env_with_sun.sun = sun
+    sun_teleport_done = False
 
     for _ in range(random.randint(env_with_sun.min_particles, env_with_sun.max_particles)):
         env_with_sun.create_particle_around_sun(sun)
@@ -209,17 +189,22 @@ if __name__ == "__main__":
         env_with_sun.draw()
         env_with_sun.update()
 
-        # Commented out for the presentation because of bugs
-        env_objects = mountains
-        #for mountain in mountains: print(mountain)
-        #env.draw()
-        #env.update(env_objects)
-
         for e in mountains:
             e.manage_mountain(screen, current_time)
 
         for e in static_mountains:
             e.manage_mountain(screen, current_time)
+
+        # Commented out for the presentation because of bugs
+        # env_objects = mountains + static_mountains
+        # env.draw()
+        # env.update(env_objects)
+        #
+        # for _ in range(random.randint(env.min_particles, env.max_particles)):
+        #     env.create_particle()
+        #
+        # for particle in env.particles:
+        #     particle.add_force(gravity)
 
         gn.globalGeneration(current_time, bpm)
         gn.firstLaunch = False

@@ -1,32 +1,19 @@
 import pygame
-import math
 import random
-from win32api import GetSystemMetrics
+from Quadtree import Quadtree, Rectangle
+from Constants import *
+import pyautogui
 
 pygame.init()
 
 #Display pygame with a bit smaller resolution than the screen itself no matter the os
-WINDOW_SIZE = (GetSystemMetrics(0) - 100, GetSystemMetrics(1) - 100)
+WINDOW_SIZE = (pyautogui.size()[0] - 100, pyautogui.size()[1] - 100)
+background_colour = (15, 0, 35)
 WINDOW = pygame.display.set_mode(WINDOW_SIZE)
 
 FPS = 60
 CLOCK = pygame.time.Clock()
 DT = CLOCK.tick(FPS) / 1000
-
-NBR_TRIANGLE_IN_CIRCLE = 8
-CIRCLE_RADIUS = 10
-SUN_PARTICLE_RADIUS = 5
-PARTICLE_COLOR = (255, 100, 0)
-SUN_PARTICLE_COLOR = (255, 255, 0)
-SUN_PARTICLE_COLOR_DELTA = 150
-#MIN_PARTICLES = 300
-#MAX_PARTICLES = 300
-GRAVITY_MAGNITUDE = 9.81
-GRAVITY_DIRECTION = math.pi / 2
-#HANDLING_PARTICLES_COLLISIONS = False
-#HANDLING_OBJECTS_COLLISIONS = False
-#HANDLING_SUN_COLLISIONS = True
-SUN_GRAVITY_MAGNITUDE = 1
 
 
 class Point:
@@ -194,7 +181,7 @@ class Particle:
         """
         if env.handling_sun_collisions:
             # Allow particles to go slightly outside the environment
-            margin = 50
+            margin = MARGIN_SUN_PARTICLES
             return (-margin <= self.form.center.x <= env.width + margin and
                     -margin <= self.form.center.y <= env.height + margin)
         return env.is_inside(self.form.center)
@@ -361,9 +348,16 @@ class Particle:
             px, py = p1.x, p1.y
             qx, qy = p2.x, p2.y
 
-            # # Compute distance from circle center to segment
+            # Compute distance from circle center to segment
             dx, dy = qx - px, qy - py
             length_squared = dx * dx + dy * dy
+
+            # Éviter la division par zéro
+            if length_squared < 0.0000001:  # Presque zéro
+                # Les points sont identiques, vérifier simplement la distance au point
+                dist_squared = (cx - px) ** 2 + (cy - py) ** 2
+                return dist_squared <= r ** 2
+
             t = max(0, min(1, ((cx - px) * dx + (cy - py) * dy) / length_squared))
             nearest_x = px + t * dx
             nearest_y = py + t * dy
@@ -371,11 +365,17 @@ class Particle:
 
             return dist_squared <= r ** 2
 
-        for triangle in object.triangles:
+        # for triangle in object.triangles:
+        #     pt = self.form.center
+        #     a = triangle.get_position1()
+        #     b = triangle.get_position2()
+        #     c = triangle.get_position3()
+
+        for triangle in object.all_triangles:
             pt = self.form.center
-            a = triangle.get_position1()
-            b = triangle.get_position2()
-            c = triangle.get_position3()
+            a = triangle.a
+            b = triangle.b
+            c = triangle.c
 
             # Convert tuples to Point objects if necessary
             if isinstance(a, tuple):
@@ -416,10 +416,15 @@ class Particle:
         """
 
         def compute_closest_side_and_normal(triangle, point):
+            # sides = [
+            #     (triangle.get_position1(), triangle.get_position2()),
+            #     (triangle.get_position2(), triangle.get_position3()),
+            #     (triangle.get_position3(), triangle.get_position1())
+            # ]
             sides = [
-                (triangle.get_position1(), triangle.get_position2()),
-                (triangle.get_position2(), triangle.get_position3()),
-                (triangle.get_position3(), triangle.get_position1())
+                (triangle.a, triangle.b),
+                (triangle.b, triangle.c),
+                (triangle.c, triangle.a)
             ]
             closest_side = None
             min_distance = float('inf')
@@ -434,6 +439,18 @@ class Particle:
                 # Projection of point onto the segment
                 dx, dy = p2.x - p1.x, p2.y - p1.y
                 length_squared = dx ** 2 + dy ** 2
+
+                # Éviter la division par zéro
+                if length_squared < 0.0000001:  # Presque zéro
+                    # Les points sont identiques, vérifier simplement la distance au point
+                    dist_squared = (point.x - p1.x) ** 2 + (point.y - p1.y) ** 2
+                    if dist_squared < min_distance:
+                        min_distance = dist_squared
+                        closest_side = (p1, p2)
+                        # Utiliser un vecteur normal par défaut (vers le haut)
+                        normal = (0, 1)
+                    continue
+
                 t = max(0, min(1, ((point.x - p1.x) * dx + (point.y - p1.y) * dy) / length_squared))
                 nearest_x = p1.x + t * dx
                 nearest_y = p1.y + t * dy
@@ -660,8 +677,8 @@ class Environment:
         self.handling_sun_collisions = False
         self.handling_objects_collisions = False
         self.handling_particles_collisions = False
-        self.min_particles = 300
-        self.max_particles = 300
+        self.min_particles = MIN_PARTICLES
+        self.max_particles = MAX_PARTICLES
 
     def is_inside(self, point):
         """
@@ -743,6 +760,73 @@ class Environment:
         except Exception as e:
             print("Error while handling particle collisions:", e)
 
+    def build_objects_quadtree(self, objects):
+        """
+        Construit un quadtree pour les objets de l'environnement
+        """
+        # Créer un nouveau quadtree couvrant tout l'environnement
+        boundary = Rectangle(0, 0, self.width, self.height)
+        self.objects_qtree = Quadtree(boundary, capacity=10)
+
+        # Insérer les triangles des objets dans le quadtree
+        for obj in objects:
+            if not hasattr(obj, 'all_triangles'):
+                continue
+
+            for triangle in obj.all_triangles:
+                # Créer un rectangle englobant pour le triangle
+                points = []
+                for point_attr in ['a', 'b', 'c']:
+                    point = getattr(triangle, point_attr)
+                    if isinstance(point, tuple):
+                        points.append((point[0], point[1]))
+                    else:
+                        points.append((point.x, point.y))
+
+                # Trouver les coordonnées min et max
+                min_x = min(p[0] for p in points)
+                max_x = max(p[0] for p in points)
+                min_y = min(p[1] for p in points)
+                max_y = max(p[1] for p in points)
+
+                # Créer un rectangle englobant pour ce triangle
+                triangle_rect = Rectangle(min_x, min_y, max_x - min_x, max_y - min_y)
+
+                # Stocker le triangle avec son rectangle englobant
+                triangle.bounding_rect = triangle_rect
+                triangle.parent_object = obj
+
+                # Insérer dans le quadtree
+                self.objects_qtree.insert(triangle)
+
+    def handle_collisions_with_objects_optimized(self, objects):
+        """
+        Version optimisée de la détection de collision utilisant le quadtree
+        """
+        # Construire ou reconstruire le quadtree pour les objets
+        self.build_objects_quadtree(objects)
+
+        # Pour chaque particule
+        for particle in self.particles:
+            # Créer un rectangle de recherche autour de la particule
+            search_radius = particle.form.radius * 2  # Zone de recherche un peu plus grande
+            search_rect = Rectangle(
+                particle.form.center.x - search_radius,
+                particle.form.center.y - search_radius,
+                search_radius * 2,
+                search_radius * 2
+            )
+
+            # Trouver les triangles potentiellement en collision
+            potential_triangles = self.objects_qtree.query(search_rect)
+
+            # Vérifier les collisions avec ces triangles
+            for triangle in potential_triangles:
+                info = particle.is_colliding_with_object(triangle.parent_object)
+                if info[0]:
+                    particle.colliding_with_objects(info[1])
+                    break  # On peut s'arrêter à la première collision
+
     def handle_collisions_with_objects(self, objects):
         """
             Check and handle collisions between particles and objects.
@@ -753,6 +837,10 @@ class Environment:
         try:
             for i in range(len(self.particles)):
                 for object in objects:
+                    # Vérifier si l'objet a la structure attendue pour la détection de collision
+                    if not hasattr(object, 'all_triangles'):
+                        continue
+
                     info = self.particles[i].is_colliding_with_object(object)
                     if info[0]:
                         #print("HIT")
@@ -828,7 +916,8 @@ class Environment:
             self.handle_particle_collisions()
 
         if self.handling_objects_collisions:
-            self.handle_collisions_with_objects(objects)
+            #self.handle_collisions_with_objects(objects)
+            self.handle_collisions_with_objects_optimized(objects)
 
         if self.handling_sun_collisions:
             self.handle_collisions_with_sun(self.sun)
