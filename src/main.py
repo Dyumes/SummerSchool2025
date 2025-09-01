@@ -167,6 +167,10 @@ if __name__ == "__main__":
             bpm = 0
             sun.can_move = False
 
+            if current_time >= midi_data.get_end_time():
+                env_with_sun.handling_particles_collisions = True
+
+
         # Drawing things
 
         screen.fill(background_colour)
