@@ -27,7 +27,7 @@ NOTE_NAMES = ["do", "do#", "ré", "ré#", "mi", "fa", "fa#", "sol", "sol#", "la"
 STEP_NUMBER = int(len(audio)/FFT_WINDOW_SIZE)
 
 BASE_TRESH = 150000
-ANY_TRESH = 7000
+ANY_TRESH = 3000
 
 def extract_sample(audio, step):    #exctrats window size sample from audio with zero-padding
     end = step*FFT_WINDOW_SIZE
@@ -249,7 +249,7 @@ def freq_anal(values):
 
                 fraction =  note.frequency/base_note.frequency
                 fraction_excess = (fraction+0.5) %1 -0.5
-                fraction_int = int(fraction-fraction_excess)
+                fraction_int = round(fraction)
 
                 #if timeNote.step == 170:
                 #    print(fraction_int,base_note.frequency,note,fraction_excess)
@@ -267,18 +267,33 @@ def freq_anal(values):
         piano_comparison_mean = [0, np.float64(1.0), np.float64(0.6327285648288827), np.float64(0.2647386789612746), np.float64(0.17201458476639642), np.float64(0.13515905554207736), np.float64(0.10292263867561052), np.float64(0.11210653450368742), np.float64(0.08744076515106432)]
         trumpet_comparison_mean = [0, np.float64(1.0), np.float64(0.992499293761613), np.float64(0.6459633061734135), np.float64(0.31838611332848116), np.float64(0.21360601223562686), np.float64(0.11931605750938493), np.float64(0.08316339062309164), np.float64(0.0701687057473084)]
 
-        piano_comparison = [[], np.float64(1.0), np.float64(0.4814294293182334), np.float64(0.10392308167988006), np.float64(0.10060534116654808), np.float64(0.08918406948375554), np.float64(0.044676543080990186), np.float64(0.07514166966407616), np.float64(0.034217232045258665)]
-        trumpet_comparison = [[], np.float64(1.0), np.float64(1.0562095347338256), np.float64(0.7313740805027068), np.float64(0.2588301447131931), np.float64(0.15505121616392709), np.float64(0.07352018582192671), np.float64(0.0465575078627254), np.float64(0.030314936431951517)]
+        piano_comparison_median = [[], np.float64(1.0), np.float64(0.4814294293182334), np.float64(0.10392308167988006), np.float64(0.10060534116654808), np.float64(0.08918406948375554), np.float64(0.044676543080990186), np.float64(0.07514166966407616), np.float64(0.034217232045258665)]
+        trumpet_comparison_median = [[], np.float64(1.0), np.float64(1.0562095347338256), np.float64(0.7313740805027068), np.float64(0.2588301447131931), np.float64(0.15505121616392709), np.float64(0.07352018582192671), np.float64(0.0465575078627254), np.float64(0.030314936431951517)]
+
+        piano_comparison = piano_comparison_median
+        trumpet_comparison = trumpet_comparison_median
 
         for bunch in result:
-            piano_indice = 0
-            trumpet_indice = 0
+            piano_indice:float = 0
+            trumpet_indice:float = 0
 
             base_freq = bunch[0][1].amplitude
             for freq in bunch:
-                if freq[0]<= 3:
+                if 0<freq[0]<= 3:
+
+                    """
                     piano_indice += abs(piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
                     trumpet_indice += abs(trumpet_comparison[freq[0]]-(freq[1].amplitude/base_freq))
+                    """
+                    """
+                    piano_indice += np.log(abs(1+piano_comparison[freq[0]]*base_freq-freq[1].amplitude))/freq[0]
+                    trumpet_indice += np.log(abs(1+trumpet_comparison[freq[0]]*base_freq-freq[1].amplitude))/freq[0]
+                    """
+                    piano_indice += np.log(piano_comparison[freq[0]]*base_freq / freq[1].amplitude)
+                    trumpet_indice += np.log(trumpet_comparison[freq[0]]*base_freq / freq[1].amplitude)
+
+                    print("piano_indice:",piano_indice)
+
                     #print("pian",piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
                     #print("trum",trumpet_comparison[freq[0]]-(freq[1].amplitude/base_freq))
             #print("piano",piano_indice)
