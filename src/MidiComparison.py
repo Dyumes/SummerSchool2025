@@ -156,6 +156,74 @@ def detailed_comparison_visualizer(midi1, midi2, title="Detailed MIDI Comparison
 
         plt.show()
 
+def split_comparison_visualizer(midi1, midi2, title="Detailed MIDI Comparison", method="lcs"):
+    pitch_seq1, time_seq1, duration_seq1, velocity_seq1 = extract_sequence_with_details(midi1)
+    pitch_seq2, time_seq2, duration_seq2, velocity_seq2 = extract_sequence_with_details(midi2)
+
+    percentage, metric_value, _, _ = compare_midis(midi1, midi2)
+    metric_name = "LCS"
+    indices1, indices2 = get_lcs_indices(pitch_seq1, pitch_seq2)
+
+    # Création de deux sous-graphiques
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
+
+    file_names = [os.path.basename(midi1), os.path.basename(midi2)]
+    note_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+    # Premier graphique - Fichier 1
+    ax1.scatter(time_seq1, pitch_seq1, s=70, c='royalblue', alpha=0.7,
+                label=f"{file_names[0]}", marker='o', edgecolors='navy')
+
+    # Notes communes sur le premier graphique
+    if indices1:
+        common_times1 = [time_seq1[i] for i in indices1]
+        common_pitches1 = [pitch_seq1[i] for i in indices1]
+        ax1.scatter(common_times1, common_pitches1, s=100, c='red', alpha=0.8,
+                   marker='*', label='Notes communes', edgecolors='darkred')
+
+    ax1.set_title(f"{file_names[0]}", fontsize=12)
+    ax1.set_yticks(range(12))
+    ax1.set_yticklabels(note_names)
+    ax1.set_ylabel('Note')
+    ax1.grid(True, linestyle='--', alpha=0.7)
+    ax1.legend(loc='upper right')
+
+    # Deuxième graphique - Fichier 2
+    ax2.scatter(time_seq2, pitch_seq2, s=70, c='forestgreen', alpha=0.7,
+                label=f"{file_names[1]}", marker='s', edgecolors='darkgreen')
+
+    # Notes communes sur le deuxième graphique
+    if indices2:
+        common_times2 = [time_seq2[i] for i in indices2]
+        common_pitches2 = [pitch_seq2[i] for i in indices2]
+        ax2.scatter(common_times2, common_pitches2, s=100, c='red', alpha=0.8,
+                   marker='*', label='Notes communes', edgecolors='darkred')
+
+    ax2.set_title(f"{file_names[1]}", fontsize=12)
+    ax2.set_yticks(range(12))
+    ax2.set_yticklabels(note_names)
+    ax2.set_xlabel('Temps (secondes)')
+    ax2.set_ylabel('Note')
+    ax2.grid(True, linestyle='--', alpha=0.7)
+    ax2.legend(loc='upper right')
+
+    # Titre global
+    fig.suptitle(f"{title}\nSimilarité: {percentage:.1f}% ({metric_name}: {metric_value})",
+                fontsize=16, y=0.98)
+
+    plt.tight_layout()
+    fig.subplots_adjust(top=0.9)
+
+    # Enregistrement de l'image
+    file_name = os.path.join("media", f"comparison_split_{method}_{os.path.basename(midi1)}_{os.path.basename(midi2)}.png")
+    plt.savefig(file_name)
+    print(f"Visualisation séparée sauvegardée sous {file_name}")
+
+    plt.show()
+
+
+""" Module for comparing two MIDI files using Longest Common Subsequence (LCS) algorithm with considering instruments."""
+
 if __name__ == "__main__":
     midi_a = os.path.join("media", "midi", "test_output_clean.mid")
     midi_b = os.path.join("media", "midi", "PinkPanther.midi")
@@ -166,3 +234,4 @@ if __name__ == "__main__":
     print(f"Generated sequence size: {len1}, Original sequence size: {len2}")
 
     detailed_comparison_visualizer(midi_a, midi_b, "Detailed comparison between generated and original MIDI")
+    split_comparison_visualizer(midi_a, midi_b, "Detailed comparison between generated and original MIDI")
