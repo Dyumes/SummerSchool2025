@@ -9,8 +9,11 @@ import Sun_Generation as sg2
 import Point2D
 from win32api import GetSystemMetrics
 import math
-from Particles import Environment, Force, Vector
+from Particles import Environment, Force, Vector, Point
 import random
+
+# Variables pour suivre la position du soleil
+sun_teleport_done = False  # Variable pour suivre si le téléport a déjà été effectué
 
 #INIT variables
 #midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
@@ -190,6 +193,16 @@ if __name__ == "__main__":
 
         sun.manage_sun(screen, bpm, current_time)
 
+        if not sun_teleport_done and sun.can_move:
+            dx = sun.circle_center.x - sun.original_center.x
+            dy = sun.circle_center.y - sun.original_center.y
+
+            for particle in env_with_sun.particles:
+                particle.form.center.x += dx
+                particle.form.center.y += dy
+
+            sun_teleport_done = True
+
         env_with_sun.draw()
         env_with_sun.update()
 
@@ -226,4 +239,3 @@ if __name__ == "__main__":
 
     # END
     pygame.display.quit()
-
