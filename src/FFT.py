@@ -6,6 +6,7 @@ import scipy
 import matplotlib.pyplot as plt
 from matplotlib.widgets import TextBox, Button
 import WriteMidiFile
+import MidiComparison
 
 AUDIO_FILE = os.path.join("media","wav","PinkPanther_Both.wav")
 
@@ -25,8 +26,8 @@ NOTE_NAMES = ["do", "do#", "ré", "ré#", "mi", "fa", "fa#", "sol", "sol#", "la"
 
 STEP_NUMBER = int(len(audio)/FFT_WINDOW_SIZE)
 
-BASE_TRESH = 200000
-ANY_TRESH = 10000
+BASE_TRESH = 150000
+ANY_TRESH = 7000
 
 def extract_sample(audio, step):    #exctrats window size sample from audio with zero-padding
     end = step*FFT_WINDOW_SIZE
@@ -449,3 +450,9 @@ for i in range(1,9):
 print(freq_table)
 """
 
+midi_a = os.path.join("media", "midi", "test_output_clean.mid")
+midi_b = os.path.join("media", "midi", "PinkPanther.midi")
+similarity, lcs_len, len1, len2 = MidiComparison.compare_midis(midi_a, midi_b)
+print(f"Similarity: {similarity:.2f}%")
+
+MidiComparison.detailed_comparison_visualizer(midi_a, midi_b, "Detailed comparison between generated and original MIDI")
