@@ -167,7 +167,7 @@ if __name__ == "__main__":
             bpm = 0
             sun.can_move = False
 
-            if current_time >= midi_data.get_end_time():
+            if current_time >= midi_data.get_end_time() and startSong:
                 env_with_sun.handling_particles_collisions = True
 
 
