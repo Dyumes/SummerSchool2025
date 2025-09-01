@@ -223,15 +223,69 @@ def split_comparison_visualizer(midi1, midi2, title="Detailed MIDI Comparison", 
 
 
 """ Module for comparing two MIDI files using Longest Common Subsequence (LCS) algorithm with considering instruments."""
+def extract_sequence_instruments(midi_path):
+    pm = pretty_midi.PrettyMIDI(midi_path)
+    notes = []
+    for instrument in pm.instruments:
+        for note in instrument.notes:
+            notes.append((note.start, note.pitch % 12, instrument.program))  # Include instrument program
+
+    notes.sort(key=lambda note: note[0])
+
+    sorted_notes = []
+    for _, pitch, program in notes:
+        sorted_notes.append((pitch, program))  # Include pitch and instrument program in the sequence
+
+    return sorted_notes
+
+def lcs_with_instruments(sequence1, sequence2):
+    rows = len(sequence1)
+    columns = len(sequence2)
+
+    # Création de la matrice pour stocker les longueurs des sous-séquences communes
+    subsequence_lengths = [[0] * (columns + 1) for _ in range(rows + 1)]
+
+    # Remplissage de la matrice
+    for row in range(rows):
+        for col in range(columns):
+            # Comparaison des tuples (hauteur de note, programme d'instrument)
+            if sequence1[row] == sequence2[col]:
+                subsequence_lengths[row + 1][col + 1] = subsequence_lengths[row][col] + 1
+            else:
+                subsequence_lengths[row + 1][col + 1] = max(
+                    subsequence_lengths[row + 1][col],
+                    subsequence_lengths[row][col + 1]
+                )
+
+    return subsequence_lengths[rows][columns]
+
+def compare_midis_instruments(midi1, midi2):
+    seq1 = extract_sequence_instruments(midi1)
+    seq2 = extract_sequence_instruments(midi2)
+
+    common_length = lcs_with_instruments(seq1, seq2)
+
+    percentage = (2 * common_length) / (len(seq1) + len(seq2)) * 100
+    return percentage, common_length, len(seq1), len(seq2)
+
+
 
 if __name__ == "__main__":
     midi_a = os.path.join("media", "midi", "test_output_clean.mid")
     midi_b = os.path.join("media", "midi", "PinkPanther.midi")
 
     similarity, lcs_len, len1, len2 = compare_midis(midi_a, midi_b)
+    print("--- Without Instruments ---")
     print(f"Similarity: {similarity:.2f}%")
     print(f"Common notes in the longest sequence: {lcs_len}")
     print(f"Generated sequence size: {len1}, Original sequence size: {len2}")
+
+    print("--- With Instruments ---")
+    similarity_inst, lcs_len_inst, len1_inst, len2_inst = compare_midis_instruments(midi_a, midi_b)
+    print(f"Similarity: {similarity_inst:.2f}%")
+    print(f"Common notes in the longest sequence: {lcs_len_inst}")
+    print(f"Generated sequence size: {len1_inst}, Original sequence size: {len2_inst}")
+    print("-------------------------")
 
     detailed_comparison_visualizer(midi_a, midi_b, "Detailed comparison between generated and original MIDI")
     split_comparison_visualizer(midi_a, midi_b, "Detailed comparison between generated and original MIDI")
