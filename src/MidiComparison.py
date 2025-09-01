@@ -140,7 +140,7 @@ def detailed_comparison_visualizer(midi1, midi2, title="Detailed MIDI Comparison
     plt.suptitle(f"{title}\nSimilarity: {percentage:.1f}% ({metric_name}: {metric_value})", fontsize=16)
     plt.tight_layout(rect=[0, 0, 1, 0.95])
 
-    file_name = f"comparison_{method}_{os.path.basename(midi1)}_{os.path.basename(midi2)}.png"
+    file_name = os.path.join("media", f"comparison_{method}_{os.path.basename(midi1)}_{os.path.basename(midi2)}.png")
     plt.savefig(file_name)
     print(f"Visualization saved as {file_name}")
 
