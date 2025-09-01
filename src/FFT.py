@@ -192,6 +192,7 @@ def freq_anal(values):
 
     return_values_piano = []
     return_values_trumpet = []
+    return_values_all = []
 
     for timeNote in values:
         base_notes = getaudiblefreqs(timeNote.notes)
@@ -229,6 +230,7 @@ def freq_anal(values):
 
         r_piano = []
         r_trumpet = []
+        r_all = []
 
 
         piano_comparison = [0, np.float64(1.0), np.float64(0.6327285648288827), np.float64(0.2647386789612746), np.float64(0.17201458476639642), np.float64(0.13515905554207736), np.float64(0.10292263867561052), np.float64(0.11210653450368742), np.float64(0.08744076515106432)]
@@ -253,6 +255,7 @@ def freq_anal(values):
                     r_piano.append(bunch[0][1])
                 else:
                     r_trumpet.append(bunch[0][1])
+                r_all.append(bunch[0][1])
 
 
 
@@ -263,8 +266,9 @@ def freq_anal(values):
 
         return_values_piano.append(timeNotes(timeNote.step,r_piano))
         return_values_trumpet.append(timeNotes(timeNote.step,r_trumpet))
+        return_values_all.append(timeNotes(timeNote.step,r_all))
 
-    return return_values_piano, return_values_trumpet
+    return return_values_piano, return_values_trumpet, return_values_all
 
 def hide_noise(values,strength):
     outvalues = []
@@ -394,10 +398,12 @@ def test_write_midi_file(piano_values,trumpet_values):
 
 fftvalues = dofft("gaussian")
 totalvalues = filter(fftvalues,"gaussian")
-piano_values,trumpet_values = freq_anal(totalvalues)
+piano_values,trumpet_values,allvalues = freq_anal(totalvalues)
 
 piano_values = hide_noise(piano_values,2)
 trumpet_values = hide_noise(trumpet_values,2)
+totalvalues = hide_noise(totalvalues,2)
+
 test_write_midi_file(piano_values,trumpet_values)
 
 """
