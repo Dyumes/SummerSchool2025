@@ -1,4 +1,5 @@
 import subprocess
+import os
 
 def mp3_to_wav(src, dst):
     """
@@ -15,4 +16,12 @@ def mp3_to_wav(src, dst):
         print(f"The error \"{e}\" occurred during the conversion process.")
         print("Please ensure that you have ffmpeg installed and the path is correctly set.")
 
-mp3_to_wav("media/mp3/Ecossaise_Trumpet.mp3", "media/wav/Ecossaise_Trumpet.wav")
+#mp3_to_wav(os.path.join("media", "mp3", "Gamme.mp3"), os.path.join("media", "wav", "Gamme.wav"))
+#mp3_to_wav(os.path.join("media", "mp3", "Gamme_Piano.mp3"), os.path.join("media", "wav", "Gamme_Piano.wav"))
+#mp3_to_wav(os.path.join("media", "mp3", "Gamme_Trumpet.mp3"), os.path.join("media", "wav", "Gamme_Trumpet.wav"))
+#mp3_to_wav(os.path.join("media", "mp3", "SSB.mp3"), os.path.join("media", "wav", "SSB.wav"))
+#mp3_to_wav(os.path.join("media", "mp3", "SSB_Piano.mp3"), os.path.join("media", "wav", "SSB_Piano.wav"))
+#mp3_to_wav(os.path.join("media", "mp3", "SSB_Trumpet.mp3"), os.path.join("media", "wav", "SSB_Trumpet.wav"))
+#mp3_to_wav(os.path.join("media", "mp3", "SuperMario.mp3"), os.path.join("media", "wav", "SuperMario.wav"))
+#mp3_to_wav(os.path.join("media", "mp3", "SuperMarion_Piano.mp3"), os.path.join("media", "wav", "SuperMarion_Piano.wav"))
+#mp3_to_wav(os.path.join("media", "mp3", "SuperMarion_Trumpet.mp3"), os.path.join("media", "wav", "SuperMarion_Trumpet.wav"))
