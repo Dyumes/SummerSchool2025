@@ -5,7 +5,7 @@ import pygame
 
 def getNotes(pianoArr, fluteArr, data):
     for instrument in data.instruments:
-        print(instrument)
+        print(instrument.name)
         for note in instrument.notes:
             note.pitch %= 12
             if instrument.name == "Piano":
