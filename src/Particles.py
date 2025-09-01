@@ -578,10 +578,12 @@ class Particle:
         # bounce_magnitude = 4 * (sun.radius + sun.offset - distance + self.form.radius) / self.form.radius
         # bounce_magnitude = max(bounce_magnitude, 1)
         bounce_magnitude = 6
+        random_angle = random.uniform(-0.5, 0.5)  # Perturbation angulaire
+        perturbed_direction = direction + random_angle
 
         if not self.is_colliding_w_sun:
             self.is_colliding_w_sun = True
-            self.add_force(Force(Vector(bounce_magnitude, direction), "SunColliding"))
+            self.add_force(Force(Vector(bounce_magnitude, perturbed_direction), "SunColliding"))
         else:
             force = self.find_force("SunColliding")
             if force is not None:
@@ -589,7 +591,7 @@ class Particle:
                 #force.vector.magnitude = max(force.vector.magnitude, bounce_magnitude)
                 #force.vector.direction = direction
 
-                self.change_force("SunColliding", change_magnitude=-0.3, change_direction=0)
+                self.change_force("SunColliding", change_magnitude=-0.3, change_direction=random.uniform(-0.1, 0.1))
                 if force.vector.magnitude <= 0:
                     self.forces.remove(force)
                     # print("Removing SunColliding force")
@@ -617,13 +619,29 @@ class Particle:
         # Gravity strength decreases with distance
         gravity_strength = SUN_GRAVITY_MAGNITUDE * 2000 / (distance + 50)
 
+        # Ajouter un petit angle aléatoire à la direction
+        random_angle = random.uniform(-0.1, 0.1)
+        perturbed_direction = direction + random_angle
+
         force = self.find_force("SunGravity")
         if force:
             force.vector.magnitude = min(gravity_strength, 2)
-            force.vector.direction = direction
+            force.vector.direction = perturbed_direction
         else:
-            gravity_force = Force(Vector(min(gravity_strength, 5), direction), "SunGravity")
+            gravity_force = Force(Vector(min(gravity_strength, 5), perturbed_direction), "SunGravity")
             self.add_force(gravity_force)
+
+        # Ajouter une légère force tangentielle pour créer un mouvement orbital
+        tangential_direction = direction + math.pi / 2
+        tangential_strength = min(gravity_strength * 0.3, 0.5)
+
+        force = self.find_force("SunOrbital")
+        if force:
+            force.vector.magnitude = tangential_strength
+            force.vector.direction = tangential_direction
+        else:
+            orbital_force = Force(Vector(tangential_strength, tangential_direction), "SunOrbital")
+            self.add_force(orbital_force)
 
     def decay_sun_colliding_force(self):
         """
