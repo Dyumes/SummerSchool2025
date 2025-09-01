@@ -6,6 +6,7 @@ import scipy
 import matplotlib.pyplot as plt
 from matplotlib.widgets import TextBox, Button
 import WriteMidiFile
+import MidiComparison
 
 AUDIO_FILE = os.path.join("media","wav","PinkPanther_Both.wav")
 
@@ -25,8 +26,8 @@ NOTE_NAMES = ["do", "do#", "ré", "ré#", "mi", "fa", "fa#", "sol", "sol#", "la"
 
 STEP_NUMBER = int(len(audio)/FFT_WINDOW_SIZE)
 
-BASE_TRESH = 200000
-ANY_TRESH = 10000
+BASE_TRESH = 150000
+ANY_TRESH = 7000
 
 def extract_sample(audio, step):    #exctrats window size sample from audio with zero-padding
     end = step*FFT_WINDOW_SIZE
@@ -191,6 +192,7 @@ def freq_anal(values):
 
     return_values_piano = []
     return_values_trumpet = []
+    return_values_all = []
 
     for timeNote in values:
         base_notes = getaudiblefreqs(timeNote.notes)
@@ -228,6 +230,7 @@ def freq_anal(values):
 
         r_piano = []
         r_trumpet = []
+        r_all = []
 
 
         piano_comparison = [0, np.float64(1.0), np.float64(0.6327285648288827), np.float64(0.2647386789612746), np.float64(0.17201458476639642), np.float64(0.13515905554207736), np.float64(0.10292263867561052), np.float64(0.11210653450368742), np.float64(0.08744076515106432)]
@@ -239,7 +242,7 @@ def freq_anal(values):
 
             base_freq = bunch[0][1].amplitude
             for freq in bunch:
-                if freq[0]<= 8:
+                if freq[0]<= 3:
                     piano_indice += abs(piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
                     trumpet_indice += abs(trumpet_comparison[freq[0]]-(freq[1].amplitude/base_freq))
                     #print("pian",piano_comparison[freq[0]]-(freq[1].amplitude/base_freq))
@@ -252,6 +255,7 @@ def freq_anal(values):
                     r_piano.append(bunch[0][1])
                 else:
                     r_trumpet.append(bunch[0][1])
+                r_all.append(bunch[0][1])
 
 
 
@@ -262,14 +266,15 @@ def freq_anal(values):
 
         return_values_piano.append(timeNotes(timeNote.step,r_piano))
         return_values_trumpet.append(timeNotes(timeNote.step,r_trumpet))
+        return_values_all.append(timeNotes(timeNote.step,r_all))
 
-    return return_values_piano, return_values_trumpet
+    return return_values_piano, return_values_trumpet, return_values_all
 
 def hide_noise(values,strength):
     outvalues = []
-    for i in range(strength,len(values)-strength):
+    for i in range(1,len(values)-strength):
         enclosing_notes = []
-        for note in values[i-strength].notes:
+        for note in values[i-1].notes:
             enclosing_notes.append(note.name())
         for note in values[i+strength].notes:
             enclosing_notes.append(note.name())
@@ -281,6 +286,10 @@ def hide_noise(values,strength):
             if name in enclosing_notes:
                 outnotes.append(note)
         outvalues.append(timeNotes(values[i].step,outnotes))
+
+    if strength != 1:
+            outvalues = hide_noise(outvalues,strength-1)
+
     return outvalues
 
 """
@@ -356,13 +365,15 @@ def plot():
 fig, ax = plt.subplots()
 
 
-import WriteMidiFile
-
 def test_write_midi_file(piano_values,trumpet_values):
     # Test the creation of a MIDI file and adding a piano instrument
     file = WriteMidiFile.create_midi_file()
     WriteMidiFile.add_piano(file)
     WriteMidiFile.add_trumpet(file)
+    file.instruments[0].name = "Piano"
+    file.instruments[1].name = "Flute"
+    print(file.instruments)
+
 
     # Add notes to the MIDI file
     for timeNote in piano_values:
@@ -387,10 +398,12 @@ def test_write_midi_file(piano_values,trumpet_values):
 
 fftvalues = dofft("gaussian")
 totalvalues = filter(fftvalues,"gaussian")
-piano_values,trumpet_values = freq_anal(totalvalues)
+piano_values,trumpet_values,allvalues = freq_anal(totalvalues)
 
-piano_values = hide_noise(piano_values,1)
-trumpet_values = hide_noise(trumpet_values,1)
+piano_values = hide_noise(piano_values,2)
+trumpet_values = hide_noise(trumpet_values,2)
+totalvalues = hide_noise(totalvalues,2)
+
 test_write_midi_file(piano_values,trumpet_values)
 
 """
@@ -443,3 +456,9 @@ for i in range(1,9):
 print(freq_table)
 """
 
+midi_a = os.path.join("media", "midi", "test_output_clean.mid")
+midi_b = os.path.join("media", "midi", "PinkPanther.midi")
+similarity, lcs_len, len1, len2 = MidiComparison.compare_midis(midi_a, midi_b)
+print(f"Similarity: {similarity:.2f}%")
+
+MidiComparison.detailed_comparison_visualizer(midi_a, midi_b, "Detailed comparison between generated and original MIDI")

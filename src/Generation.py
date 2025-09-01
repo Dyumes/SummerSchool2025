@@ -38,15 +38,16 @@ HANDLING_OBJECTS_COLLISIONS = False
 HANDLING_SUN_COLLISIONS = True
 SUN_GRAVITY_MAGNITUDE = 1
 
-suns = []
-mountains = []
+# suns = []
+#mountains = []
 cubes = []
 palms = []
 grounds = []
 validGround = []
 
 
-
+# Old sun generation
+"""
 class Sun:
     def __init__(self, centerX, centerY, nbrTriangle, radius):
         self.nbrTriangle = nbrTriangle
@@ -102,6 +103,7 @@ class Sun:
             pygame.draw.polygon(window, (255, 255, 0), [
                 [endCenterX, endCenterY], [x1, y1], [x2, y2]
             ])
+"""
 
 class Triangle:
     def __init__(self, color, p1, p2, p3):
@@ -581,7 +583,8 @@ def spawnMountains():
         positionX += (windowWidth) / 12
 """
 firstLaunch = True
-s1 = Sun((windowWidth) / 2, (windowHeight)/ 2 - (pyautogui.size()[1]/4), 16, 100)
+#s1 = Sun((windowWidth) / 2, (windowHeight)/ 2 - (pyautogui.size()[1]/4), 16, 100)
+#s1 = Sun((windowWidth) / 2, (windowHeight)/ 2 - (GetSystemMetrics(1)/4), 16, 100)
 g = Ground()
 p1 = Palm()
 
@@ -600,7 +603,7 @@ def getSortKey(cube):
 
 
 def globalGeneration(time, bpm):
-    global s1
+    #global s1
     if firstLaunch:
         # spawnMountain()
         #s1 = Sun((windowWidth) / 2, (windowHeight)/ 2 - (pyautogui.size()[1]/4), 16, 100)
@@ -622,18 +625,19 @@ def globalGeneration(time, bpm):
         #    sun.draw()
         #    sun.update(bpm)
 
-        env_with_sun.draw()
-        env_with_sun.update()
-
-        # Commented out for the presentation because of bugs
-        # env_objects = grounds
+        # env_with_sun.draw()
+        # env_with_sun.update()
+        #
+        # # Commented out for the presentation because of bugs
+        # env_objects = mountains
+        # for mountain in mountains: print(mountain)
         # env.draw()
         # env.update(env_objects)
 
-        for mountain in mountains:
-            mountain.draw()
-            if mountain.canMove:
-                mountain.update(time)
+        # for mountain in mountains:
+        #     mountain.draw()
+        #     if mountain.canMove:
+        #         mountain.update(time)
         #s1.draw()
         #s1.update(bpm)
         # for mountain in mountains:
@@ -655,7 +659,7 @@ def globalGeneration(time, bpm):
             palm.draw()
 
 
-
+"""
 def clearAll():
     global mountains
     global cubes
@@ -664,7 +668,7 @@ def clearAll():
     cubes.clear()
     palms.clear()
     grounds.clear()
-
+"""
 
 font = pygame.font.SysFont("Arial", 30)
 def fps_counter(win, clk):
@@ -672,12 +676,14 @@ def fps_counter(win, clk):
     fps_t = font.render(fps , 1, pygame.Color("RED"))
     win.blit(fps_t,(0,0))
 
+"""
 def playTrumpet(nbr):
     mountains[nbr].canMove = True
     # if mountains[nbr].canMove:
     #     mountains[nbr].canMove = False
     # else:
     #     mountains[nbr].canMove = True
+"""
 
 notes = []
 for i in range(12):
@@ -742,7 +748,8 @@ def playPianoAll():
             cube.canMove = True
 
 
-
+# Not used
+"""
 def changeMountainGrowthSpeed(newSpeed, nbr):
     mountains[nbr].growthSpeed = newSpeed
 
@@ -754,6 +761,7 @@ def changeMountainAnimiationTime(newAnimiationTime, nbr):
 
 def changeMountainStartTime(newStartTime, nbr):
     mountains[nbr].startTime = newStartTime
+"""
 
 def changeCubeGrowthSpeed(newSpeed, nbr):
     cubes[nbr].growthSpeed = newSpeed
@@ -767,28 +775,27 @@ def changeCubeAnimiationTime(newAnimiationTime, nbr):
 def changeCubeStartTime(newStartTime, nbr):
     cubes[nbr].startTime = newStartTime
 
-env_with_sun = Environment(WINDOW_SIZE)
-env_with_sun.handling_sun_collisions = True
-env_with_sun.handling_objects_collisions = False
-env_with_sun.handling_particles_collisions = False
-env_with_sun.min_particles = 100
-env_with_sun.max_particles = 100
-
-env = Environment(WINDOW_SIZE)
-env.handling_sun_collisions = False
-env.handling_objects_collisions = True
-env.handling_particles_collisions = False
-env.min_particles = 10
-env.max_particles = 10
-
-gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))
-
-env_with_sun.sun = s1
-
-for _ in range(random.randint(env_with_sun.min_particles, env_with_sun.max_particles)):
-    env_with_sun.create_particle_around_sun(s1)
-
-# Commented out for the presentation because of bugs
+# env_with_sun = Environment(WINDOW_SIZE)
+# env_with_sun.handling_sun_collisions = True
+# env_with_sun.handling_objects_collisions = False
+# env_with_sun.handling_particles_collisions = False
+# env_with_sun.min_particles = 100
+# env_with_sun.max_particles = 100
+#
+# env = Environment(WINDOW_SIZE)
+# env.handling_sun_collisions = False
+# env.handling_objects_collisions = True
+# env.handling_particles_collisions = False
+# env.min_particles = 10
+# env.max_particles = 10
+#
+# gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))
+#
+# env_with_sun.sun = s1
+#
+# for _ in range(random.randint(env_with_sun.min_particles, env_with_sun.max_particles)):
+#     env_with_sun.create_particle_around_sun(s1)
+#
 # for _ in range(random.randint(env.min_particles, env.max_particles)):
 #     env.create_particle()
 #
@@ -818,7 +825,7 @@ if __name__ == "__main__":
                 match event.key :
                     case pygame.K_r:
                         window.fill((0, 0, 0))
-                        clearAll()
+                        #clearAll()
                         firstLaunch = True
                     case pygame.K_1:
                         #playTrumpet(1)
