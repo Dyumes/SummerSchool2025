@@ -267,9 +267,9 @@ def freq_anal(values):
 
 def hide_noise(values,strength):
     outvalues = []
-    for i in range(strength,len(values)-strength):
+    for i in range(1,len(values)-strength):
         enclosing_notes = []
-        for note in values[i-strength].notes:
+        for note in values[i-1].notes:
             enclosing_notes.append(note.name())
         for note in values[i+strength].notes:
             enclosing_notes.append(note.name())
@@ -281,6 +281,10 @@ def hide_noise(values,strength):
             if name in enclosing_notes:
                 outnotes.append(note)
         outvalues.append(timeNotes(values[i].step,outnotes))
+
+    if strength != 1:
+            outvalues = hide_noise(outvalues,strength-1)
+
     return outvalues
 
 """
@@ -393,8 +397,8 @@ fftvalues = dofft("gaussian")
 totalvalues = filter(fftvalues,"gaussian")
 piano_values,trumpet_values = freq_anal(totalvalues)
 
-piano_values = hide_noise(hide_noise(piano_values,2),1)
-trumpet_values = hide_noise(hide_noise(trumpet_values,2),1)
+piano_values = hide_noise(piano_values,2)
+trumpet_values = hide_noise(trumpet_values,2)
 test_write_midi_file(piano_values,trumpet_values)
 
 """
