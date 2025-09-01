@@ -695,7 +695,7 @@ class Environment:
             Create a new particle at a random position around the sun.
 
             Args:
-                sun (Sun): The sun object to spawn particles around.
+                sun: The sun object to spawn particles around.
         """
         if hasattr(sun, 'circle_center'):
             angle = random.uniform(0, 2 * math.pi)
@@ -785,7 +785,7 @@ class Environment:
             if self.handling_sun_collisions:
 
                 if hasattr(self.sun, 'top_color'):
-                    print("The sun is a SunV2 instance, adjusting color based on position.")
+                    #print("The sun is a SunV2 instance, adjusting color based on position.")
 
                     top_color = self.sun.top_color
                     bottom_color = self.sun.bottom_color
