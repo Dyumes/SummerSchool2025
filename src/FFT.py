@@ -249,7 +249,7 @@ def freq_anal(values):
 
                 fraction =  note.frequency/base_note.frequency
                 fraction_excess = (fraction+0.5) %1 -0.5
-                fraction_int = round(fraction)
+                fraction_int = int(fraction-fraction_excess)
 
                 #if timeNote.step == 170:
                 #    print(fraction_int,base_note.frequency,note,fraction_excess)
