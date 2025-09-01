@@ -1,4 +1,5 @@
 import subprocess
+import os
 
 def mp3_to_wav(src, dst):
     """
@@ -15,4 +16,11 @@ def mp3_to_wav(src, dst):
         print(f"The error \"{e}\" occurred during the conversion process.")
         print("Please ensure that you have ffmpeg installed and the path is correctly set.")
 
-mp3_to_wav("media/mp3/Ecossaise_Trumpet.mp3", "media/wav/Ecossaise_Trumpet.wav")
+
+
+if __name__ == "__main__":
+    for file in os.listdir(os.path.join("media", "mp3")):
+        if file.endswith(".mp3"):
+            src = os.path.join("media", "mp3", file)
+            dst = os.path.join(os.path.join("media", "wav"), os.path.splitext(file)[0] + ".wav")
+            mp3_to_wav(src, dst)
