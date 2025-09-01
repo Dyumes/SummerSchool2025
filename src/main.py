@@ -8,6 +8,9 @@ import Mountain_Generation as gn2
 import Sun_Generation as sg2
 import Point2D
 from win32api import GetSystemMetrics
+import math
+from Particles import Environment, Force, Vector
+import random
 
 #INIT variables
 midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
@@ -30,6 +33,23 @@ fps = 60
 background_colour = (15, 0, 35)
 screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
+
+# ENVIRONMENT SETTINGS
+NBR_TRIANGLE_IN_CIRCLE = 8
+CIRCLE_RADIUS = 10
+SUN_PARTICLE_RADIUS = 5
+PARTICLE_COLOR = (255, 100, 0)
+SUN_PARTICLE_COLOR = (255, 255, 0)
+SUN_PARTICLE_COLOR_DELTA = 150
+#MIN_PARTICLES = 10
+#MAX_PARTICLES = 10
+GRAVITY_MAGNITUDE = 9.81
+GRAVITY_DIRECTION = math.pi / 2
+# HANDLING_PARTICLES_COLLISIONS = False
+# HANDLING_OBJECTS_COLLISIONS = False
+# HANDLING_SUN_COLLISIONS = True
+SUN_GRAVITY_MAGNITUDE = 1
+
 
 # INIT
 rmf.getNotes(piano_notes, flute_notes, midi_data)
@@ -89,6 +109,33 @@ if __name__ == "__main__":
         temp.generate()
         static_mountains.append(temp)
 
+    env_with_sun = Environment((width, height))
+    env_with_sun.handling_sun_collisions = True
+    env_with_sun.handling_objects_collisions = False
+    env_with_sun.handling_particles_collisions = False
+    env_with_sun.min_particles = 300
+    env_with_sun.max_particles = 300
+
+    env = Environment((width, height))
+    env.handling_sun_collisions = False
+    env.handling_objects_collisions = True
+    env.handling_particles_collisions = False
+    env.min_particles = 10
+    env.max_particles = 10
+
+    gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION))
+
+    env_with_sun.sun = sun
+
+    for _ in range(random.randint(env_with_sun.min_particles, env_with_sun.max_particles)):
+        env_with_sun.create_particle_around_sun(sun)
+
+    for _ in range(random.randint(env.min_particles, env.max_particles)):
+        env.create_particle()
+
+    for particle in env.particles:
+        particle.add_force(gravity)
+
     running = True
     while running:
         # Close the Windows if the button close is pressed
@@ -103,7 +150,7 @@ if __name__ == "__main__":
                             startSong = True
                             pygame.mixer.music.play()
                             start_ticks = pygame.time.get_ticks()
-                            sun.can_move = False # A changer pour faire déplacer le soleil
+                            sun.can_move = True # A changer pour faire déplacer le soleil
 
                     case pygame.K_ESCAPE:
                         running = False
@@ -141,6 +188,15 @@ if __name__ == "__main__":
         detectPianoNotes(active_piano_notes)
 
         sun.manage_sun(screen, bpm, current_time)
+
+        env_with_sun.draw()
+        env_with_sun.update()
+
+        # Commented out for the presentation because of bugs
+        env_objects = mountains
+        #for mountain in mountains: print(mountain)
+        #env.draw()
+        #env.update(env_objects)
 
         for e in mountains:
             e.manage_mountain(screen, current_time)
