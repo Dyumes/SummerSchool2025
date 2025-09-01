@@ -188,6 +188,42 @@ def certainty(note):
 
 #piano_freqs = []
 
+def get_median_harmonics(piano_freqs):
+    print(piano_freqs)
+    full_piano_anal = []
+    print(piano_freqs)
+    for bunch in piano_freqs:
+
+        print("Bunch:")
+
+        piano_analysis = []
+        for i in range(9):
+            piano_analysis.append(None)
+        base_amp = bunch[0][1].amplitude
+
+        single_note = True
+
+        for i in range (1,len(bunch)):
+            if bunch[i][0] == 1:
+                single_note = False
+
+        if single_note:     # if there is only one base note to get good freqs
+            for note in bunch:
+                if note[0]< 9:
+                    print(note[0],note[1].amplitude/base_amp)
+                    piano_analysis[note[0]] = note[1].amplitude/base_amp
+            full_piano_anal.append(piano_analysis)
+
+    #print(full_piano_anal)
+    freq_table =[]
+    for i in range(9):
+        freq_table.append([])
+    for note in full_piano_anal:
+        for i in range(1,9):
+            if note[i]:
+                freq_table[i].append(note[i])
+    print("freq table",freq_table)
+
 
 def freq_anal(values):
 
@@ -430,8 +466,8 @@ def test_write_midi_file(piano_values,trumpet_values):
 
 fftvalues = dofft("gaussian")
 totalvalues = filter(fftvalues,"gaussian")
-piano_values,trumpet_values,allvalues = freq_anal(totalvalues)
-
+piano_values,trumpet_values,allvalues,rawvalues = freq_anal(totalvalues)
+get_median_harmonics(rawvalues)
 
 piano_values = hide_noise(piano_values,2)
 trumpet_values = hide_noise(trumpet_values,2)
