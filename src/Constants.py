@@ -18,10 +18,10 @@ SUN_GRAVITY_MAGNITUDE = 1
 MARGIN_SUN_PARTICLES = 100
 
 """ Music process """
-midi_file = "SSB.mid"
-mp3_file = "SSB.mp3"
-#midi_file = "Ecossaise_Beethoven.midi"
-#mp3_file = "Ecossaise_Both.mp3"
+#midi_file = "SSB.mid"
+#mp3_file = "SSB.mp3"
+midi_file = "Ecossaise_Beethoven.midi"
+mp3_file = "Ecossaise_Both.mp3"
 
 """ Generation """
 min_depth = int(600/2560 * pyautogui.size()[0])
@@ -29,3 +29,8 @@ max_depth = int(1100/2560 * pyautogui.size()[0])
 
 """ Palm """
 NB_PALM = 20
+
+""" Math """
+TWO_PI = 2.0 * math.pi
+HALF_PI = math.pi / 2.0
+NEAR_ZERO = 0.0000001
