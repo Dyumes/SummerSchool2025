@@ -192,7 +192,7 @@ SOFTWARE.
 
 - **Contributors:**
   - Veuillet Gaëtan
-  - Favre Fabien
+  - Favre Florian
   - Weber Benno
   - Schanen Louis
 
