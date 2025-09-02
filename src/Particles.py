@@ -1,3 +1,4 @@
+import time
 import pygame
 import random
 from Quadtree import Quadtree, Rectangle
@@ -1232,6 +1233,8 @@ if __name__ == "__main__":
     while running:
 
         WINDOW.fill((0, 0, 0))
+
+        time.sleep(10)
 
         current_time = (pygame.time.get_ticks() - start_ticks) / 1000.0
 
