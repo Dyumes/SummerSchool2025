@@ -62,9 +62,9 @@ def detectTrumpetNotes(notes):
 
 def detectPianoNotes(notes):
     for n in notes:
-        print(n.pitch)
-        print(n.duration)
-        print(n.velocity * 2)
+        #print(n.pitch)
+        #print(n.duration)
+        #print(n.velocity * 2)
         gn.changeCubeAnimiationTime(n.duration,n.pitch)
         gn.changeCubeStartTime(current_time, n.pitch)
         # gn.changeMountainGrowthSpeed(200/n.duration, n.pitch)
