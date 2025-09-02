@@ -19,8 +19,7 @@ import pyautogui
 
 
 #INIT variables
-#midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
-midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi",Constants.midi_file))
+midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi", Constants.midi_file))
 tempo_times, tempi = midi_data.get_tempo_changes()
 
 piano_notes = []
