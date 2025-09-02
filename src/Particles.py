@@ -15,6 +15,8 @@ FPS = 60
 CLOCK = pygame.time.Clock()
 DT = CLOCK.tick(FPS) / 1000
 
+start_ticks = pygame.time.get_ticks()
+
 
 class Point:
     def __init__(self, x, y):
@@ -643,6 +645,67 @@ class Particle:
             orbital_force = Force(Vector(tangential_strength, tangential_direction), "SunOrbital")
             self.add_force(orbital_force)
 
+    def apply_predictive_sun_gravity(self, sun):
+        """
+        Applique une force gravitationnelle synchronisée avec le mouvement du soleil
+        """
+        # Position actuelle du soleil
+        if hasattr(sun, 'circle_center'):
+            current_sun_x = sun.circle_center.x
+            current_sun_y = sun.circle_center.y
+            sun_radius = sun.circle_radius
+        else:
+            current_sun_x = sun.centerX
+            current_sun_y = sun.centerY
+            sun_radius = sun.radius
+
+        # Direction vers le soleil actuel
+        dx = current_sun_x - self.form.center.x
+        dy = current_sun_y - self.form.center.y
+        distance = math.sqrt(dx * dx + dy * dy)
+        direction = math.atan2(dy, dx)
+
+        # Force gravitationnelle de base
+        gravity_strength = min(SUN_GRAVITY_MAGNITUDE * 2000 / (distance + 50), 3)
+
+        # Calculer la position future du soleil si possible
+        try:
+            if hasattr(sun, 'calc_position') and hasattr(sun, 'music_duration') and hasattr(sun, 'can_move') and sun.can_move:
+                # Utiliser start_ticks depuis l'espace global pour rester synchronisé
+                current_time = (pygame.time.get_ticks() - start_ticks) / 1000.0
+
+                # Anticiper la position (0.1 seconde dans le futur - réduit pour moins d'avance)
+                look_ahead_time = current_time + 0.1
+                if look_ahead_time > sun.music_duration:
+                    look_ahead_time = sun.music_duration
+
+                screen = pygame.display.get_surface()
+                if screen:
+                    screen_width, screen_height = screen.get_size()
+                    future_position = sun.calc_position(look_ahead_time, screen_width, screen_height)
+
+                    # Ajuster la direction vers la position future
+                    future_dx = future_position.x - self.form.center.x
+                    future_dy = future_position.y - self.form.center.y
+                    future_direction = math.atan2(future_dy, future_dx)
+
+                    # Combiner la direction actuelle et future
+                    direction = direction * 0.3 + future_direction * 0.7
+        except Exception as e:
+            pass
+
+        # Ajouter une légère perturbation aléatoire
+        random_angle = random.uniform(-0.1, 0.1)
+        perturbed_direction = direction + random_angle
+
+        # Appliquer la force gravitationnelle
+        force = self.find_force("SunGravity")
+        if force:
+            force.vector.magnitude = gravity_strength
+            force.vector.direction = perturbed_direction
+        else:
+            self.add_force(Force(Vector(gravity_strength, perturbed_direction), "SunGravity"))
+
     def decay_sun_colliding_force(self):
         """
             Gradually decay and remove the 'SunColliding' force after a certain time.
@@ -878,6 +941,8 @@ class Environment:
             for particle in self.particles:
                 if particle.is_colliding_with_sun(sun):
                     particle.colliding_with_sun(sun)
+                else:
+                    particle.apply_predictive_sun_gravity(sun)
         except Exception as e:
             print("Error while handling collisions with the sun:", e)
 
