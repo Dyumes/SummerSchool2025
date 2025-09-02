@@ -12,7 +12,7 @@ from Generation import normalScreenSize
 class MountainV2:
     def __init__(self):
         self.max_height = 2000/normalScreenSize * pyautogui.size()[0]
-        self.animation_max_height = 4000/normalScreenSize * pyautogui.size()[0]
+        self.animation_max_height = 1000/normalScreenSize * pyautogui.size()[0]
         self.height = self.max_height
         self.real_height = self.max_height
         self.width = 500
