@@ -404,10 +404,10 @@ def sauvegarder_resultats_dans_fichier(midi_a, midi_b, nom_fichier=None):
         f.write(f"Taille de la séquence du fichier 1: {len1_inst}, Taille de la séquence du fichier 2: {len2_inst}\n")
         f.write("-------------------------\n\n")
 
-        similarite_rythme = comparer_midis_rythme(midi_a, midi_b)
-        f.write("--- Similarité Rythmique ---\n")
-        f.write(f"Similarité rythmique: {similarite_rythme:.2f}%\n")
-        f.write("-------------------------\n\n")
+        # similarite_rythme = comparer_midis_rythme(midi_a, midi_b)
+        # f.write("--- Similarité Rythmique ---\n")
+        # f.write(f"Similarité rythmique: {similarite_rythme:.2f}%\n")
+        # f.write("-------------------------\n\n")
 
         similarite_intervalle, commun_intervalles, len_int1, len_int2 = comparer_midis_intervalles(midi_a, midi_b)
         f.write("--- Similarité par Intervalles ---\n")
@@ -438,4 +438,3 @@ if __name__ == "__main__":
     visualiseur_comparaison_separee(midi_a, midi_b, "Comparaison détaillée entre MIDI généré et original")
     comparaison_densite_notes(midi_a, midi_b, "Densité de notes entre MIDI généré et original")
 
-    print(f"Analyse complète. Consultez les résultats dans {fichier_resultats}")
