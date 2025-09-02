@@ -1,6 +1,7 @@
 import pretty_midi
 import os
 import matplotlib.pyplot as plt
+import datetime
 
 """ Module pour comparer deux fichiers MIDI en utilisant l'algorithme de la Plus Longue Sous-séquence Commune (PLSC) sans tenir compte des instruments."""
 def extraire_sequence(chemin_midi):
@@ -414,44 +415,84 @@ def comparaison_densite_notes(midi1, midi2, titre="Comparaison de Densité Tempo
 
         plt.show()
 
+def sauvegarder_resultats_dans_fichier(midi_a, midi_b, nom_fichier=None):
+    """Sauvegarde les résultats de comparaison dans un fichier texte"""
 
+    # Créer un nom de fichier par défaut basé sur la date et l'heure
+    if nom_fichier is None:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        nom_fichier = f"resultats_comparaison_{timestamp}.txt"
 
+    # Assurer que le chemin est complet
+    if not os.path.isabs(nom_fichier):
+        nom_fichier = os.path.join("media", "resultats", nom_fichier)
+
+    # S'assurer que le dossier existe
+    os.makedirs(os.path.dirname(nom_fichier), exist_ok=True)
+
+    # Obtenir les noms de base des fichiers
+    nom_base_a = os.path.basename(midi_a)
+    nom_base_b = os.path.basename(midi_b)
+
+    with open(nom_fichier, "w", encoding="utf-8") as f:
+        f.write(f"=== RÉSULTATS DE COMPARAISON MIDI ===\n")
+        f.write(f"Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Fichier 1: {nom_base_a}\n")
+        f.write(f"Fichier 2: {nom_base_b}\n")
+        f.write("="*40 + "\n\n")
+
+        # Comparaison de base (sans instruments)
+        similarite, lcs_len, len1, len2 = comparer_midis(midi_a, midi_b)
+        f.write("--- Sans Instruments ---\n")
+        f.write(f"Similarité: {similarite:.2f}%\n")
+        f.write(f"Notes communes dans la plus longue séquence: {lcs_len}\n")
+        f.write(f"Taille de la séquence du fichier 1: {len1}, Taille de la séquence du fichier 2: {len2}\n")
+        f.write("-------------------------\n\n")
+
+        # Comparaison avec instruments
+        similarite_inst, lcs_len_inst, len1_inst, len2_inst = comparer_midis_instruments(midi_a, midi_b)
+        f.write("--- Avec Instruments ---\n")
+        f.write(f"Similarité: {similarite_inst:.2f}%\n")
+        f.write(f"Notes communes dans la plus longue séquence: {lcs_len_inst}\n")
+        f.write(f"Taille de la séquence du fichier 1: {len1_inst}, Taille de la séquence du fichier 2: {len2_inst}\n")
+        f.write("-------------------------\n\n")
+
+        # Similarité rythmique
+        similarite_rythme = comparer_midis_rythme(midi_a, midi_b)
+        f.write("--- Similarité Rythmique ---\n")
+        f.write(f"Similarité rythmique: {similarite_rythme:.2f}%\n")
+        f.write("-------------------------\n\n")
+
+        # Similarité par intervalles
+        similarite_intervalle, commun_intervalles, len_int1, len_int2 = comparer_midis_intervalles(midi_a, midi_b)
+        f.write("--- Similarité par Intervalles ---\n")
+        f.write(f"Similarité: {similarite_intervalle:.2f}%\n")
+        f.write(f"Intervalles communs dans la plus longue séquence: {commun_intervalles}\n")
+        f.write(f"Taille de la séquence d'intervalles du fichier 1: {len_int1}, Taille de la séquence d'intervalles du fichier 2: {len_int2}\n")
+        f.write("-------------------------\n\n")
+
+        # Chemins des images générées
+        f.write("--- Chemins des visualisations ---\n")
+        f.write(f"Graphique fusionné: media/comparison_merged_plsc_{nom_base_a}_{nom_base_b}.png\n")
+        f.write(f"Graphique séparé: media/comparison_split_plsc_{nom_base_a}_{nom_base_b}.png\n")
+        f.write(f"Analyse de densité: media/densite_temporelle_{nom_base_a}_{nom_base_b}.png\n")
+        f.write("-------------------------\n\n")
+
+        f.write("=== FIN DU RAPPORT ===\n")
+
+    print(f"Résultats de comparaison sauvegardés dans {nom_fichier}")
+    return nom_fichier
 
 if __name__ == "__main__":
     midi_a = os.path.join("media", "midi", "test_output_clean.mid")
-    midi_b = os.path.join("media", "midi", "SuperMario.mid")
+    midi_b = os.path.join("media", "midi", "PinkPanther.midi")
 
-    similarite, lcs_len, len1, len2 = comparer_midis(midi_a, midi_b)
-    print("--- Sans Instruments ---")
-    print(f"Similarité: {similarite:.2f}%")
-    print(f"Notes communes dans la plus longue séquence: {lcs_len}")
-    print(f"Taille de la séquence générée: {len1}, Taille de la séquence originale: {len2}")
-    print("-------------------------\n")
+    # Sauvegarder les résultats dans un fichier
+    fichier_resultats = sauvegarder_resultats_dans_fichier(midi_a, midi_b, "PinkPanther.txt")
 
-    print("--- Avec Instruments ---")
-    similarite_inst, lcs_len_inst, len1_inst, len2_inst = comparer_midis_instruments(midi_a, midi_b)
-    print(f"Similarité: {similarite_inst:.2f}%")
-    print(f"Notes communes dans la plus longue séquence: {lcs_len_inst}")
-    print(f"Taille de la séquence générée: {len1_inst}, Taille de la séquence originale: {len2_inst}")
-    print("-------------------------\n")
-
-    print("--- Similarité Rythmique ---")
-    similarite_rythme = comparer_midis_rythme(midi_a, midi_b)
-    print(f"Similarité rythmique: {similarite_rythme:.2f}%")
-    print("-------------------------\n")
-
-    print("--- Similarité par Intervalles ---")
-    similarite_intervalle, commun_intervalles, len_int1, len_int2 = comparer_midis_intervalles(midi_a, midi_b)
-    print(f"Similarité: {similarite_intervalle:.2f}%")
-    print(f"Intervalles communs dans la plus longue séquence: {commun_intervalles}")
-    print(f"Taille de la séquence d'intervalles générée: {len_int1}, Taille de la séquence d'intervalles originale: {len_int2}")
-    print("-------------------------\n")
-
-    print("--- Analyse de Densité de Notes ---")
-    comparaison_densite_notes(midi_a, midi_b, "Densité de notes entre MIDI généré et original")
-    print("-------------------------\n")
-
-
-
+    # Générer les visualisations
     visualiseur_comparaison_detaillee(midi_a, midi_b, "Comparaison détaillée entre MIDI généré et original")
     visualiseur_comparaison_separee(midi_a, midi_b, "Comparaison détaillée entre MIDI généré et original")
+    comparaison_densite_notes(midi_a, midi_b, "Densité de notes entre MIDI généré et original")
+
+    print(f"Analyse complète. Consultez les résultats dans {fichier_resultats}")
