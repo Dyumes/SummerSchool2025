@@ -6,11 +6,9 @@ import Generation as gn
 import Mountain_Generation as gn2
 import Sun_Generation as sg2
 import Point2D
-from Particles import Environment, Force, Vector, Point
+from Particles import Environment, Force, Vector
 import random
 from Constants import *
-import pyautogui
-from src.Generation import normalScreenSize
 import Constants
 
 # Variables pour suivre la position du soleil
