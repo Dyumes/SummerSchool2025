@@ -20,8 +20,8 @@ class PalmV2():
         self.bottom_trunk_color = (50, 0, 50)
         self.top_leaves_color = (0, 255, 180)
         self.bottom_leaves_color = (0, 120, 80)
-        self.max_height = 800 * self.depth
-        self.bottom_width = 100 * self.depth
+        self.max_height = 500 * self.depth /normalScreenSize * pyautogui.size()[0]
+        self.bottom_width = 75 * self.depth /normalScreenSize * pyautogui.size()[0]
         self.nb_tree_parts = 6
         self.bottom_height = self.max_height/self.nb_tree_parts
         self.angle = math.radians(5) # mettre entre + ou - 5
@@ -32,7 +32,7 @@ class PalmV2():
         self.nb_leaves = 10
         self.leaves_base_angle = 120
         self.leaves_start_angle = math.radians(180 + (180-self.leaves_base_angle)/2) # from right
-        self.leaves_triangles_size = 75 * self.depth
+        self.leaves_triangles_size = 50 * self.depth /normalScreenSize * pyautogui.size()[0]
         self.last_leaves_point = Point2D.Point2D(0,0)
         self.nb_triangles_by_leaves = 15
         self.triangle_leaves_rotation = math.radians(90/(self.nb_triangles_by_leaves - 1))
