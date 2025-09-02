@@ -42,22 +42,6 @@ background_colour = (15, 0, 35)
 screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
 
-# ENVIRONMENT SETTINGS
-NBR_TRIANGLE_IN_CIRCLE = 8
-CIRCLE_RADIUS = 10/normalScreenSize * pyautogui.size()[0]
-SUN_PARTICLE_RADIUS = 5
-PARTICLE_COLOR = (255, 100, 0)
-SUN_PARTICLE_COLOR = (255, 255, 0)
-SUN_PARTICLE_COLOR_DELTA = 150
-#MIN_PARTICLES = 10
-#MAX_PARTICLES = 10
-GRAVITY_MAGNITUDE = 9.81
-GRAVITY_DIRECTION = math.pi / 2
-# HANDLING_PARTICLES_COLLISIONS = False
-# HANDLING_OBJECTS_COLLISIONS = False
-# HANDLING_SUN_COLLISIONS = True
-SUN_GRAVITY_MAGNITUDE = 1
-
 
 # INIT
 rmf.getNotes(piano_notes, flute_notes, midi_data)
