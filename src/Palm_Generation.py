@@ -1,8 +1,11 @@
+from numpy.random import randint
+
 import Triangle
 import Point2D
 import random
 import pygame
 import math
+import Coconut
 
 class PalmV2():
     def __init__(self, position):
@@ -30,7 +33,8 @@ class PalmV2():
         self.nb_triangles_by_leaves = 15
         self.triangle_leaves_rotation = math.radians(90/(self.nb_triangles_by_leaves - 1))
 
-    def generate(self):
+        self.coconuts = []
+    def generate(self, window):
         random.seed(self.seed)
         self.angle = math.radians(random.randint(-5, 5))
 
@@ -51,6 +55,11 @@ class PalmV2():
                 self.all_triangles.append(tri)
                 tri = Triangle.Triangle(d, c, b, (0, 0, 0))
                 self.all_triangles.append(tri)
+                if (i == self.nb_tree_parts - 1):
+                    size = randint(10, 20)
+                    c1 = Coconut.Coconut((self.last_c.x, self.last_c.y), size)
+                    c1.generate()
+                    self.coconuts.append(c1)
             else:
                 a = Point2D.Point2D(self.position.x + i * self.width_factor, self.position.y - i * self.bottom_height)  # Coin en bas a gauche
                 b = Point2D.Point2D(self.position.x - i * self.width_factor + self.bottom_width, self.position.y - i * self.bottom_height)  # coin en bas a droite
@@ -64,6 +73,9 @@ class PalmV2():
                 self.all_triangles.append(tri)
                 tri = Triangle.Triangle(d,c,b,(0,0,0))
                 self.all_triangles.append(tri)
+
+
+
 
         for tri in self.all_triangles:
             self.color_for_trunk(tri)
@@ -140,13 +152,15 @@ class PalmV2():
     def manage_sun(self, window, time):
         for tri in self.all_triangles:
             pygame.draw.polygon(window, tri.color, tri.to_pygame_point())
+        for c in self.coconuts:
+            c.draw(window)
 
 if __name__ == "__main__":
     pygame.init()
     screen = pygame.display.set_mode((1920, 1080))
     clock = pygame.time.Clock()
     test = PalmV2(Point2D.Point2D(screen.get_width()/2, screen.get_height()/2))
-    test.generate()
+    test.generate(screen)
 
     running = True
     while running:

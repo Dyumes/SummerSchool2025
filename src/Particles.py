@@ -15,6 +15,21 @@ FPS = 60
 CLOCK = pygame.time.Clock()
 DT = CLOCK.tick(FPS) / 1000
 
+NBR_TRIANGLE_IN_CIRCLE = 8
+CIRCLE_RADIUS = 10 / 2560 * pyautogui.size()[0]
+SUN_PARTICLE_RADIUS = 5
+PARTICLE_COLOR = (255, 100, 0)
+SUN_PARTICLE_COLOR = (255, 255, 0)
+SUN_PARTICLE_COLOR_DELTA = 150
+#MIN_PARTICLES = 300
+#MAX_PARTICLES = 300
+GRAVITY_MAGNITUDE = 9.81
+GRAVITY_DIRECTION = math.pi / 2
+#HANDLING_PARTICLES_COLLISIONS = False
+#HANDLING_OBJECTS_COLLISIONS = False
+#HANDLING_SUN_COLLISIONS = True
+SUN_GRAVITY_MAGNITUDE = 1
+
 
 class Point:
     def __init__(self, x, y):
@@ -348,7 +363,7 @@ class Particle:
             px, py = p1.x, p1.y
             qx, qy = p2.x, p2.y
 
-            # Compute distance from circle center to segment
+            # # Compute distance from circle center to segment
             dx, dy = qx - px, qy - py
             length_squared = dx * dx + dy * dy
 

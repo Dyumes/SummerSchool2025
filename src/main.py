@@ -10,11 +10,17 @@ from Particles import Environment, Force, Vector, Point
 import random
 from Constants import *
 import pyautogui
+from src.Generation import normalScreenSize
+import Constants
+
+# Variables pour suivre la position du soleil
+sun_teleport_done = False  # Variable pour suivre si le téléport a déjà été effectué
+import pyautogui
 
 
 #INIT variables
 #midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","Ecossaise_Beethoven.midi"))
-midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi","SSB.mid"))
+midi_data = pretty_midi.PrettyMIDI(os.path.join("media","midi",Constants.midi_file))
 tempo_times, tempi = midi_data.get_tempo_changes()
 
 piano_notes = []
@@ -36,6 +42,22 @@ background_colour = (15, 0, 35)
 screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
 
+# ENVIRONMENT SETTINGS
+NBR_TRIANGLE_IN_CIRCLE = 8
+CIRCLE_RADIUS = 10/normalScreenSize * pyautogui.size()[0]
+SUN_PARTICLE_RADIUS = 5
+PARTICLE_COLOR = (255, 100, 0)
+SUN_PARTICLE_COLOR = (255, 255, 0)
+SUN_PARTICLE_COLOR_DELTA = 150
+#MIN_PARTICLES = 10
+#MAX_PARTICLES = 10
+GRAVITY_MAGNITUDE = 9.81
+GRAVITY_DIRECTION = math.pi / 2
+# HANDLING_PARTICLES_COLLISIONS = False
+# HANDLING_OBJECTS_COLLISIONS = False
+# HANDLING_SUN_COLLISIONS = True
+SUN_GRAVITY_MAGNITUDE = 1
+
 
 # INIT
 rmf.getNotes(piano_notes, flute_notes, midi_data)
@@ -43,7 +65,7 @@ pygame.display.flip()
 start_ticks = pygame.time.get_ticks()
 
 pygame.mixer.init()
-pygame.mixer.music.load(os.path.join("media", "mp3", "SSB.mp3"))
+pygame.mixer.music.load(os.path.join("media", "mp3", Constants.mp3_file))
 
 # Reorder Note by the starting time
 piano_notes = sorted(piano_notes, key=lambda note: note.start)

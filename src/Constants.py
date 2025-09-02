@@ -1,5 +1,6 @@
 import math
 
+#Particles
 NBR_TRIANGLE_IN_CIRCLE = 5
 CIRCLE_RADIUS = 3
 SUN_PARTICLE_RADIUS = 5
@@ -14,3 +15,7 @@ GRAVITY_MAGNITUDE = 9.81
 GRAVITY_DIRECTION = math.pi / 2
 SUN_GRAVITY_MAGNITUDE = 1
 MARGIN_SUN_PARTICLES = 100
+
+#Music process
+midi_file = "Ecossaise_Beethoven.midi"
+mp3_file = "Ecossaise_Both.mp3"

@@ -1,19 +1,24 @@
 import random
 import pygame
 import math
+
+from sympy.benchmarks.bench_meijerint import normal
+
 import Triangle
 import Point2D
+import pyautogui
+from Generation import normalScreenSize
 
 class MountainV2:
     def __init__(self):
-        self.max_height = 1000
-        self.animation_max_height = 2000
+        self.max_height = 1000/normalScreenSize * pyautogui.size()[0]
+        self.animation_max_height = 2000/normalScreenSize * pyautogui.size()[0]
         self.height = self.max_height
         self.real_height = self.max_height
         self.width = 500
         self.nb_subdivision = 3
         self.pos_x = 50 # position x au coin en bas a gauche
-        self.floor_position = 600
+        self.floor_position = 600/normalScreenSize * pyautogui.size()[0]
         self.seed = random.randint(0, 10000)
         self.all_triangles = []
         self.nb_layers = 5

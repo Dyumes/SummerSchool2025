@@ -1,16 +1,18 @@
 import pretty_midi
 import os
 import pygame
+import Constants
 
 
 def getNotes(pianoArr, fluteArr, data):
+    instruments = []
     for instrument in data.instruments:
-        print(instrument.name)
+        instruments.append(instrument.name)
         for note in instrument.notes:
             note.pitch %= 12
-            if instrument.name == "Piano":
+            if instrument.name == f"{instruments[0]}":
                 pianoArr.append(note)
-            elif instrument.name == "Flute":
+            elif instrument.name == f"{instruments[1]}":
                 fluteArr.append(note)
 
 # TEST
@@ -24,7 +26,7 @@ def drawNotes(notes, color, pos_y):
 
 if __name__ == "__main__":
     # INIT variables
-    midi_data = pretty_midi.PrettyMIDI(os.path.join("media", "midi", "test_output_clean.mid"))
+    midi_data = pretty_midi.PrettyMIDI(os.path.join("media", "midi", Constants.midi_file))
     # print(midi_data.estimate_tempo()) #Print estimate bpm (For the sun)
 
     tempo = 60 / midi_data.estimate_tempo()
@@ -50,7 +52,7 @@ if __name__ == "__main__":
     start_ticks = pygame.time.get_ticks()
 
     pygame.mixer.init()
-    pygame.mixer.music.load(os.path.join("media", "mp3", "Ecossaise_Both.mp3"))
+    pygame.mixer.music.load(os.path.join("media", "mp3", Constants.mp3_file))
     pygame.mixer.music.play()
 
     # Reorder Note by the starting time

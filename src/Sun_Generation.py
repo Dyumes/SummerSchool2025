@@ -3,6 +3,9 @@ import Point2D
 import random
 import pygame
 import math
+import pyautogui
+from Generation import normalScreenSize
+
 
 class SunV2():
     def __init__(self, center_point):
@@ -11,7 +14,7 @@ class SunV2():
         self.original_triangles = []
         self.all_triangles = []
         self.nb_triangle_circle = 20
-        self.circle_radius = 75
+        self.circle_radius = 100/normalScreenSize * pyautogui.size()[0]
         self.seed = random.randint(0,10000)
         self.top_color = (255, 220, 120)
         self.bottom_color = (255, 70, 160)
@@ -19,8 +22,8 @@ class SunV2():
         self.percentage = 0.5
         self.offset = 0
 
-        self.ray_big_distance = self.circle_radius + 75
-        self.ray_tiny_distance = self.circle_radius + 50
+        self.ray_big_distance = self.circle_radius + 75/normalScreenSize * pyautogui.size()[0]
+        self.ray_tiny_distance = self.circle_radius + 50/normalScreenSize * pyautogui.size()[0]
         self.ray_speed = 60
         self.ray_gap = 10
 
