@@ -322,37 +322,41 @@ def getSortKey(cube):
 def globalGeneration(screen, time, bpm):
     if firstLaunch:
         g.groundGeneration()
-        print("nb cube pour palm a droite : " + str(len(palm_right_possible_pos)))
-        print("nb cube pour palm a gauche : " + str(len(palm_left_possible_pos)))
 
-        for i in range(NB_PALM):
-            left_cube = palm_left_possible_pos[random.randint(0,len(palm_left_possible_pos)-1)]
-            right_cube = palm_right_possible_pos[random.randint(0,len(palm_right_possible_pos)-1)]
+        for i in range(Constants.NB_PALM):
+            left_pos = random.randint(0,len(palm_left_possible_pos)-1)
+            right_pos = random.randint(0,len(palm_right_possible_pos)-1)
 
-            l_pos_x = min(left_cube.p1[0],min(left_cube.p2[0],min(left_cube.p3[0],left_cube.p4[0])))
-            r_pos_x = min(right_cube.p1[0],min(right_cube.p2[0],min(right_cube.p3[0],right_cube.p4[0])))
+            left_cube = palm_left_possible_pos[left_pos]
+            right_cube = palm_right_possible_pos[right_pos]
 
-            l_pos_y = min(left_cube.p1[1],min(left_cube.p2[1],min(left_cube.p3[1],left_cube.p4[1])))
-            r_pos_y = min(right_cube.p1[1],min(right_cube.p2[1],min(right_cube.p3[1],right_cube.p4[1])))
+            palm_left_possible_pos.remove(left_cube)
+            palm_right_possible_pos.remove(right_cube)
 
-            print(l_pos_x)
-            print(l_pos_y)
+            l_pos_x = left_cube.p1[0]
+            r_pos_x = right_cube.p1[0]
 
-            print(r_pos_x)
-            print(r_pos_y)
+            l_pos_y = left_cube.p1[1]
+            r_pos_y = right_cube.p1[1]
 
-            palm = Palm_Generation.PalmV2(Point2D.Point2D(l_pos_x, l_pos_y))
+            current_left_depth = (left_cube.get_depth() - Constants.min_depth) / (Constants.max_depth - Constants.min_depth)
+            current_right_depth = (right_cube.get_depth() - Constants.min_depth) / (Constants.max_depth - Constants.min_depth)
+
+            palm = Palm_Generation.PalmV2(Point2D.Point2D(l_pos_x, l_pos_y),current_left_depth)
             palm.generate()
             palms.append(palm)
 
-            palm = Palm_Generation.PalmV2(Point2D.Point2D(r_pos_x, r_pos_y))
+            palm = Palm_Generation.PalmV2(Point2D.Point2D(r_pos_x, r_pos_y),current_right_depth)
             palm.generate()
             palms.append(palm)
+
+        palms.sort(key=lambda x: x.position.y)
 
         generateValidGround()
         assignCubesToColumns()
         printCubesPerColumn()
         grounds.append(g)
+
     elif not firstLaunch:
         g.draw()
         cubes_sorted = sorted(validGround, key=getSortKey)
@@ -367,6 +371,7 @@ def globalGeneration(screen, time, bpm):
                             [(0, windowHeight), (windowWidth, windowHeight), (windowWidth, validGround[0].p1[1])])
 
         for palm in palms:
+            print(palm.depth)
             palm.manage_palm(screen, time)
 
 font = pygame.font.SysFont("Arial", 30)
