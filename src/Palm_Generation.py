@@ -1,3 +1,4 @@
+import pyautogui
 from numpy.random import randint
 
 import Triangle
@@ -6,6 +7,8 @@ import random
 import pygame
 import math
 import Coconut
+from src.Generation import normalScreenSize
+
 
 class PalmV2():
     def __init__(self, position):
@@ -56,11 +59,26 @@ class PalmV2():
                 self.all_triangles.append(tri)
                 tri = Triangle.Triangle(d, c, b, (0, 0, 0))
                 self.all_triangles.append(tri)
-                if (i == self.nb_tree_parts - 1):
-                    size = randint(10, 20)
-                    c1 = Coconut.Coconut((self.last_c.x, self.last_c.y), size)
-                    c1.generate()
-                    self.coconuts.append(c1)
+                if i == self.nb_tree_parts - 1:
+                    nbrCoconut = randint(3, 5)
+                    centerX = self.last_c.x
+                    centerY = self.last_c.y
+                    for coconut in range(nbrCoconut):
+                        if coconut == 0: #First coconut
+                            size = randint(10/normalScreenSize * pyautogui.size()[0], 20/normalScreenSize * pyautogui.size()[0])
+                            c1 = Coconut.Coconut((centerX, centerY), size)
+                            c1.generate()
+                            self.coconuts.append(c1)
+                        else: #Other coconuts
+                            size = randint(10/normalScreenSize * pyautogui.size()[0], 20/normalScreenSize * pyautogui.size()[0])
+                            newCx = centerX + randint(size/2, size)
+                            newCy = centerY + randint(size/2, size)
+                            c1 = Coconut.Coconut((newCx, newCy), size)
+                            c1.generate()
+                            self.coconuts.append(c1)
+
+
+
             else:
                 a = Point2D.Point2D(self.position.x + i * self.width_factor, self.position.y - i * self.bottom_height)  # Coin en bas a gauche
                 b = Point2D.Point2D(self.position.x - i * self.width_factor + self.bottom_width, self.position.y - i * self.bottom_height)  # coin en bas a droite

@@ -1,6 +1,5 @@
 import random
 import pygame
-#from Demos.win32console_demo import window_size
 from pygame import gfxdraw
 import pyautogui
 import math
@@ -8,9 +7,7 @@ import numpy as np
 import Point2D
 import Constants
 import Palm_Generation
-from sympy.logic.inference import valid
-from win32api import GetSystemMetrics
-from Particles import Environment, Force, Vector
+import Constants
 from src.Constants import NB_PALM
 
 #TODO : PALM TREE, FILL EMPTY ZONE WITH A FLAT SQUARE, SUN SCALING
@@ -69,7 +66,7 @@ class Triangle:
     def get_position3(self):
         return self.p3
 
-def violet_gradient_color(depth, min_depth=int(600/normalScreenSize * pyautogui.size()[0]), max_depth=int(1100/normalScreenSize * pyautogui.size()[0])):
+def violet_gradient_color(depth, min_depth = Constants.min_depth, max_depth = Constants.max_depth):
     t = (depth - min_depth) / (max_depth - min_depth)
     t = np.clip(t, 0, 1)
     dark_violet = np.array([90, 40, 120])
@@ -281,9 +278,6 @@ class Ground():
 
 
     def draw(self):
-        for tri in reversed(self.triangles):
-            color = tri.get_color()
-            pygame.gfxdraw.trigon(window, tri.p1[0], tri.p1[1],tri.p2[0], tri.p2[1], tri.p3[0], tri.p3[1],color)
 
         pygame.draw.polygon(window, (170, 40, 165),
                             [(0,int(pyautogui.size()[1]/2)),
@@ -306,6 +300,9 @@ class Ground():
                 pygame.draw.polygon(window, color, [(0, p1[1]), (0, p3[1]),(windowWidth, p4[1])])
                 pygame.draw.polygon(window, color, [(0, p1[1]), (windowWidth, p3[1]),(windowWidth, p2[1])])
 
+        for tri in reversed(self.triangles):
+            color = tri.get_color()
+            pygame.gfxdraw.trigon(window, tri.p1[0], tri.p1[1],tri.p2[0], tri.p2[1], tri.p3[0], tri.p3[1],color)
     def clear(self):
         self.triangles = []
 

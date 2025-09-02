@@ -1,6 +1,8 @@
 import math
 import pyautogui
 
+
+
 #Particles
 NBR_TRIANGLE_IN_CIRCLE = 5
 CIRCLE_RADIUS = 10/2560 * pyautogui.size()[0]
@@ -17,10 +19,12 @@ GRAVITY_DIRECTION = math.pi / 2
 SUN_GRAVITY_MAGNITUDE = 1
 MARGIN_SUN_PARTICLES = 100
 
-#Music process
-#midi_file = "SSB.mid"
-#mp3_file = "SSB.mp3"
+#Generation
+min_depth = int(600/2560 * pyautogui.size()[0])
+max_depth = int(1100/2560 * pyautogui.size()[0])
 
+
+#Music process
 midi_file = "Ecossaise_Beethoven.midi"
 mp3_file = "Ecossaise_Both.mp3"
 
