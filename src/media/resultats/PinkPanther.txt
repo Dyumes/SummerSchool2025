@@ -1,5 +1,5 @@
 === RÉSULTATS DE COMPARAISON MIDI ===
-Date: 2025-09-02 11:22:54
+Date: 2025-09-02 11:46:04
 Fichier 1: test_output_clean.mid
 Fichier 2: PinkPanther.midi
 ========================================

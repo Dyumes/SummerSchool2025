@@ -45,8 +45,8 @@ class Circle:
             Draw the circle as a polygon made of triangular slices.
         """
         for t in range(self.nbrTriangle):
-            angle1 = (2 * math.pi * t) / self.nbrTriangle
-            angle2 = (2 * math.pi * (t + 1)) / self.nbrTriangle
+            angle1 = (TWO_PI * t) / self.nbrTriangle
+            angle2 = (TWO_PI * (t + 1)) / self.nbrTriangle
 
             pygame.draw.polygon(WINDOW, color, [[self.center.x, self.center.y],
                                                         [self.center.x + (self.radius * math.cos(angle1)),
@@ -354,7 +354,7 @@ class Particle:
             length_squared = dx * dx + dy * dy
 
             # Éviter la division par zéro
-            if length_squared < 0.0000001:
+            if length_squared < NEAR_ZERO:
                 # Les points sont identiques, vérifier simplement la distance au point
                 dist_squared = (cx - px) ** 2 + (cy - py) ** 2
                 return dist_squared <= r ** 2
@@ -442,7 +442,7 @@ class Particle:
                 length_squared = dx ** 2 + dy ** 2
 
                 # Éviter la division par zéro
-                if length_squared < 0.0000001:  # Presque zéro
+                if length_squared < NEAR_ZERO:  # Presque zéro
                     # Les points sont identiques, vérifier simplement la distance au point
                     dist_squared = (point.x - p1.x) ** 2 + (point.y - p1.y) ** 2
                     if dist_squared < min_distance:
@@ -633,7 +633,7 @@ class Particle:
             self.add_force(gravity_force)
 
         # Ajouter une légère force tangentielle pour créer un mouvement orbital
-        tangential_direction = direction + math.pi / 2
+        tangential_direction = direction + HALF_PI
         tangential_strength = min(gravity_strength * 0.3, 0.5)
 
         force = self.find_force("SunOrbital")
@@ -734,7 +734,7 @@ class Environment:
                 sun: The sun object to spawn particles around.
         """
         if hasattr(sun, 'circle_center'):
-            angle = random.uniform(0, 2 * math.pi)
+            angle = random.uniform(0, TWO_PI)
             distance = random.uniform(sun.circle_radius, sun.circle_radius + 50)
             x = sun.circle_center.x + distance * math.cos(angle)
             y = sun.circle_center.y + distance * math.sin(angle)
@@ -742,7 +742,7 @@ class Environment:
             self.particles.append(Particle(Circle(Point(x, y), radius, NBR_TRIANGLE_IN_CIRCLE)))
 
         else:
-            angle = random.uniform(0, 2 * math.pi)
+            angle = random.uniform(0, TWO_PI)
             distance = random.uniform(sun.radius, sun.radius + 50)
             x = sun.centerX + distance * math.cos(angle)
             y = sun.centerY + distance * math.sin(angle)
@@ -1015,8 +1015,8 @@ if __name__ == "__main__":
 
         def draw(self):
             for t in range(self.nbrTriangle):
-                angle1 = (2 * math.pi * t) / self.nbrTriangle
-                angle2 = (2 * math.pi * (t + 1)) / self.nbrTriangle
+                angle1 = (TWO_PI * t) / self.nbrTriangle
+                angle2 = (TWO_PI * (t + 1)) / self.nbrTriangle
                 midAngle = (angle1 + angle2) / 2
 
                 endCenterX = self.centerX + ((self.offset) * math.cos(midAngle))
