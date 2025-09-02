@@ -150,7 +150,7 @@ def visualiseur_comparaison_detaillee(midi1, midi2, titre="Comparaison MIDI Dét
         plt.tight_layout()
 
         # Enregistrement de l'image
-        nom_fichier = os.path.join("media", f"comparison_merged_{methode}_{os.path.basename(midi1)}_{os.path.basename(midi2)}.png")
+        nom_fichier = os.path.join("media", "graphs", f"comparison_merged_{methode}_{os.path.basename(midi1)}_{os.path.basename(midi2)}.png")
         plt.savefig(nom_fichier)
         print(f"Visualisation sauvegardée sous {nom_fichier}")
 
@@ -215,7 +215,7 @@ def visualiseur_comparaison_separee(midi1, midi2, titre="Comparaison MIDI Détai
     fig.subplots_adjust(top=0.9)
 
     # Enregistrement de l'image
-    nom_fichier = os.path.join("media", f"comparison_split_{methode}_{os.path.basename(midi1)}_{os.path.basename(midi2)}.png")
+    nom_fichier = os.path.join("media", "graphs", f"comparison_split_{methode}_{os.path.basename(midi1)}_{os.path.basename(midi2)}.png")
     plt.savefig(nom_fichier)
     print(f"Visualisation séparée sauvegardée sous {nom_fichier}")
 
@@ -408,7 +408,7 @@ def comparaison_densite_notes(midi1, midi2, titre="Comparaison de Densité Tempo
         plt.subplots_adjust(bottom=0.2)
 
         # Sauvegarde de l'image
-        nom_fichier = os.path.join("media", f"densite_temporelle_{os.path.basename(midi1)}_{os.path.basename(midi2)}.png")
+        nom_fichier = os.path.join("media", "graphs", f"densite_temporelle_{os.path.basename(midi1)}_{os.path.basename(midi2)}.png")
         plt.savefig(nom_fichier)
         print(f"Analyse de densité temporelle sauvegardée sous {nom_fichier}")
 
@@ -419,7 +419,7 @@ def comparaison_densite_notes(midi1, midi2, titre="Comparaison de Densité Tempo
 
 if __name__ == "__main__":
     midi_a = os.path.join("media", "midi", "test_output_clean.mid")
-    midi_b = os.path.join("media", "midi", "PinkPanther.midi")
+    midi_b = os.path.join("media", "midi", "SuperMario.mid")
 
     similarite, lcs_len, len1, len2 = comparer_midis(midi_a, midi_b)
     print("--- Sans Instruments ---")
