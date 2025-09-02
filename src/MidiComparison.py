@@ -432,7 +432,7 @@ if __name__ == "__main__":
     midi_a = os.path.join("media", "midi", "test_output_clean.mid")
     midi_b = os.path.join("media", "midi", "PinkPanther.midi")
 
-    fichier_resultats = sauvegarder_resultats_dans_fichier(midi_a, midi_b)
+    fichier_resultats = sauvegarder_resultats_dans_fichier(midi_a, midi_b, "PinkPanther.txt")
 
     visualiseur_comparaison_detaillee(midi_a, midi_b, "Comparaison détaillée entre MIDI généré et original")
     visualiseur_comparaison_separee(midi_a, midi_b, "Comparaison détaillée entre MIDI généré et original")
