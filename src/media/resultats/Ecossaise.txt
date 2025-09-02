@@ -1,0 +1,35 @@
+=== RÉSULTATS DE COMPARAISON MIDI ===
+Date: 2025-09-02 11:21:27
+Fichier 1: test_output_clean.mid
+Fichier 2: Ecossaise_Beethoven.midi
+========================================
+
+--- Sans Instruments ---
+Similarité: 55.85%
+Notes communes dans la plus longue séquence: 494
+Taille de la séquence du fichier 1: 1022, Taille de la séquence du fichier 2: 747
+-------------------------
+
+--- Avec Instruments ---
+Similarité: 37.99%
+Notes communes dans la plus longue séquence: 336
+Taille de la séquence du fichier 1: 1022, Taille de la séquence du fichier 2: 747
+-------------------------
+
+--- Similarité Rythmique ---
+Similarité rythmique: 1.02%
+-------------------------
+
+--- Similarité par Intervalles ---
+Similarité: 24.00%
+Intervalles communs dans la plus longue séquence: 212
+Taille de la séquence d'intervalles du fichier 1: 1021, Taille de la séquence d'intervalles du fichier 2: 746
+-------------------------
+
+--- Chemins des visualisations ---
+Graphique fusionné: media/comparison_merged_plsc_test_output_clean.mid_Ecossaise_Beethoven.midi.png
+Graphique séparé: media/comparison_split_plsc_test_output_clean.mid_Ecossaise_Beethoven.midi.png
+Analyse de densité: media/densite_temporelle_test_output_clean.mid_Ecossaise_Beethoven.midi.png
+-------------------------
+
+=== FIN DU RAPPORT ===

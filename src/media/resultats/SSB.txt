@@ -1,0 +1,35 @@
+=== RÉSULTATS DE COMPARAISON MIDI ===
+Date: 2025-09-02 11:19:34
+Fichier 1: test_output_clean.mid
+Fichier 2: SSB.mid
+========================================
+
+--- Sans Instruments ---
+Similarité: 61.70%
+Notes communes dans la plus longue séquence: 58
+Taille de la séquence du fichier 1: 79, Taille de la séquence du fichier 2: 109
+-------------------------
+
+--- Avec Instruments ---
+Similarité: 27.66%
+Notes communes dans la plus longue séquence: 26
+Taille de la séquence du fichier 1: 79, Taille de la séquence du fichier 2: 109
+-------------------------
+
+--- Similarité Rythmique ---
+Similarité rythmique: 34.04%
+-------------------------
+
+--- Similarité par Intervalles ---
+Similarité: 29.03%
+Intervalles communs dans la plus longue séquence: 27
+Taille de la séquence d'intervalles du fichier 1: 78, Taille de la séquence d'intervalles du fichier 2: 108
+-------------------------
+
+--- Chemins des visualisations ---
+Graphique fusionné: media/comparison_merged_plsc_test_output_clean.mid_SSB.mid.png
+Graphique séparé: media/comparison_split_plsc_test_output_clean.mid_SSB.mid.png
+Analyse de densité: media/densite_temporelle_test_output_clean.mid_SSB.mid.png
+-------------------------
+
+=== FIN DU RAPPORT ===

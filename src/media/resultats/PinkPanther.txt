@@ -1,0 +1,35 @@
+=== RÉSULTATS DE COMPARAISON MIDI ===
+Date: 2025-09-02 11:22:54
+Fichier 1: test_output_clean.mid
+Fichier 2: PinkPanther.midi
+========================================
+
+--- Sans Instruments ---
+Similarité: 53.19%
+Notes communes dans la plus longue séquence: 354
+Taille de la séquence du fichier 1: 880, Taille de la séquence du fichier 2: 451
+-------------------------
+
+--- Avec Instruments ---
+Similarité: 37.11%
+Notes communes dans la plus longue séquence: 247
+Taille de la séquence du fichier 1: 880, Taille de la séquence du fichier 2: 451
+-------------------------
+
+--- Similarité Rythmique ---
+Similarité rythmique: 2.25%
+-------------------------
+
+--- Similarité par Intervalles ---
+Similarité: 26.19%
+Intervalles communs dans la plus longue séquence: 174
+Taille de la séquence d'intervalles du fichier 1: 879, Taille de la séquence d'intervalles du fichier 2: 450
+-------------------------
+
+--- Chemins des visualisations ---
+Graphique fusionné: media/comparison_merged_plsc_test_output_clean.mid_PinkPanther.midi.png
+Graphique séparé: media/comparison_split_plsc_test_output_clean.mid_PinkPanther.midi.png
+Analyse de densité: media/densite_temporelle_test_output_clean.mid_PinkPanther.midi.png
+-------------------------
+
+=== FIN DU RAPPORT ===

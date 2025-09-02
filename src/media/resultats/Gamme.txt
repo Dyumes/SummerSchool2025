@@ -1,0 +1,35 @@
+=== RÉSULTATS DE COMPARAISON MIDI ===
+Date: 2025-09-02 11:20:15
+Fichier 1: test_output_clean.mid
+Fichier 2: Gamme.mid
+========================================
+
+--- Sans Instruments ---
+Similarité: 42.86%
+Notes communes dans la plus longue séquence: 45
+Taille de la séquence du fichier 1: 158, Taille de la séquence du fichier 2: 52
+-------------------------
+
+--- Avec Instruments ---
+Similarité: 31.43%
+Notes communes dans la plus longue séquence: 33
+Taille de la séquence du fichier 1: 158, Taille de la séquence du fichier 2: 52
+-------------------------
+
+--- Similarité Rythmique ---
+Similarité rythmique: 25.71%
+-------------------------
+
+--- Similarité par Intervalles ---
+Similarité: 29.81%
+Intervalles communs dans la plus longue séquence: 31
+Taille de la séquence d'intervalles du fichier 1: 157, Taille de la séquence d'intervalles du fichier 2: 51
+-------------------------
+
+--- Chemins des visualisations ---
+Graphique fusionné: media/comparison_merged_plsc_test_output_clean.mid_Gamme.mid.png
+Graphique séparé: media/comparison_split_plsc_test_output_clean.mid_Gamme.mid.png
+Analyse de densité: media/densite_temporelle_test_output_clean.mid_Gamme.mid.png
+-------------------------
+
+=== FIN DU RAPPORT ===

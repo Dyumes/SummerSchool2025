@@ -1,0 +1,35 @@
+=== RÉSULTATS DE COMPARAISON MIDI ===
+Date: 2025-09-02 11:19:08
+Fichier 1: test_output_clean.mid
+Fichier 2: SuperMario.mid
+========================================
+
+--- Sans Instruments ---
+Similarité: 58.90%
+Notes communes dans la plus longue séquence: 91
+Taille de la séquence du fichier 1: 120, Taille de la séquence du fichier 2: 189
+-------------------------
+
+--- Avec Instruments ---
+Similarité: 49.84%
+Notes communes dans la plus longue séquence: 77
+Taille de la séquence du fichier 1: 120, Taille de la séquence du fichier 2: 189
+-------------------------
+
+--- Similarité Rythmique ---
+Similarité rythmique: 26.54%
+-------------------------
+
+--- Similarité par Intervalles ---
+Similarité: 19.54%
+Intervalles communs dans la plus longue séquence: 30
+Taille de la séquence d'intervalles du fichier 1: 119, Taille de la séquence d'intervalles du fichier 2: 188
+-------------------------
+
+--- Chemins des visualisations ---
+Graphique fusionné: media/comparison_merged_plsc_test_output_clean.mid_SuperMario.mid.png
+Graphique séparé: media/comparison_split_plsc_test_output_clean.mid_SuperMario.mid.png
+Analyse de densité: media/densite_temporelle_test_output_clean.mid_SuperMario.mid.png
+-------------------------
+
+=== FIN DU RAPPORT ===
