@@ -9,15 +9,16 @@ import Coconut
 
 class PalmV2():
     def __init__(self, position):
+        self.depth = 1
         self.position = position # left bottom corner
         self.all_triangles = []
         self.seed = random.randint(0,10000)
-        self.top_trunk_color = (238, 214, 175)
-        self.bottom_trunk_color = (205, 133, 63)
-        self.top_leaves_color = (144, 238, 144)
-        self.bottom_leaves_color = (34, 139, 34)
-        self.max_height = 300
-        self.bottom_width = 40
+        self.top_trunk_color = (200, 0, 180)
+        self.bottom_trunk_color = (50, 0, 50)
+        self.top_leaves_color = (0, 255, 180)
+        self.bottom_leaves_color = (0, 120, 80)
+        self.max_height = 300 * self.depth
+        self.bottom_width = 40 * self.depth
         self.nb_tree_parts = 6
         self.bottom_height = self.max_height/self.nb_tree_parts
         self.angle = math.radians(5) # mettre entre + ou - 5
@@ -28,13 +29,13 @@ class PalmV2():
         self.nb_leaves = 10
         self.leaves_base_angle = 120
         self.leaves_start_angle = math.radians(180 + (180-self.leaves_base_angle)/2) # from right
-        self.leaves_triangles_size = 25
+        self.leaves_triangles_size = 25 * self.depth
         self.last_leaves_point = Point2D.Point2D(0,0)
         self.nb_triangles_by_leaves = 15
         self.triangle_leaves_rotation = math.radians(90/(self.nb_triangles_by_leaves - 1))
 
         self.coconuts = []
-    def generate(self, window):
+    def generate(self):
         random.seed(self.seed)
         self.angle = math.radians(random.randint(-5, 5))
 
@@ -122,8 +123,8 @@ class PalmV2():
     def color_for_trunk(self, triangle):
         altitude = triangle.a.y
 
-        y_max = self.position.y
-        y_min = self.max_height
+        y_max = self.max_height
+        y_min = self.position.y
 
         t = (altitude - y_min)/(y_max - y_min)
 
@@ -149,7 +150,7 @@ class PalmV2():
     def update(self, bpm):
         print("TODO")
 
-    def manage_sun(self, window, time):
+    def manage_palm(self, window, time):
         for tri in self.all_triangles:
             pygame.draw.polygon(window, tri.color, tri.to_pygame_point())
         for c in self.coconuts:
@@ -171,7 +172,7 @@ if __name__ == "__main__":
         current_time = pygame.time.get_ticks() / 1000.0
 
         screen.fill((255, 255, 255))
-        test.manage_sun(screen, current_time)
+        test.manage_palm(screen, current_time)
 
         pygame.display.flip()
         clock.tick(60)

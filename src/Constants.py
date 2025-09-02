@@ -23,3 +23,6 @@ MARGIN_SUN_PARTICLES = 100
 
 midi_file = "Ecossaise_Beethoven.midi"
 mp3_file = "Ecossaise_Both.mp3"
+
+#Palm
+NB_PALM = 10

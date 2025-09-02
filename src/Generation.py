@@ -5,9 +5,13 @@ from pygame import gfxdraw
 import pyautogui
 import math
 import numpy as np
+import Point2D
+import Constants
+import Palm_Generation
 from sympy.logic.inference import valid
 from win32api import GetSystemMetrics
 from Particles import Environment, Force, Vector
+from src.Constants import NB_PALM
 
 #TODO : PALM TREE, FILL EMPTY ZONE WITH A FLAT SQUARE, SUN SCALING
 
@@ -41,6 +45,9 @@ HANDLING_SUN_COLLISIONS = True
 SUN_GRAVITY_MAGNITUDE = 1
 
 cubes = []
+palm_left_possible_pos = []
+palm_right_possible_pos = []
+palms = []
 grounds = []
 validGround = []
 
@@ -236,7 +243,10 @@ class Ground():
 
         transfo = get_transformation(src, dest)
 
+        nb_cel = 2
+
         for i in range(self.rows):
+            index = 0
             for j in range(self.cols):
                 p1 = (j*cell_width, i*cell_height)
                 p2 = ((j + 1) * cell_width, i * cell_height)
@@ -257,6 +267,17 @@ class Ground():
 
                     cube = Cube(t1, t2)
                     cubes.append(cube)
+
+                    if 2 <= i <= 6:
+                        if index < nb_cel:
+                            palm_right_possible_pos.append(cube)
+
+                        if  index > nb_cel + 11:
+                            palm_left_possible_pos.append(cube)
+                    index += 1
+
+            if 2 <= i:
+                nb_cel += 2
 
 
     def draw(self):
@@ -281,6 +302,7 @@ class Ground():
                 p2 = cube.p2
                 p3 = cube.p3
                 p4 = cube.p4
+                #print("p1:", p1, "p2:", p2, "p3:", p3, "p4:", p4)
                 pygame.draw.polygon(window, color, [(0, p1[1]), (0, p3[1]),(windowWidth, p4[1])])
                 pygame.draw.polygon(window, color, [(0, p1[1]), (windowWidth, p3[1]),(windowWidth, p2[1])])
 
@@ -300,9 +322,36 @@ def getSortKey(cube):
     else:
         return (depth, -x_mean)  # right side : right to left
 
-def globalGeneration(time, bpm):
+def globalGeneration(screen, time, bpm):
     if firstLaunch:
         g.groundGeneration()
+        print("nb cube pour palm a droite : " + str(len(palm_right_possible_pos)))
+        print("nb cube pour palm a gauche : " + str(len(palm_left_possible_pos)))
+
+        for i in range(NB_PALM):
+            left_cube = palm_left_possible_pos[random.randint(0,len(palm_left_possible_pos)-1)]
+            right_cube = palm_right_possible_pos[random.randint(0,len(palm_right_possible_pos)-1)]
+
+            l_pos_x = min(left_cube.p1[0],min(left_cube.p2[0],min(left_cube.p3[0],left_cube.p4[0])))
+            r_pos_x = min(right_cube.p1[0],min(right_cube.p2[0],min(right_cube.p3[0],right_cube.p4[0])))
+
+            l_pos_y = min(left_cube.p1[1],min(left_cube.p2[1],min(left_cube.p3[1],left_cube.p4[1])))
+            r_pos_y = min(right_cube.p1[1],min(right_cube.p2[1],min(right_cube.p3[1],right_cube.p4[1])))
+
+            print(l_pos_x)
+            print(l_pos_y)
+
+            print(r_pos_x)
+            print(r_pos_y)
+
+            palm = Palm_Generation.PalmV2(Point2D.Point2D(l_pos_x, l_pos_y))
+            palm.generate()
+            palms.append(palm)
+
+            palm = Palm_Generation.PalmV2(Point2D.Point2D(r_pos_x, r_pos_y))
+            palm.generate()
+            palms.append(palm)
+
         generateValidGround()
         assignCubesToColumns()
         printCubesPerColumn()
@@ -310,13 +359,18 @@ def globalGeneration(time, bpm):
     elif not firstLaunch:
         g.draw()
         cubes_sorted = sorted(validGround, key=getSortKey)
+
         for cube in cubes_sorted:
             cube.update(pygame.time.get_ticks())
             cube.draw()
+
         pygame.draw.polygon(window, (255, 255, 255),
-                                [(0, windowHeight), (0, validGround[0].p1[1]), (windowWidth, validGround[0].p2[1])])
+                            [(0, windowHeight), (0, validGround[0].p1[1]), (windowWidth, validGround[0].p2[1])])
         pygame.draw.polygon(window, (255, 255, 255),
-                        [(0, windowHeight), (windowWidth, windowHeight), (windowWidth, validGround[0].p1[1])])
+                            [(0, windowHeight), (windowWidth, windowHeight), (windowWidth, validGround[0].p1[1])])
+
+        for palm in palms:
+            palm.manage_palm(screen, time)
 
 font = pygame.font.SysFont("Arial", 30)
 def fps_counter(win, clk):

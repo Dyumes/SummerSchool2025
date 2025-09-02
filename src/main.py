@@ -216,7 +216,7 @@ if __name__ == "__main__":
         # for particle in env.particles:
         #     particle.add_force(gravity)
 
-        gn.globalGeneration(current_time, bpm)
+        gn.globalGeneration(screen, current_time, bpm)
         gn.firstLaunch = False
         gn.fps_counter(screen, clock)
         # detectTrumpetNotes(active_flute_notes)
