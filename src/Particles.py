@@ -3,6 +3,8 @@ import random
 from Quadtree import Quadtree, Rectangle
 from Constants import *
 import pyautogui
+import Point2D
+import Triangle
 
 pygame.init()
 
@@ -14,7 +16,7 @@ WINDOW = pygame.display.set_mode(WINDOW_SIZE)
 FPS = 60
 CLOCK = pygame.time.Clock()
 DT = CLOCK.tick(FPS) / 1000
-
+start_ticks = pygame.time.get_ticks()
 
 
 class Point:
@@ -950,144 +952,310 @@ class Environment:
 if __name__ == "__main__":
 
     """ For testing purposes"""
-    class Triangle:
-        def __init__(self, color, p1, p2, p3):
-            self.color = color
-            self.p1 = p1
-            self.p2 = p2
-            self.p3 = p3
-            self.sides = [(p1, p2), (p1, p3), (p2, p3)]
+    # class Triangle:
+    #     def __init__(self, color, p1, p2, p3):
+    #         self.color = color
+    #         self.p1 = p1
+    #         self.p2 = p2
+    #         self.p3 = p3
+    #         self.sides = [(p1, p2), (p1, p3), (p2, p3)]
+    #
+    #     def get_color(self):
+    #         returnList = [self.color[0], self.color[1], self.color[2]]
+    #         return returnList
+    #
+    #     def get_position1(self):
+    #         return self.p1
+    #
+    #     def get_position2(self):
+    #         return self.p2
+    #
+    #     def get_position3(self):
+    #         return self.p3
+    #
+    #     def draw(self):
+    #         pygame.draw.polygon(
+    #             WINDOW,
+    #             self.color,
+    #             [(self.p1.x, self.p1.y), (self.p2.x, self.p2.y), (self.p3.x, self.p3.y)]
+    #         )
+    #
+    # class TestingObject:
+    #     def __init__(self, triangles):
+    #         self.triangles = triangles
 
-        def get_color(self):
-            returnList = [self.color[0], self.color[1], self.color[2]]
-            return returnList
 
-        def get_position1(self):
-            return self.p1
-
-        def get_position2(self):
-            return self.p2
-
-        def get_position3(self):
-            return self.p3
-
-        def draw(self):
-            pygame.draw.polygon(
-                WINDOW,
-                self.color,
-                [(self.p1.x, self.p1.y), (self.p2.x, self.p2.y), (self.p3.x, self.p3.y)]
-            )
-
-    class TestingObject:
-        def __init__(self, triangles):
-            self.triangles = triangles
-
+    # class Sun:
+    #     def __init__(self, centerX, centerY, nbrTriangle, radius):
+    #         self.nbrTriangle = nbrTriangle
+    #         self.radius = radius
+    #         self.centerX = centerX
+    #         self.centerY = centerY
+    #         self.offset = 0
+    #         self.maxReached = False
+    #         self.previous_offset = None
+    #         self.is_static = False
+    #
+    #     def update(self, bpm):
+    #
+    #         if not self.maxReached:
+    #             self.offset += 1 * bpm / 60
+    #             if self.offset >= 60:
+    #                 self.offset = 60
+    #                 self.maxReached = True
+    #         else:
+    #             self.offset -= 1 * bpm / 60
+    #             if self.offset <= 0:
+    #                 self.offset = 0
+    #                 self.maxReached = False
+    #         #self.previous_offset = self.offset
+    #
+    #         if self.previous_offset == self.offset:
+    #             self.is_static = True
+    #         else:
+    #             self.is_static = False
+    #
+    #     def draw(self):
+    #         for t in range(self.nbrTriangle):
+    #             angle1 = (TWO_PI * t) / self.nbrTriangle
+    #             angle2 = (TWO_PI * (t + 1)) / self.nbrTriangle
+    #             midAngle = (angle1 + angle2) / 2
+    #
+    #             endCenterX = self.centerX + ((self.offset) * math.cos(midAngle))
+    #             endCenterY = self.centerY + ((self.offset) * math.sin(midAngle))
+    #
+    #             x1 = endCenterX + ((self.radius + self.offset) * math.cos(angle1))
+    #             y1 = endCenterY + ((self.radius + self.offset) * math.sin(angle1))
+    #             x2 = endCenterX + ((self.radius + self.offset) * math.cos(angle2))
+    #             y2 = endCenterY + ((self.radius + self.offset) * math.sin(angle2))
+    #
+    #             pygame.draw.polygon(WINDOW, (255, 100, 0), [[self.centerX, self.centerY],
+    #                                                         [self.centerX + (
+    #                                                                     (self.radius + self.offset) * math.cos(angle1)),
+    #                                                          self.centerY + ((self.radius + self.offset) * math.sin(
+    #                                                              angle1))],
+    #                                                         [self.centerX + (
+    #                                                                     (self.radius + self.offset) * math.cos(angle2)),
+    #                                                          self.centerY + ((self.radius + self.offset) * math.sin(
+    #                                                              angle2))]])
+    #
+    #             pygame.draw.polygon(WINDOW, (255, 167, 0), [[self.centerX, self.centerY], [x1, y1], [x2, y2]])
+    #
+    #             pygame.draw.polygon(WINDOW, (255, 255, 0), [
+    #                 [endCenterX, endCenterY], [x1, y1], [x2, y2]
+    #             ])
 
     class Sun:
-        def __init__(self, centerX, centerY, nbrTriangle, radius):
-            self.nbrTriangle = nbrTriangle
-            self.radius = radius
-            self.centerX = centerX
-            self.centerY = centerY
+        def __init__(self, center_point):
+            self.circle_center = center_point
+            self.original_center = Point2D.Point2D(center_point.x, center_point.y)
+            self.original_triangles = []
+            self.all_triangles = []
+            self.nb_triangle_circle = 20
+            self.circle_radius = 100 / 2560 * pyautogui.size()[0]
+            self.seed = random.randint(0, 10000)
+            self.top_color = (255, 220, 120)
+            self.bottom_color = (255, 70, 160)
+            self.max_reached = False
+            self.percentage = 0.5
             self.offset = 0
-            self.maxReached = False
-            self.previous_offset = None
-            self.is_static = False
+
+            self.ray_big_distance = self.circle_radius + 75 / 2560 * pyautogui.size()[0]
+            self.ray_tiny_distance = self.circle_radius + 50 / 2560 * pyautogui.size()[0]
+            self.ray_speed = 60
+            self.ray_gap = 10
+
+            self.music_duration = 70
+            self.can_move = True
+
+        def generate(self):
+            angle = 2 * math.pi / self.nb_triangle_circle
+
+            for i in range(self.nb_triangle_circle):
+                a = self.circle_center
+                b = Point2D.Point2D(self.circle_center.x + self.circle_radius * math.cos(angle * i),
+                                    self.circle_center.y + self.circle_radius * math.sin(angle * i))
+                c = Point2D.Point2D(self.circle_center.x + self.circle_radius * math.cos(angle * (i + 1)),
+                                    self.circle_center.y + self.circle_radius * math.sin(angle * (i + 1)))
+                self.all_triangles.append(Triangle.Triangle(a, b, c, (0, 0, 0)))
+                self.original_triangles.append(Triangle.Triangle(a, b, c, (0, 0, 0)))
+
+            for i in range(self.nb_triangle_circle):
+                if i % 2 == 0:
+                    a = Point2D.Point2D(self.circle_center.x + self.ray_big_distance * math.cos(
+                        angle * i + (angle * (i + 1) - angle * i) / 2),
+                                        self.circle_center.y + self.ray_big_distance * math.sin(
+                                            angle * i + (angle * (i + 1) - angle * i) / 2))
+                    b = Point2D.Point2D(
+                        self.circle_center.x + (self.circle_radius + self.ray_gap) * math.cos(angle * i),
+                        self.circle_center.y + (self.circle_radius + self.ray_gap) * math.sin(angle * i))
+                    c = Point2D.Point2D(
+                        self.circle_center.x + (self.circle_radius + self.ray_gap) * math.cos(angle * (i + 1)),
+                        self.circle_center.y + (self.circle_radius + self.ray_gap) * math.sin(angle * (i + 1)))
+                    self.all_triangles.append(Triangle.Triangle(a, b, c, (0, 0, 0), "ray_big"))
+                    self.original_triangles.append(Triangle.Triangle(a, b, c, (0, 0, 0), "ray_big"))
+                else:
+                    a = Point2D.Point2D(self.circle_center.x + self.ray_tiny_distance * math.cos(
+                        angle * i + (angle * (i + 1) - angle * i) / 2),
+                                        self.circle_center.y + self.ray_tiny_distance * math.sin(
+                                            angle * i + (angle * (i + 1) - angle * i) / 2))
+                    b = Point2D.Point2D(
+                        self.circle_center.x + (self.circle_radius + self.ray_gap) * math.cos(angle * i),
+                        self.circle_center.y + (self.circle_radius + self.ray_gap) * math.sin(angle * i))
+                    c = Point2D.Point2D(
+                        self.circle_center.x + (self.circle_radius + self.ray_gap) * math.cos(angle * (i + 1)),
+                        self.circle_center.y + (self.circle_radius + self.ray_gap) * math.sin(angle * (i + 1)))
+                    self.all_triangles.append(Triangle.Triangle(a, b, c, (0, 0, 0), "ray_tiny"))
+                    self.original_triangles.append(Triangle.Triangle(a, b, c, (0, 0, 0), "ray_tiny"))
+
+            for tri in self.all_triangles:
+                self.color_for_triangle(tri)
+
+        def color_for_triangle(self, triangle):
+            altitude = max(triangle.b.y, triangle.c.y)
+            y_max = self.circle_center.y - self.ray_big_distance
+            y_min = self.circle_center.y + self.ray_big_distance
+
+            t = (altitude - y_min) / (y_max - y_min)
+
+            triangle.color = self.linear_interpolation_color(self.bottom_color, self.top_color, t)
+
+        def linear_interpolation_color(self, color1, color2, factor):
+            color = (int(color1[0] + (color2[0] - color1[0]) * factor),
+                     int(color1[1] + (color2[1] - color1[1]) * factor),
+                     int(color1[2] + (color2[2] - color1[2]) * factor))
+
+            return color
+
+        def calc_position(self, current_time, screen_width, screen_height):
+            factor = screen_width / self.music_duration
+            pos_x = current_time * factor
+            pos_y = pow(pos_x - screen_width / 2, 2) / (pow(screen_width / 2, 2) / (
+                        1 / 8 * screen_height + self.ray_big_distance)) + self.ray_big_distance
+
+            return Point2D.Point2D(pos_x, pos_y)
 
         def update(self, bpm):
-
-            if not self.maxReached:
+            if not self.max_reached:
                 self.offset += 1 * bpm / 60
                 if self.offset >= 60:
                     self.offset = 60
-                    self.maxReached = True
+                    self.max_reached = True
             else:
                 self.offset -= 1 * bpm / 60
                 if self.offset <= 0:
                     self.offset = 0
-                    self.maxReached = False
-            #self.previous_offset = self.offset
+                    self.max_reached = False
 
-            if self.previous_offset == self.offset:
-                self.is_static = True
-            else:
-                self.is_static = False
+        def manage_sun(self, window, bpm, time):
+            self.update(bpm)
 
-        def draw(self):
-            for t in range(self.nbrTriangle):
-                angle1 = (TWO_PI * t) / self.nbrTriangle
-                angle2 = (TWO_PI * (t + 1)) / self.nbrTriangle
-                midAngle = (angle1 + angle2) / 2
+            if self.can_move:
+                self.circle_center = self.calc_position(time, window.get_width(), window.get_height())
 
-                endCenterX = self.centerX + ((self.offset) * math.cos(midAngle))
-                endCenterY = self.centerY + ((self.offset) * math.sin(midAngle))
+            scale = 1 + (self.offset / 60) * self.percentage
+            scale_ray_big = 1 + (self.offset / 60) * self.percentage
+            center_x = self.circle_center.x
+            center_y = self.circle_center.y
 
-                x1 = endCenterX + ((self.radius + self.offset) * math.cos(angle1))
-                y1 = endCenterY + ((self.radius + self.offset) * math.sin(angle1))
-                x2 = endCenterX + ((self.radius + self.offset) * math.cos(angle2))
-                y2 = endCenterY + ((self.radius + self.offset) * math.sin(angle2))
+            for i, tri in enumerate(self.all_triangles):
+                original = self.original_triangles[i]
 
-                pygame.draw.polygon(WINDOW, (255, 100, 0), [[self.centerX, self.centerY],
-                                                            [self.centerX + (
-                                                                        (self.radius + self.offset) * math.cos(angle1)),
-                                                             self.centerY + ((self.radius + self.offset) * math.sin(
-                                                                 angle1))],
-                                                            [self.centerX + (
-                                                                        (self.radius + self.offset) * math.cos(angle2)),
-                                                             self.centerY + ((self.radius + self.offset) * math.sin(
-                                                                 angle2))]])
+                if original.tag == "none":
+                    p1 = (center_x + (original.a.x - self.original_center.x) * scale,
+                          center_y + (original.a.y - self.original_center.y) * scale)
+                    p2 = (center_x + (original.b.x - self.original_center.x) * scale,
+                          center_y + (original.b.y - self.original_center.y) * scale)
+                    p3 = (center_x + (original.c.x - self.original_center.x) * scale,
+                          center_y + (original.c.y - self.original_center.y) * scale)
+                elif original.tag == "ray_big":
+                    p1 = (center_x + (original.a.x - self.original_center.x) * scale_ray_big,
+                          center_y + (original.a.y - self.original_center.y) * scale_ray_big)
+                    p2 = (center_x + (original.b.x - self.original_center.x) * scale,
+                          center_y + (original.b.y - self.original_center.y) * scale)
+                    p3 = (center_x + (original.c.x - self.original_center.x) * scale,
+                          center_y + (original.c.y - self.original_center.y) * scale)
+                else:
+                    p1 = (center_x + (original.a.x - self.original_center.x) * scale,
+                          center_y + (original.a.y - self.original_center.y) * scale)
+                    p2 = (center_x + (original.b.x - self.original_center.x) * scale,
+                          center_y + (original.b.y - self.original_center.y) * scale)
+                    p3 = (center_x + (original.c.x - self.original_center.x) * scale,
+                          center_y + (original.c.y - self.original_center.y) * scale)
 
-                pygame.draw.polygon(WINDOW, (255, 167, 0), [[self.centerX, self.centerY], [x1, y1], [x2, y2]])
-
-                pygame.draw.polygon(WINDOW, (255, 255, 0), [
-                    [endCenterX, endCenterY], [x1, y1], [x2, y2]
-                ])
+                pygame.draw.polygon(window, tri.color, [p1, p2, p3])
 
     running = True
 
     env = Environment(WINDOW_SIZE)
-    gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION), "Gravity")
+    # gravity = Force(Vector(GRAVITY_MAGNITUDE, GRAVITY_DIRECTION), "Gravity")
     #sun_gravity = Force(Vector(GRAVITY_MAGNITUDE / 2, GRAVITY_DIRECTION + math.pi / 2), "SunGravity")
     #forces = [gravity]
     #forces = []
-    t1 = Triangle(
-        (0, 0, 255),
-        Point(WINDOW_SIZE[0] // 2 - 50, WINDOW_SIZE[1] // 2 - 50),
-        Point(WINDOW_SIZE[0] // 2 + 50, WINDOW_SIZE[1] // 2 - 50),
-        Point(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2 + 50)
-    )
-    o1 = TestingObject([t1])
+    # t1 = Triangle(
+    #     (0, 0, 255),
+    #     Point(WINDOW_SIZE[0] // 2 - 50, WINDOW_SIZE[1] // 2 - 50),
+    #     Point(WINDOW_SIZE[0] // 2 + 50, WINDOW_SIZE[1] // 2 - 50),
+    #     Point(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2 + 50)
+    # )
+    # o1 = TestingObject([t1])
 
-    s1 = Sun(WINDOW_SIZE[0] / 2, WINDOW_SIZE[1] / 2, 16, 100)
+
+    sun = Sun(Point2D.Point2D(WINDOW.get_width() / 2, WINDOW.get_height() / 2 - pyautogui.size()[1] / 4))
+    sun.generate()
+    #sun.can_move = False
+
+    # s1 = Sun(WINDOW_SIZE[0] / 2, WINDOW_SIZE[1] / 2, 16, 100)
     # env.sun = s1
-    # env.handling_sun_collisions = True
-    env.handling_objects_collisions = True
+    env.sun = sun
+    env.handling_sun_collisions = True
+    env.handling_objects_collisions = False
+
+    env.min_particles = MIN_SUN_PARTICLES
+    env.max_particles = MAX_SUN_PARTICLES
 
     if env.handling_sun_collisions:
         for _ in range(random.randint(env.min_particles, env.max_particles)):
-            env.create_particle_around_sun(s1)
+            env.create_particle_around_sun(sun)
     else:
         for _ in range(random.randint(env.min_particles, env.max_particles)):
             env.create_particle()
 
 
     for particle in env.particles:
-        particle.add_force(gravity)
-        #pass
+        #particle.add_force(gravity)
+        pass
+
+    sun_teleport_done = False
 
 
     while running:
 
         WINDOW.fill((0, 0, 0))
 
-        t1.draw()
-        objects = [o1]
+        current_time = (pygame.time.get_ticks() - start_ticks) / 1000.0
+
+        # t1.draw()
+        # objects = [o1]
 
         # s1.draw()
         # s1.update(60)
 
         env.draw()
-        env.update(objects)
+        #env.update(objects)
+        env.update()
+
+        sun.manage_sun(WINDOW, 60, current_time)
+
+        if not sun_teleport_done and sun.can_move:
+            dx = sun.circle_center.x - sun.original_center.x
+            dy = sun.circle_center.y - sun.original_center.y
+
+            for particle in env.particles:
+                particle.form.center.x += dx
+                particle.form.center.y += dy
+
+            sun_teleport_done = True
 
         for event in pygame.event.get():
 
