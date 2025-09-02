@@ -300,9 +300,9 @@ class Ground():
                 pygame.draw.polygon(window, color, [(0, p1[1]), (0, p3[1]),(windowWidth, p4[1])])
                 pygame.draw.polygon(window, color, [(0, p1[1]), (windowWidth, p3[1]),(windowWidth, p2[1])])
 
-        for tri in reversed(self.triangles):
-            color = tri.get_color()
-            pygame.gfxdraw.trigon(window, tri.p1[0], tri.p1[1],tri.p2[0], tri.p2[1], tri.p3[0], tri.p3[1],color)
+        # for tri in reversed(self.triangles):
+        #     color = tri.get_color()
+        #     pygame.gfxdraw.trigon(window, tri.p1[0], tri.p1[1],tri.p2[0], tri.p2[1], tri.p3[0], tri.p3[1],color)
     def clear(self):
         self.triangles = []
 
@@ -371,8 +371,7 @@ def globalGeneration(screen, time, bpm):
                             [(0, windowHeight), (windowWidth, windowHeight), (windowWidth, validGround[0].p1[1])])
 
         for palm in palms:
-            print(palm.depth)
-            palm.manage_palm(screen, time)
+            palm.manage_palm(screen)
 
 font = pygame.font.SysFont("Arial", 30)
 def fps_counter(win, clk):

@@ -9,11 +9,12 @@ Coconuts = []
 
 class Coconut():
     def __init__(self, center_point, radius):
-        self.center_point = center_point[0], center_point[1]
+        self.center_point = center_point
         self.radius = radius
         self.nbr_triangles = 20
         self.can_Break = False
         self.triangles = []
+        self.original_triangles = []
         self.color = (115, 75, 20)
 
     def generate(self):
@@ -26,10 +27,10 @@ class Coconut():
         for i in range(self.nbr_triangles):
             a = self.center_point
             variation = 1 + 0.05 * math.sin(5 * i)  # petites bosses
-            b = (self.center_point[0] + rx * variation * math.cos(angle * i),
-                 self.center_point[1] + ry * variation * math.sin(angle * i))
-            c = (self.center_point[0] + rx * math.cos(angle * (i + 1)),
-                 self.center_point[1] + ry * math.sin(angle * (i + 1)))
+            b =  Point2D.Point2D(self.center_point.x + rx * variation * math.cos(angle * i),
+                 self.center_point.y + ry * variation * math.sin(angle * i))
+            c =  Point2D.Point2D(self.center_point.x + rx * math.cos(angle * (i + 1)),
+                 self.center_point.y + ry * math.sin(angle * (i + 1)))
 
             """
             red = randint(100, 130)
@@ -51,8 +52,8 @@ class Coconut():
 
         r = randint(int(self.radius/4), int(self.radius/2))
         theta = random() * 2 * math.pi
-        center_x = self.center_point[0] + r * math.cos(theta)
-        center_y = self.center_point[1] + r * math.sin(theta)
+        center_x = self.center_point.x + r * math.cos(theta)
+        center_y = self.center_point.y + r * math.sin(theta)
 
         dist = holeRadius * randint(5, 7)/2
         base_angle = random() * 2 * math.pi
@@ -63,20 +64,26 @@ class Coconut():
             hy = center_y + dist * math.sin(angle_i)
             self.make_hole(hx, hy, holeRadius, holeColor)
 
+        for tri in self.triangles:
+            self.original_triangles.append((
+                Point2D.Point2D(tri.a.x, tri.a.y),
+                Point2D.Point2D(tri.b.x, tri.b.y),
+                Point2D.Point2D(tri.c.x, tri.c.y)
+            ))
 
     def make_hole(self, cx, cy, holeRadius, holeColor):
         step_angle = 2 * math.pi / 10
         for i in range(10):
-            a = (cx, cy)
-            b = (cx + holeRadius * math.cos(step_angle * i),
+            a = Point2D.Point2D(cx, cy)
+            b = Point2D.Point2D(cx + holeRadius * math.cos(step_angle * i),
                  cy + holeRadius * math.sin(step_angle * i))
-            c = (cx + holeRadius * math.cos(step_angle * (i + 1)),
+            c = Point2D.Point2D(cx + holeRadius * math.cos(step_angle * (i + 1)),
                  cy + holeRadius * math.sin(step_angle * (i + 1)))
             self.triangles.append(Triangle.Triangle(a, b, c, holeColor))
 
     def draw(self, window):
         for t in self.triangles:
-            pygame.draw.polygon(window, t.color, [(t.a[0], t.a[1]), (t.b[0], t.b[1]), (t.c[0], t.c[1])])
+            pygame.draw.polygon(window, t.color, t.to_pygame_point())
 
 def clean(window):
     Coconuts.clear()

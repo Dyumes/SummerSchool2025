@@ -14,7 +14,7 @@ class Triangle:
                 (self.b.x, self.b.y),
                 (self.c.x, self.c.y)]
 
-def get_triangle_from_center(center_point, angle, side_lenght):
+def get_triangle_from_center(center_point, angle, side_lenght, tag="none"):
     radius = side_lenght / math.sqrt(3)
     return Triangle(
         Point2D.Point2D(center_point.x + radius * math.cos(angle), center_point.y + radius * math.sin(angle)),
@@ -22,4 +22,4 @@ def get_triangle_from_center(center_point, angle, side_lenght):
                         center_point.y + radius * math.sin(angle + math.radians(120))),
         Point2D.Point2D(center_point.x + radius * math.cos(angle + math.radians(240)),
                         center_point.y + radius * math.sin(angle + math.radians(240))),
-        (0, 0, 0))
+        (0, 0, 0), tag)
