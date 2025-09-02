@@ -28,4 +28,4 @@ min_depth = int(600/2560 * pyautogui.size()[0])
 max_depth = int(1100/2560 * pyautogui.size()[0])
 
 """ Palm """
-NB_PALM = 10
+NB_PALM = 20

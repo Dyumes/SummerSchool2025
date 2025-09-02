@@ -11,8 +11,8 @@ from src.Generation import normalScreenSize
 
 
 class PalmV2():
-    def __init__(self, position):
-        self.depth = 1
+    def __init__(self, position, depth = 1):
+        self.depth = depth
         self.position = position # left bottom corner
         self.all_triangles = []
         self.seed = random.randint(0,10000)
@@ -20,8 +20,8 @@ class PalmV2():
         self.bottom_trunk_color = (50, 0, 50)
         self.top_leaves_color = (0, 255, 180)
         self.bottom_leaves_color = (0, 120, 80)
-        self.max_height = 300 * self.depth
-        self.bottom_width = 40 * self.depth
+        self.max_height = 800 * self.depth
+        self.bottom_width = 100 * self.depth
         self.nb_tree_parts = 6
         self.bottom_height = self.max_height/self.nb_tree_parts
         self.angle = math.radians(5) # mettre entre + ou - 5
@@ -32,7 +32,7 @@ class PalmV2():
         self.nb_leaves = 10
         self.leaves_base_angle = 120
         self.leaves_start_angle = math.radians(180 + (180-self.leaves_base_angle)/2) # from right
-        self.leaves_triangles_size = 25 * self.depth
+        self.leaves_triangles_size = 75 * self.depth
         self.last_leaves_point = Point2D.Point2D(0,0)
         self.nb_triangles_by_leaves = 15
         self.triangle_leaves_rotation = math.radians(90/(self.nb_triangles_by_leaves - 1))
